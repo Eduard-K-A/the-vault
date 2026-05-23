@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "The Vault",
+    "slug": "the-vault",
+    "scheme": "thevault",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "jsEngine": "hermes",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false
+    },
+    "extra": {
+      "eas": {
+        "projectId": "00000000-0000-0000-0000-000000000000"
+      }
+    }
+  }
+}
