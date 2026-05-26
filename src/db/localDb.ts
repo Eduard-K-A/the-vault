@@ -528,6 +528,35 @@ export function restockInventory(input: {
   return log;
 }
 
+export function initializeInventory(input: {
+  productId: string;
+  branchId: string;
+  quantity: number;
+  actorId: string;
+}): InventoryLog {
+  const inventory = ensureInventoryRow(input.productId, input.branchId);
+  const quantityBefore = inventory.stock_quantity;
+  inventory.stock_quantity = input.quantity;
+  inventory.updated_at = now();
+
+  const log: InventoryLog = {
+    id: generateUUID(),
+    product_id: input.productId,
+    branch_id: input.branchId,
+    action_type: 'initial',
+    quantity_before: quantityBefore,
+    quantity_changed: input.quantity - quantityBefore,
+    quantity_after: inventory.stock_quantity,
+    reference_type: 'system',
+    reference_id: null,
+    performed_by: input.actorId,
+    created_at: now(),
+  };
+  state.inventoryLogs.unshift(log);
+  touch();
+  return log;
+}
+
 export function createSale(input: {
   sale: Sale;
   items: SaleItem[];
@@ -628,4 +657,3 @@ function ensureInventoryRow(productId: string, branchIdValue: string): Inventory
   state.inventory.unshift(inventory);
   return inventory;
 }
-

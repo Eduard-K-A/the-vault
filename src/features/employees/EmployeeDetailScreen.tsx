@@ -1,5 +1,6 @@
 import React from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
@@ -9,20 +10,32 @@ import { getLocalDbState } from '@/db/localDb';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { formatCurrency } from '@/utils/formatCurrency';
+import { useAuthStore } from '@/store/authStore';
 import type { RootStackParamList } from '@/types/navigation';
 
 type Route = NativeStackScreenProps<RootStackParamList, 'EmployeeDetail'>['route'];
+type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function EmployeeDetailScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<Navigation>();
   const route = useRoute<Route>();
+  const role = useAuthStore((state) => state.role);
   const state = getLocalDbState();
   const employee = state.profiles.find((profile) => profile.id === route.params.employeeId) ?? null;
   const sales = state.sales.filter((sale) => sale.employee_id === route.params.employeeId && sale.status === 'completed');
 
+  function handleBack() {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.popToTop();
+  }
+
   if (!employee) {
     return (
-      <Screen title="Employee detail" subtitle="Employee not found." onBack={() => navigation.goBack()}>
+      <Screen title="Employee detail" subtitle="Employee not found." onBack={handleBack}>
         <EmptyState title="Missing employee" description="The selected employee is unavailable." />
       </Screen>
     );
@@ -31,7 +44,7 @@ export default function EmployeeDetailScreen() {
   const revenue = sales.reduce((sum, sale) => sum + sale.total_amount, 0);
 
   return (
-    <Screen title={employee.fullname} subtitle={employee.email} onBack={() => navigation.goBack()}>
+    <Screen title={employee.fullname} subtitle={employee.email} onBack={handleBack}>
       <View style={styles.metrics}>
         <StatCard label="Transactions" value={String(sales.length)} tone="primary" />
         <StatCard label="Revenue" value={formatCurrency(revenue)} tone="accent" />

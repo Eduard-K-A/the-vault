@@ -8,6 +8,7 @@ import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useCart } from '@/hooks/useCart';
+import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
 import type { PaymentMethod } from '@/types/models';
@@ -18,6 +19,7 @@ const paymentMethods: PaymentMethod[] = ['cash', 'card', 'gcash', 'others'];
 
 export default function CheckoutScreen() {
   const navigation = useNavigation<Navigation>();
+  const role = useAuthStore((state) => state.role);
   const { items, subtotal, discountAmount, total, paymentMethod, setPaymentMethod, checkout } = useCart();
   const business = useBusinessStore((state) => state.activeBusiness);
   const branch = useBusinessStore((state) => state.activeBranch);
@@ -35,8 +37,17 @@ export default function CheckoutScreen() {
     }
   }
 
+  function handleBack() {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.navigate(role === 'owner' ? 'OwnerApp' : 'EmployeeApp');
+  }
+
   return (
-    <Screen title="Checkout" subtitle="All writes happen locally before sync." onBack={() => navigation.goBack()}>
+    <Screen title="Checkout" subtitle="All writes happen locally before sync." onBack={handleBack}>
       <ScrollView contentContainerStyle={{ gap: 16 }}>
         <Card style={{ gap: dimensions.sm }}>
           <SectionHeader title={business?.name ?? 'No business selected'} subtitle={branch?.name ?? 'No branch selected'} />

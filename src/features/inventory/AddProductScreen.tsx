@@ -16,23 +16,28 @@ export default function AddProductScreen() {
   const navigation = useNavigation<Navigation>();
   const authUserId = useAuthStore((state) => state.userId);
   const businessId = useBusinessStore((state) => state.activeBusiness?.id ?? null);
+  const branchId = useBusinessStore((state) => state.activeBranch?.id ?? null);
   const [name, setName] = useState('');
   const [barcode, setBarcode] = useState('');
   const [sku, setSku] = useState('');
   const [sellingPrice, setSellingPrice] = useState('0');
   const [costPrice, setCostPrice] = useState('0');
+  const [initialStock, setInitialStock] = useState('0');
   const [loading, setLoading] = useState(false);
 
   async function handleSave() {
-    if (!authUserId || !businessId) {
+    if (!authUserId || !businessId || !branchId) {
+      Alert.alert('Save failed', 'Select a branch before creating a product.');
       return;
     }
 
     try {
       setLoading(true);
+      const productId = generateUUID();
+      const stockCount = Math.max(0, Math.trunc(Number(initialStock) || 0));
       await db.writeTransaction(async (tx) => {
         tx.upsertProduct({
-          id: generateUUID(),
+          id: productId,
           business_id: businessId,
           category_id: null,
           name: name.trim(),
@@ -45,8 +50,19 @@ export default function AddProductScreen() {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         }, authUserId);
+
+        tx.initializeInventory({
+          productId,
+          branchId,
+          quantity: stockCount,
+          actorId: authUserId,
+        });
       });
-      navigation.goBack();
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.popToTop();
+      }
     } catch (error) {
       Alert.alert('Save failed', error instanceof Error ? error.message : 'Unknown error');
     } finally {
@@ -54,13 +70,23 @@ export default function AddProductScreen() {
     }
   }
 
+  function handleBack() {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.popToTop();
+  }
+
   return (
-    <Screen title="Add product" subtitle="Owners can create products for the workspace." onBack={() => navigation.goBack()}>
+    <Screen title="Add product" subtitle="Owners can create products for the workspace." onBack={handleBack}>
       <ScrollView contentContainerStyle={{ gap: 16 }}>
         <Card style={{ gap: 16 }}>
           <Input label="Product name" value={name} onChangeText={setName} />
           <Input label="Barcode" value={barcode} onChangeText={setBarcode} autoCapitalize="characters" />
           <Input label="SKU" value={sku} onChangeText={setSku} autoCapitalize="characters" />
+          <Input label="Initial stock" value={initialStock} onChangeText={setInitialStock} keyboardType="numeric" />
           <Input label="Selling price" value={sellingPrice} onChangeText={setSellingPrice} keyboardType="numeric" />
           <Input label="Cost price" value={costPrice} onChangeText={setCostPrice} keyboardType="numeric" />
           <Button label="Save" onPress={handleSave} loading={loading} />

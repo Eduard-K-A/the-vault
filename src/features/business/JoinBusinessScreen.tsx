@@ -24,7 +24,11 @@ export default function JoinBusinessScreen() {
     try {
       setLoading(true);
       await joinBusiness({ joinCode, userId });
-      navigation.navigate('BusinessSelection');
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.popToTop();
+      }
     } catch (error) {
       Alert.alert('Join failed', error instanceof Error ? error.message : 'Unknown error');
     } finally {
@@ -32,8 +36,17 @@ export default function JoinBusinessScreen() {
     }
   }
 
+  function handleBack() {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.popToTop();
+  }
+
   return (
-    <Screen title="Join business" subtitle="Enter the 6-character join code from the owner." onBack={() => navigation.goBack()}>
+    <Screen title="Join business" subtitle="Enter the 6-character join code from the owner." onBack={handleBack}>
       <Card style={{ gap: 16 }}>
         <Input
           label="Join code"

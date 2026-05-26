@@ -52,7 +52,11 @@ export default function EditProductScreen() {
           authUserId,
         );
       });
-      navigation.goBack();
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.popToTop();
+      }
     } catch (error) {
       Alert.alert('Save failed', error instanceof Error ? error.message : 'Unknown error');
     } finally {
@@ -68,12 +72,25 @@ export default function EditProductScreen() {
     await db.writeTransaction(async (tx) => {
       tx.archiveProduct(product.id, authUserId);
     });
-    navigation.goBack();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.popToTop();
+    }
+  }
+
+  function handleBack() {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.popToTop();
   }
 
   if (!product) {
     return (
-      <Screen title="Edit product" subtitle="Product not found." onBack={() => navigation.goBack()}>
+      <Screen title="Edit product" subtitle="Product not found." onBack={handleBack}>
         <Card>
           <Text style={styles.missing}>The product could not be loaded.</Text>
         </Card>
@@ -86,7 +103,7 @@ export default function EditProductScreen() {
       title="Edit product"
       subtitle="Archived products stay hidden from employees."
       action={<Badge label={product.is_active ? 'Active' : 'Archived'} tone={product.is_active ? 'success' : 'neutral'} />}
-      onBack={() => navigation.goBack()}
+      onBack={handleBack}
     >
       <ScrollView contentContainerStyle={{ gap: 16 }}>
         <Card style={{ gap: 16 }}>

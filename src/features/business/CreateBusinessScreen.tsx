@@ -28,8 +28,17 @@ export default function CreateBusinessScreen() {
     }
   }
 
+  function handleBack() {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.popToTop();
+  }
+
   return (
-    <Screen title="Create business" subtitle="Set up your first workspace." onBack={() => navigation.goBack()}>
+    <Screen title="Create business" subtitle="Set up your first workspace." onBack={handleBack}>
       <Card style={{ gap: 16 }}>
         <Input label="Business name" value={name} onChangeText={setName} />
         <Input label="Address" value={address} onChangeText={setAddress} />

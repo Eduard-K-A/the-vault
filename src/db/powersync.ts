@@ -7,6 +7,7 @@ import {
   archiveProduct,
   createBusiness,
   createSale,
+  initializeInventory,
   getLocalDbState,
   getVersion,
   markSaleSynced,
@@ -27,6 +28,7 @@ export interface LocalTransaction {
   archiveProduct: typeof archiveProduct;
   createBusiness: typeof createBusiness;
   createSale: typeof createSale;
+  initializeInventory: typeof initializeInventory;
   markSaleSynced: typeof markSaleSynced;
   restockInventory: typeof restockInventory;
   upsertProduct: typeof upsertProduct;
@@ -38,6 +40,7 @@ const transaction: LocalTransaction = {
   archiveProduct,
   createBusiness,
   createSale,
+  initializeInventory,
   markSaleSynced,
   restockInventory,
   upsertProduct,
@@ -58,4 +61,3 @@ export const db = {
     return operation(transaction);
   },
 };
-

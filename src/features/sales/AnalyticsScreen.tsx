@@ -31,9 +31,18 @@ export default function AnalyticsScreen() {
         ? getEmployeeAnalytics(getLocalDbState(), userId)
         : null;
 
+  function handleBack() {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.popToTop();
+  }
+
   if (!analytics) {
     return (
-      <Screen title="Analytics" subtitle="No active business selected." onBack={() => navigation.goBack()}>
+      <Screen title="Analytics" subtitle="No active business selected." onBack={handleBack}>
         <EmptyState title="Pick a workspace" description="Analytics are tied to the active business and branch." />
       </Screen>
     );
@@ -49,7 +58,7 @@ export default function AnalyticsScreen() {
       title="Analytics"
       subtitle="Local analytics from SQLite-style queries."
       action={<Badge label={role ?? 'member'} tone="primary" />}
-      onBack={() => navigation.goBack()}
+      onBack={handleBack}
     >
       <View style={styles.metrics}>
         {'summary' in analytics ? (

@@ -16,15 +16,24 @@ export default function BusinessCreatedScreen() {
   const navigation = useNavigation<Navigation>();
   const route = useRoute<Route>();
 
+  function handleBack() {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.popToTop();
+  }
+
   return (
-    <Screen title="Business created" subtitle="Share this join code with employees." onBack={() => navigation.goBack()}>
+    <Screen title="Business created" subtitle="Share this join code with employees." onBack={handleBack}>
       <Card style={styles.card}>
         <Badge label="Join code" tone="accent" />
         <Text style={styles.code}>{route.params.joinCode}</Text>
         <Text style={styles.helper}>
           Employees use this code from the join flow. In the real app, the code would be validated by an Edge Function.
         </Text>
-        <Button label="Continue" onPress={() => navigation.navigate('BusinessSelection')} />
+        <Button label="Continue" onPress={() => navigation.popToTop()} />
       </Card>
     </Screen>
   );

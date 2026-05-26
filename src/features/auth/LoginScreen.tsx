@@ -29,8 +29,17 @@ export default function LoginScreen() {
     }
   }
 
+  function handleBack() {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.navigate('Landing');
+  }
+
   return (
-    <Screen title="Log in" subtitle="Use your Supabase-backed account to access the workspace." onBack={() => navigation.navigate('Landing')}>
+    <Screen title="Log in" subtitle="Use your Supabase-backed account to access the workspace." onBack={handleBack}>
       <Card style={styles.card}>
         <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
         <Input label="Password" value={password} onChangeText={setPassword} secureTextEntry />

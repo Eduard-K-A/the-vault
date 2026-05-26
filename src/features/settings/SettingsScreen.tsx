@@ -20,6 +20,7 @@ export default function SettingsScreen() {
   const role = useAuthStore((state) => state.role);
   const business = useBusinessStore((state) => state.activeBusiness);
   const branch = useBusinessStore((state) => state.activeBranch);
+  const clearActiveBusiness = useBusinessStore((state) => state.clearActiveBusiness);
 
   async function handleLogout() {
     try {
@@ -36,7 +37,7 @@ export default function SettingsScreen() {
         <Text style={styles.meta}>Business: {business?.name ?? 'None selected'}</Text>
         <Text style={styles.meta}>Branch: {branch?.name ?? 'None selected'}</Text>
         <View style={styles.actions}>
-          <Button label="Switch business" variant="secondary" onPress={() => navigation.navigate('BusinessSelection')} />
+          <Button label="Switch business" variant="secondary" onPress={clearActiveBusiness} />
           <Button label="Branch management" variant="secondary" onPress={() => navigation.navigate('BranchManagement')} />
           <Button label="Reports" variant="secondary" onPress={() => navigation.navigate('Reports')} />
           <Button label="Audit log" variant="secondary" onPress={() => navigation.navigate('AuditLog')} />

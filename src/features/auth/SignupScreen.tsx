@@ -34,8 +34,17 @@ export default function SignupScreen() {
     }
   }
 
+  function handleBack() {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.navigate('Login');
+  }
+
   return (
-    <Screen title="Create account" subtitle="Choose a role to tailor the workspace." onBack={() => navigation.goBack()}>
+    <Screen title="Create account" subtitle="Choose a role to tailor the workspace." onBack={handleBack}>
       <Card style={styles.card}>
         <Input label="Full name" value={fullname} onChangeText={setFullname} />
         <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />

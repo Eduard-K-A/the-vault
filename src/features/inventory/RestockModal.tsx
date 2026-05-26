@@ -35,7 +35,11 @@ export default function RestockModal() {
           actorId: authUserId,
         });
       });
-      navigation.goBack();
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.popToTop();
+      }
     } catch (error) {
       Alert.alert('Restock failed', error instanceof Error ? error.message : 'Unknown error');
     } finally {
@@ -43,8 +47,17 @@ export default function RestockModal() {
     }
   }
 
+  function handleBack() {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.popToTop();
+  }
+
   return (
-    <Screen title="Restock inventory" subtitle="Inventory logs are recorded for every stock change." onBack={() => navigation.goBack()}>
+    <Screen title="Restock inventory" subtitle="Inventory logs are recorded for every stock change." onBack={handleBack}>
       <ScrollView contentContainerStyle={{ gap: 16 }}>
         <Card style={{ gap: 16 }}>
           <Input label="Quantity" value={quantity} onChangeText={setQuantity} keyboardType="numeric" />

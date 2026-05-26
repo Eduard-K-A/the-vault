@@ -27,8 +27,17 @@ export default function ForgotPasswordScreen() {
     }
   }
 
+  function handleBack() {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.navigate('Login');
+  }
+
   return (
-    <Screen title="Forgot password" subtitle="Request a reset link for your account." onBack={() => navigation.goBack()}>
+    <Screen title="Forgot password" subtitle="Request a reset link for your account." onBack={handleBack}>
       <Card style={{ gap: 16 }}>
         <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
         <Button label="Send reset link" onPress={handleReset} loading={loading} />

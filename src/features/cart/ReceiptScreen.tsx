@@ -30,9 +30,18 @@ export default function ReceiptScreen() {
     [route.params.saleId],
   );
 
+  function handleBack() {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.popToTop();
+  }
+
   if (!sale) {
     return (
-      <Screen title="Receipt" subtitle="Sale not found." onBack={() => navigation.goBack()}>
+      <Screen title="Receipt" subtitle="Sale not found." onBack={handleBack}>
         <Card>
           <Text style={styles.empty}>The receipt is no longer available.</Text>
         </Card>
@@ -41,7 +50,7 @@ export default function ReceiptScreen() {
   }
 
   return (
-    <Screen title="Receipt" subtitle="Local sale record captured for sync." onBack={() => navigation.goBack()}>
+    <Screen title="Receipt" subtitle="Local sale record captured for sync." onBack={handleBack}>
       <Card style={{ gap: dimensions.md }}>
         <SectionHeader title={formatCurrency(sale.total_amount)} subtitle={formatDate(sale.created_at)} />
         <Badge label={sale.status} tone={sale.status === 'completed' ? 'success' : 'neutral'} />
@@ -65,7 +74,7 @@ export default function ReceiptScreen() {
             );
           }}
         />
-        <Button label="Done" onPress={() => navigation.navigate(role === 'owner' ? 'OwnerApp' : 'EmployeeApp')} />
+        <Button label="Done" onPress={() => navigation.popToTop()} />
       </Card>
     </Screen>
   );
