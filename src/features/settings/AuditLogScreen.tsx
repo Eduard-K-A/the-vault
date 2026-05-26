@@ -1,5 +1,6 @@
 import React from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 import { Badge, Card, Screen } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
@@ -10,11 +11,12 @@ import { formatDate } from '@/utils/formatDate';
 import { useBusinessStore } from '@/store/businessStore';
 
 export default function AuditLogScreen() {
+  const navigation = useNavigation();
   const businessId = useBusinessStore((state) => state.activeBusiness?.id ?? null);
   const logs = getLocalDbState().auditLogs.filter((log) => log.business_id === businessId);
 
   return (
-    <Screen title="Audit log" subtitle="Owner-only trace of business actions.">
+    <Screen title="Audit log" subtitle="Owner-only trace of business actions." onBack={() => navigation.goBack()}>
       {logs.length === 0 ? (
         <EmptyState title="No audit events" description="Actions will appear here when changes are recorded." />
       ) : (
@@ -54,4 +56,3 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
 });
-

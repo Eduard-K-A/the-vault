@@ -30,7 +30,7 @@ export default function LoginScreen() {
   }
 
   return (
-    <Screen title="Log in" subtitle="Use your Supabase-backed account to access the workspace.">
+    <Screen title="Log in" subtitle="Use your Supabase-backed account to access the workspace." onBack={() => navigation.navigate('Landing')}>
       <Card style={styles.card}>
         <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
         <Input label="Password" value={password} onChangeText={setPassword} secureTextEntry />
@@ -61,4 +61,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-

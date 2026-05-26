@@ -36,7 +36,7 @@ export default function CheckoutScreen() {
   }
 
   return (
-    <Screen title="Checkout" subtitle="All writes happen locally before sync.">
+    <Screen title="Checkout" subtitle="All writes happen locally before sync." onBack={() => navigation.goBack()}>
       <ScrollView contentContainerStyle={{ gap: 16 }}>
         <Card style={{ gap: dimensions.sm }}>
           <SectionHeader title={business?.name ?? 'No business selected'} subtitle={branch?.name ?? 'No branch selected'} />
@@ -76,7 +76,6 @@ export default function CheckoutScreen() {
         </Card>
 
         <Button label="Complete sale" onPress={handleCheckout} loading={loading} />
-        <Button label="Back" variant="secondary" onPress={() => navigation.goBack()} />
       </ScrollView>
     </Screen>
   );
@@ -118,4 +117,3 @@ const styles = StyleSheet.create({
     gap: dimensions.sm,
   },
 });
-

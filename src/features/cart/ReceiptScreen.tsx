@@ -32,7 +32,7 @@ export default function ReceiptScreen() {
 
   if (!sale) {
     return (
-      <Screen title="Receipt" subtitle="Sale not found.">
+      <Screen title="Receipt" subtitle="Sale not found." onBack={() => navigation.goBack()}>
         <Card>
           <Text style={styles.empty}>The receipt is no longer available.</Text>
         </Card>
@@ -41,7 +41,7 @@ export default function ReceiptScreen() {
   }
 
   return (
-    <Screen title="Receipt" subtitle="Local sale record captured for sync.">
+    <Screen title="Receipt" subtitle="Local sale record captured for sync." onBack={() => navigation.goBack()}>
       <Card style={{ gap: dimensions.md }}>
         <SectionHeader title={formatCurrency(sale.total_amount)} subtitle={formatDate(sale.created_at)} />
         <Badge label={sale.status} tone={sale.status === 'completed' ? 'success' : 'neutral'} />

@@ -1,5 +1,6 @@
 import React from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 import { Badge, Card, Screen, StatCard } from '@/components/ui';
 import { BarChart } from '@/components/charts';
@@ -11,6 +12,7 @@ import { dimensions } from '@/constants/dimensions';
 import { formatCurrency } from '@/utils/formatCurrency';
 
 export default function PerformanceDashboard() {
+  const navigation = useNavigation();
   const state = getLocalDbState();
   const business = state.businesses[0];
   const branch = state.branches[0];
@@ -18,14 +20,14 @@ export default function PerformanceDashboard() {
 
   if (!analytics) {
     return (
-      <Screen title="Performance" subtitle="Employee performance dashboard.">
+      <Screen title="Performance" subtitle="Employee performance dashboard." onBack={() => navigation.goBack()}>
         <EmptyState title="No data" description="Performance charts appear after sales are recorded." />
       </Screen>
     );
   }
 
   return (
-    <Screen title="Performance" subtitle="Employee leaderboard and category trends.">
+    <Screen title="Performance" subtitle="Employee leaderboard and category trends." onBack={() => navigation.goBack()}>
       <View style={styles.metrics}>
         <StatCard label="Revenue today" value={formatCurrency(analytics.summary.revenue)} tone="primary" />
         <StatCard label="Top sellers" value={String(analytics.topProducts.length)} tone="accent" />
@@ -78,4 +80,3 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
-

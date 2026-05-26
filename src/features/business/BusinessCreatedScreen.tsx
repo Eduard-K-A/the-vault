@@ -17,7 +17,7 @@ export default function BusinessCreatedScreen() {
   const route = useRoute<Route>();
 
   return (
-    <Screen title="Business created" subtitle="Share this join code with employees.">
+    <Screen title="Business created" subtitle="Share this join code with employees." onBack={() => navigation.goBack()}>
       <Card style={styles.card}>
         <Badge label="Join code" tone="accent" />
         <Text style={styles.code}>{route.params.joinCode}</Text>
@@ -45,4 +45,3 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
 });
-

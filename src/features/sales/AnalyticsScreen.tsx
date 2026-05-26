@@ -1,5 +1,7 @@
 import React from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
 
 import { Badge, Card, Screen, StatCard } from '@/components/ui';
 import { BarChart, LineChart } from '@/components/charts';
@@ -11,8 +13,12 @@ import { dimensions } from '@/constants/dimensions';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
+import type { RootStackParamList } from '@/types/navigation';
+
+type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function AnalyticsScreen() {
+  const navigation = useNavigation<Navigation>();
   const role = useAuthStore((state) => state.role);
   const userId = useAuthStore((state) => state.userId);
   const businessId = useBusinessStore((state) => state.activeBusiness?.id ?? null);
@@ -27,7 +33,7 @@ export default function AnalyticsScreen() {
 
   if (!analytics) {
     return (
-      <Screen title="Analytics" subtitle="No active business selected.">
+      <Screen title="Analytics" subtitle="No active business selected." onBack={() => navigation.goBack()}>
         <EmptyState title="Pick a workspace" description="Analytics are tied to the active business and branch." />
       </Screen>
     );
@@ -39,7 +45,12 @@ export default function AnalyticsScreen() {
       : analytics.leaderboard.map((item) => ({ label: item.fullname.slice(0, 8), value: item.revenue }));
 
   return (
-    <Screen title="Analytics" subtitle="Local analytics from SQLite-style queries." action={<Badge label={role ?? 'member'} tone="primary" />}>
+    <Screen
+      title="Analytics"
+      subtitle="Local analytics from SQLite-style queries."
+      action={<Badge label={role ?? 'member'} tone="primary" />}
+      onBack={() => navigation.goBack()}
+    >
       <View style={styles.metrics}>
         {'summary' in analytics ? (
           <>
@@ -116,4 +127,3 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
-

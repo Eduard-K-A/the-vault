@@ -33,7 +33,7 @@ export default function JoinBusinessScreen() {
   }
 
   return (
-    <Screen title="Join business" subtitle="Enter the 6-character join code from the owner.">
+    <Screen title="Join business" subtitle="Enter the 6-character join code from the owner." onBack={() => navigation.goBack()}>
       <Card style={{ gap: 16 }}>
         <Input
           label="Join code"
@@ -43,9 +43,7 @@ export default function JoinBusinessScreen() {
           maxLength={6}
         />
         <Button label="Join" onPress={handleJoin} loading={loading} />
-        <Button label="Back" variant="secondary" onPress={() => navigation.goBack()} />
       </Card>
     </Screen>
   );
 }
-

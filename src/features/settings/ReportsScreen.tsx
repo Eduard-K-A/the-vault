@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 import { Button, Card, Screen } from '@/components/ui';
 import { exportInventoryReport, exportSalesReport } from '@/services/export.service';
@@ -8,6 +9,7 @@ import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 
 export default function ReportsScreen() {
+  const navigation = useNavigation();
   const business = useBusinessStore((state) => state.activeBusiness);
   const branch = useBusinessStore((state) => state.activeBranch);
   const [loading, setLoading] = useState(false);
@@ -43,7 +45,7 @@ export default function ReportsScreen() {
   }
 
   return (
-    <Screen title="Reports" subtitle="Export business data to Excel.">
+    <Screen title="Reports" subtitle="Export business data to Excel." onBack={() => navigation.goBack()}>
       <Card style={styles.card}>
         <Text style={styles.helper}>Exports use SheetJS and the native share sheet.</Text>
         <Button label="Export sales" onPress={handleExportSales} loading={loading} />
@@ -61,4 +63,3 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
 });
-

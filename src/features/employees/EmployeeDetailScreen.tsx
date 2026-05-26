@@ -1,7 +1,7 @@
 import React from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 import { Badge, Card, Screen, StatCard } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
@@ -14,6 +14,7 @@ import type { RootStackParamList } from '@/types/navigation';
 type Route = NativeStackScreenProps<RootStackParamList, 'EmployeeDetail'>['route'];
 
 export default function EmployeeDetailScreen() {
+  const navigation = useNavigation();
   const route = useRoute<Route>();
   const state = getLocalDbState();
   const employee = state.profiles.find((profile) => profile.id === route.params.employeeId) ?? null;
@@ -21,7 +22,7 @@ export default function EmployeeDetailScreen() {
 
   if (!employee) {
     return (
-      <Screen title="Employee detail" subtitle="Employee not found.">
+      <Screen title="Employee detail" subtitle="Employee not found." onBack={() => navigation.goBack()}>
         <EmptyState title="Missing employee" description="The selected employee is unavailable." />
       </Screen>
     );
@@ -30,7 +31,7 @@ export default function EmployeeDetailScreen() {
   const revenue = sales.reduce((sum, sale) => sum + sale.total_amount, 0);
 
   return (
-    <Screen title={employee.fullname} subtitle={employee.email}>
+    <Screen title={employee.fullname} subtitle={employee.email} onBack={() => navigation.goBack()}>
       <View style={styles.metrics}>
         <StatCard label="Transactions" value={String(sales.length)} tone="primary" />
         <StatCard label="Revenue" value={formatCurrency(revenue)} tone="accent" />
@@ -76,4 +77,3 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
-

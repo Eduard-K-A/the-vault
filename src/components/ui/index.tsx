@@ -7,6 +7,7 @@ import {
   Text,
   TextInput,
   View,
+  type StyleProp,
   type TextStyle,
   type TextInputProps,
   type ViewStyle,
@@ -23,17 +24,30 @@ interface ScreenProps {
   title?: string;
   subtitle?: string;
   action?: React.ReactNode;
+  onBack?: () => void | Promise<void>;
+  backLabel?: string;
 }
 
-export function Screen({ children, title, subtitle, action }: ScreenProps) {
+export function Screen({ children, title, subtitle, action, onBack, backLabel = 'Back' }: ScreenProps) {
   return (
     <View style={styles.screen}>
       <View style={styles.screenHeader}>
-        <View style={{ flex: 1 }}>
-          {title ? <Text style={styles.screenTitle}>{title}</Text> : null}
-          {subtitle ? <Text style={styles.screenSubtitle}>{subtitle}</Text> : null}
+        <View style={styles.screenHeaderRow}>
+          {onBack ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={onBack}
+              style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
+            >
+              <Text style={styles.backButtonText}>{backLabel}</Text>
+            </Pressable>
+          ) : null}
+          <View style={styles.screenHeaderContent}>
+            {title ? <Text style={styles.screenTitle}>{title}</Text> : null}
+            {subtitle ? <Text style={styles.screenSubtitle}>{subtitle}</Text> : null}
+          </View>
+          {action}
         </View>
-        {action}
       </View>
       {children}
     </View>
@@ -42,7 +56,7 @@ export function Screen({ children, title, subtitle, action }: ScreenProps) {
 
 interface CardProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   padded?: boolean;
 }
 
@@ -174,9 +188,16 @@ const styles = StyleSheet.create({
     gap: dimensions.lg,
   },
   screenHeader: {
+    gap: dimensions.sm,
+  },
+  screenHeaderRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: dimensions.md,
+    gap: dimensions.sm,
+  },
+  screenHeaderContent: {
+    flex: 1,
+    minWidth: 0,
   },
   screenTitle: {
     ...typography.title,
@@ -285,6 +306,24 @@ const styles = StyleSheet.create({
   sheetTitle: {
     ...typography.subtitle,
     color: colors.text,
+  },
+  backButton: {
+    minHeight: 36,
+    paddingHorizontal: dimensions.sm,
+    borderRadius: dimensions.radiusMd,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButtonPressed: {
+    opacity: 0.88,
+  },
+  backButtonText: {
+    ...typography.caption,
+    color: colors.text,
+    fontWeight: '700',
   },
   statCard: {
     minWidth: 140,

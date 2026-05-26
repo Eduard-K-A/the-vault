@@ -1,5 +1,6 @@
 import React from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 import { Badge, Button, Card, Screen } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
@@ -9,11 +10,12 @@ import { dimensions } from '@/constants/dimensions';
 import { useBusinessStore } from '@/store/businessStore';
 
 export default function BranchManagementScreen() {
+  const navigation = useNavigation();
   const businessId = useBusinessStore((state) => state.activeBusiness?.id ?? null);
   const branches = getLocalDbState().branches.filter((branch) => branch.business_id === businessId);
 
   return (
-    <Screen title="Branches" subtitle="Manage branches and stock locations.">
+    <Screen title="Branches" subtitle="Manage branches and stock locations." onBack={() => navigation.goBack()}>
       {branches.length === 0 ? (
         <EmptyState title="No branches" description="Create a branch when the business is set up." />
       ) : (
@@ -50,4 +52,3 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
-

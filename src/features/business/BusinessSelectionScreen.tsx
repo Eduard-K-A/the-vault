@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
@@ -10,6 +10,7 @@ import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
+import { signOut } from '@/services/auth.service';
 import type { RootStackParamList } from '@/types/navigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -24,11 +25,16 @@ export default function BusinessSelectionScreen() {
     selectBusiness(businessId);
   }
 
+  async function handleBack() {
+    await signOut();
+  }
+
   return (
     <Screen
       title="Select business"
       subtitle="Choose a workspace to continue. Owners can also create a new one."
       action={<Badge label={role ?? 'member'} tone="primary" />}
+      onBack={handleBack}
     >
       {businesses.length === 0 ? (
         <EmptyState
@@ -75,4 +81,3 @@ const styles = StyleSheet.create({
     marginTop: dimensions.lg,
   },
 });
-

@@ -28,13 +28,11 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <Screen title="Forgot password" subtitle="Request a reset link for your account.">
+    <Screen title="Forgot password" subtitle="Request a reset link for your account." onBack={() => navigation.goBack()}>
       <Card style={{ gap: 16 }}>
         <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
         <Button label="Send reset link" onPress={handleReset} loading={loading} />
-        <Button label="Back to login" variant="secondary" onPress={() => navigation.navigate('Login')} />
       </Card>
     </Screen>
   );
 }
-

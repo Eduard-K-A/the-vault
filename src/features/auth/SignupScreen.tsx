@@ -35,7 +35,7 @@ export default function SignupScreen() {
   }
 
   return (
-    <Screen title="Create account" subtitle="Choose a role to tailor the workspace.">
+    <Screen title="Create account" subtitle="Choose a role to tailor the workspace." onBack={() => navigation.goBack()}>
       <Card style={styles.card}>
         <Input label="Full name" value={fullname} onChangeText={setFullname} />
         <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
@@ -48,7 +48,6 @@ export default function SignupScreen() {
           ))}
         </View>
         <Button label="Create account" onPress={handleSignUp} loading={loading} />
-        <Button label="Back to login" variant="secondary" onPress={() => navigation.navigate('Login')} />
       </Card>
       <Text style={styles.helper}>Owners can create businesses after signup. Employees can join with a code.</Text>
     </Screen>
@@ -72,4 +71,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-

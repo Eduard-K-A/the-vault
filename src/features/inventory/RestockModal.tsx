@@ -44,15 +44,13 @@ export default function RestockModal() {
   }
 
   return (
-    <Screen title="Restock inventory" subtitle="Inventory logs are recorded for every stock change.">
+    <Screen title="Restock inventory" subtitle="Inventory logs are recorded for every stock change." onBack={() => navigation.goBack()}>
       <ScrollView contentContainerStyle={{ gap: 16 }}>
         <Card style={{ gap: 16 }}>
           <Input label="Quantity" value={quantity} onChangeText={setQuantity} keyboardType="numeric" />
           <Button label="Apply restock" onPress={handleRestock} loading={loading} />
-          <Button label="Cancel" variant="secondary" onPress={() => navigation.goBack()} />
         </Card>
       </ScrollView>
     </Screen>
   );
 }
-

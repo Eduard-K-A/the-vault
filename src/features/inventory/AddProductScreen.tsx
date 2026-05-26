@@ -55,7 +55,7 @@ export default function AddProductScreen() {
   }
 
   return (
-    <Screen title="Add product" subtitle="Owners can create products for the workspace.">
+    <Screen title="Add product" subtitle="Owners can create products for the workspace." onBack={() => navigation.goBack()}>
       <ScrollView contentContainerStyle={{ gap: 16 }}>
         <Card style={{ gap: 16 }}>
           <Input label="Product name" value={name} onChangeText={setName} />
@@ -64,10 +64,8 @@ export default function AddProductScreen() {
           <Input label="Selling price" value={sellingPrice} onChangeText={setSellingPrice} keyboardType="numeric" />
           <Input label="Cost price" value={costPrice} onChangeText={setCostPrice} keyboardType="numeric" />
           <Button label="Save" onPress={handleSave} loading={loading} />
-          <Button label="Cancel" variant="secondary" onPress={() => navigation.goBack()} />
         </Card>
       </ScrollView>
     </Screen>
   );
 }
-

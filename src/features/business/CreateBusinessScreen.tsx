@@ -29,15 +29,13 @@ export default function CreateBusinessScreen() {
   }
 
   return (
-    <Screen title="Create business" subtitle="Set up your first workspace.">
+    <Screen title="Create business" subtitle="Set up your first workspace." onBack={() => navigation.goBack()}>
       <Card style={{ gap: 16 }}>
         <Input label="Business name" value={name} onChangeText={setName} />
         <Input label="Address" value={address} onChangeText={setAddress} />
         <Input label="First branch" value={branchName} onChangeText={setBranchName} />
         <Button label="Create" onPress={handleCreate} loading={loading} />
-        <Button label="Back" variant="secondary" onPress={() => navigation.goBack()} />
       </Card>
     </Screen>
   );
 }
-

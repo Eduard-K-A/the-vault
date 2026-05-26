@@ -73,7 +73,7 @@ export default function EditProductScreen() {
 
   if (!product) {
     return (
-      <Screen title="Edit product" subtitle="Product not found.">
+      <Screen title="Edit product" subtitle="Product not found." onBack={() => navigation.goBack()}>
         <Card>
           <Text style={styles.missing}>The product could not be loaded.</Text>
         </Card>
@@ -86,6 +86,7 @@ export default function EditProductScreen() {
       title="Edit product"
       subtitle="Archived products stay hidden from employees."
       action={<Badge label={product.is_active ? 'Active' : 'Archived'} tone={product.is_active ? 'success' : 'neutral'} />}
+      onBack={() => navigation.goBack()}
     >
       <ScrollView contentContainerStyle={{ gap: 16 }}>
         <Card style={{ gap: 16 }}>
@@ -96,7 +97,6 @@ export default function EditProductScreen() {
           <Input label="Cost price" value={costPrice} onChangeText={setCostPrice} keyboardType="numeric" />
           <Button label="Save changes" onPress={handleSave} loading={loading} />
           <Button label="Archive product" variant="danger" onPress={handleArchive} />
-          <Button label="Back" variant="secondary" onPress={() => navigation.goBack()} />
         </Card>
       </ScrollView>
     </Screen>
@@ -109,4 +109,3 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
 });
-
