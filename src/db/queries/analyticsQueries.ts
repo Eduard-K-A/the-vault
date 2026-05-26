@@ -83,8 +83,10 @@ export function getOwnerAnalytics(state: LocalDbState, businessId: string, branc
     (sale) => sale.business_id === businessId && sale.status === 'completed',
   );
   const today = new Date();
+  const revenue = sumSalesForDate(completedSales, today);
   const summary = {
-    revenue: sumSalesForDate(completedSales, today),
+    total: revenue,
+    revenue,
     transactions: completedSales.filter((sale) => isSameDate(new Date(sale.created_at), today)).length,
     netRevenue: completedSales
       .filter((sale) => isSameDate(new Date(sale.created_at), today))
@@ -278,4 +280,3 @@ function getWeekKey(date: Date): string {
 function nowKey(): string {
   return new Date().toISOString().slice(0, 10);
 }
-

@@ -1,4 +1,4 @@
-import * as FileSystem from 'expo-file-system';
+import { EncodingType, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as XLSX from 'xlsx';
 
@@ -15,19 +15,19 @@ async function writeWorkbook(fileName: string, sheets: Record<string, unknown[]>
   }
 
   const base64 = XLSX.write(workbook, { type: 'base64', bookType: 'xlsx' });
-  const uri = `${FileSystem.cacheDirectory ?? ''}${fileName}`;
-  await FileSystem.writeAsStringAsync(uri, base64, {
-    encoding: FileSystem.EncodingType.Base64,
+  const file = new File(Paths.cache, fileName);
+  file.write(base64, {
+    encoding: EncodingType.Base64,
   });
 
   if (await Sharing.isAvailableAsync()) {
-    await Sharing.shareAsync(uri, {
+    await Sharing.shareAsync(file.uri, {
       mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       dialogTitle: fileName,
     });
   }
 
-  return uri;
+  return file.uri;
 }
 
 export async function exportSalesReport(businessId: string): Promise<string> {
@@ -82,4 +82,3 @@ export async function exportInventoryReport(branchId: string): Promise<string> {
     Inventory: inventory,
   });
 }
-

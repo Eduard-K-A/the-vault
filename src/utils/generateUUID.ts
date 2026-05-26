@@ -1,7 +1,6 @@
 export function generateUUID(): string {
-  const cryptoApi = globalThis.crypto as { randomUUID?: () => string } | undefined;
-  if (cryptoApi?.randomUUID) {
-    return cryptoApi.randomUUID();
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
   }
 
   const template = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx';

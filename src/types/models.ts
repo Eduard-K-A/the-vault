@@ -154,7 +154,7 @@ export interface AuthSession {
 
 export interface SaleMetrics {
   total: number;
+  revenue: number;
   transactions: number;
   netRevenue: number;
 }
-
