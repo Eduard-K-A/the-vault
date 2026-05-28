@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Business Selection</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+        .pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+    </style>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#ffdad6",
+                        "outline": "#78767d",
+                        "on-surface-variant": "#47464c",
+                        "surface": "#f8f9fb",
+                        "on-tertiary-container": "#009768",
+                        "on-secondary-container": "#fffbff",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container-highest": "#e1e2e4",
+                        "primary-fixed": "#e2e0fc",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#002114",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#45455b",
+                        "on-secondary-fixed-variant": "#3323cc",
+                        "on-error-container": "#93000a",
+                        "secondary": "#4b41e1",
+                        "surface-container-high": "#e7e8ea",
+                        "secondary-fixed-dim": "#c3c0ff",
+                        "on-secondary-fixed": "#0f0069",
+                        "inverse-primary": "#c6c4df",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed": "#e2dfff",
+                        "inverse-surface": "#2e3132",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "surface-variant": "#e1e2e4",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#1a1a2e",
+                        "inverse-on-surface": "#f0f1f3",
+                        "primary": "#00000b",
+                        "on-surface": "#191c1e",
+                        "surface-dim": "#d9dadc",
+                        "on-background": "#191c1e",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "primary-fixed-dim": "#c6c4df",
+                        "surface-bright": "#f8f9fb",
+                        "on-tertiary-fixed": "#002113",
+                        "tertiary": "#000000",
+                        "on-primary-fixed": "#1a1a2e",
+                        "surface-container": "#edeef0",
+                        "outline-variant": "#c8c5cd",
+                        "on-primary": "#ffffff",
+                        "on-primary-container": "#83829b",
+                        "tertiary-fixed": "#6ffbbe",
+                        "background": "#f8f9fb",
+                        "surface-tint": "#5d5c74",
+                        "secondary-container": "#645efb",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "24px",
+                        "gutter": "12px",
+                        "stack-sm": "8px",
+                        "padding-v": "16px",
+                        "padding-h": "20px",
+                        "base": "4px",
+                        "stack-md": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Inter"],
+                        "micro": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "caption": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "micro": ["11px", { "lineHeight": "16px", "letterSpacing": "0.6px", "fontWeight": "500" }],
+                        "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "caption": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface min-h-screen flex flex-col font-body-md antialiased pt-safe selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+<!-- Transactional Header: Suppressing Shared Component Navs per mandate -->
+<header class="flex items-center justify-between px-padding-h h-14 bg-surface-container-lowest border-b border-outline-variant/30 sticky top-0 z-50 pt-safe">
+<div class="w-20"></div> <!-- Spacer for center alignment -->
+<h1 class="font-headline-sm text-headline-sm text-on-surface flex-1 text-center truncate">Your Businesses</h1>
+<button class="w-20 text-right font-body-md text-body-md text-secondary hover:text-on-secondary-fixed-variant active:text-secondary-fixed-dim transition-colors">Sign out</button>
+</header>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto px-padding-h py-stack-lg flex flex-col">
+<div class="max-w-md mx-auto w-full flex flex-col gap-stack-md h-full">
+<div class="mb-2">
+<p class="font-caption text-caption text-on-surface-variant">Select a business to continue</p>
+</div>
+<!-- Business List -->
+<div class="flex flex-col bg-surface-container-lowest rounded-xl border border-outline-variant/30 shadow-[0_2px_8px_rgba(0,0,0,0.02)] overflow-hidden">
+<!-- Business Item 1: Owner -->
+<button class="flex items-center h-[72px] px-padding-h border-b border-outline-variant/30 w-full text-left group hover:bg-surface-container-low transition-colors active:bg-surface-container-highest">
+<div class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-headline-md text-headline-md shrink-0 shadow-sm">
+                        SB
+                    </div>
+<div class="flex-1 flex flex-col justify-center ml-gutter overflow-hidden">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Starlight Bakery</span>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-micro text-micro shrink-0 uppercase tracking-wider">Owner</span>
+</div>
+<span class="font-caption text-caption text-outline mt-0.5 truncate">Main Street Branch</span>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-secondary transition-colors ml-2" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- Business Item 2: Employee -->
+<button class="flex items-center h-[72px] px-padding-h border-b border-outline-variant/30 w-full text-left group hover:bg-surface-container-low transition-colors active:bg-surface-container-highest">
+<div class="w-10 h-10 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-headline-md text-headline-md shrink-0 shadow-sm">
+                        CD
+                    </div>
+<div class="flex-1 flex flex-col justify-center ml-gutter overflow-hidden">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Cafe Delight</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-variant text-on-surface-variant font-micro text-micro shrink-0 uppercase tracking-wider">Employee</span>
+</div>
+<span class="font-caption text-caption text-outline mt-0.5 truncate">Westside Kiosk</span>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-secondary transition-colors ml-2" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- Business Item 3: Manager (using outline for variety) -->
+<button class="flex items-center h-[72px] px-padding-h w-full text-left group hover:bg-surface-container-low transition-colors active:bg-surface-container-highest">
+<div class="w-10 h-10 rounded-full bg-primary-fixed text-on-primary-fixed flex items-center justify-center font-headline-md text-headline-md shrink-0 shadow-sm">
+                        NB
+                    </div>
+<div class="flex-1 flex flex-col justify-center ml-gutter overflow-hidden">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Nexus Books</span>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface-variant font-micro text-micro shrink-0 uppercase tracking-wider">Manager</span>
+</div>
+<span class="font-caption text-caption text-outline mt-0.5 truncate">Downtown Retail</span>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-secondary transition-colors ml-2" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Sticky Bottom Actions -->
+<div class="p-padding-h bg-surface-container-lowest/90 backdrop-blur-md border-t border-outline-variant/30 sticky bottom-0 z-50 pb-safe">
+<div class="max-w-md mx-auto w-full flex flex-col gap-stack-sm">
+<button class="h-[52px] w-full rounded-lg border-[1.5px] border-secondary text-secondary font-headline-sm text-headline-sm flex items-center justify-center hover:bg-secondary/5 active:bg-secondary/10 transition-colors">
+                Join a business
+            </button>
+<button class="h-[52px] w-full rounded-lg bg-secondary text-on-secondary font-headline-sm text-headline-sm flex items-center justify-center hover:bg-on-secondary-fixed-variant active:scale-[0.98] transition-all shadow-md shadow-secondary/20">
+                Create a business
+            </button>
+</div>
+</div>
+</body></html>

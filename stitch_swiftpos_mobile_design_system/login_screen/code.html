@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login - POSly</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary-container": "#1a1a2e",
+                        "on-primary-fixed-variant": "#45455b",
+                        "surface-container": "#edeef0",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#5d5c74",
+                        "primary-fixed": "#e2e0fc",
+                        "on-surface": "#191c1e",
+                        "tertiary-container": "#002114",
+                        "on-secondary-fixed": "#0f0069",
+                        "surface-variant": "#e1e2e4",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#c3c0ff",
+                        "surface-container-high": "#e7e8ea",
+                        "on-error-container": "#93000a",
+                        "surface": "#f8f9fb",
+                        "outline-variant": "#c8c5cd",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "inverse-primary": "#c6c4df",
+                        "on-error": "#ffffff",
+                        "on-tertiary-container": "#009768",
+                        "surface-bright": "#f8f9fb",
+                        "surface-container-highest": "#e1e2e4",
+                        "on-secondary-container": "#fffbff",
+                        "secondary-container": "#645efb",
+                        "outline": "#78767d",
+                        "primary-fixed-dim": "#c6c4df",
+                        "on-primary-fixed": "#1a1a2e",
+                        "on-tertiary-fixed": "#002113",
+                        "secondary": "#4b41e1",
+                        "background": "#f8f9fb",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "secondary-fixed": "#e2dfff",
+                        "primary": "#00000b",
+                        "tertiary-fixed": "#6ffbbe",
+                        "tertiary": "#000000",
+                        "on-background": "#191c1e",
+                        "on-primary-container": "#83829b",
+                        "inverse-surface": "#2e3132",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#d9dadc",
+                        "error": "#ba1a1a",
+                        "surface-container-low": "#f2f4f6",
+                        "on-surface-variant": "#47464c",
+                        "on-secondary-fixed-variant": "#3323cc",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#f0f1f3"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px"
+                    },
+                    spacing: {
+                        base: "4px",
+                        "stack-sm": "8px",
+                        "stack-lg": "24px",
+                        "padding-h": "20px",
+                        "padding-v": "16px",
+                        "stack-md": "16px",
+                        "gutter": "12px"
+                    },
+                    fontFamily: {
+                        "headline-lg": ["Inter"],
+                        "caption": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "micro": ["Inter"],
+                        "headline-sm": ["Inter"]
+                    },
+                    fontSize: {
+                        "headline-lg": ["24px", { lineHeight: "32px", fontWeight: "700" }],
+                        "caption": ["13px", { lineHeight: "18px", fontWeight: "400" }],
+                        "headline-md": ["20px", { lineHeight: "28px", fontWeight: "600" }],
+                        "body-md": ["15px", { lineHeight: "22px", fontWeight: "400" }],
+                        "micro": ["11px", { lineHeight: "16px", letterSpacing: "0.6px", fontWeight: "500" }],
+                        "headline-sm": ["16px", { lineHeight: "24px", fontWeight: "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface-container-lowest min-h-screen flex flex-col font-body-md text-on-surface antialiased">
+<header class="flex items-center justify-between px-padding-h h-14 bg-surface-container-lowest relative z-10">
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors active:scale-95 cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<div class="flex items-center justify-center">
+<img alt="" class="w-[32px] h-[32px] object-contain" src="data:image/png;base64,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"/>
+</div>
+<div class="w-10 h-10"></div>
+</header>
+<main class="flex-1 flex flex-col px-padding-h py-stack-lg max-w-[400px] mx-auto w-full relative z-0">
+<div class="text-center mb-stack-lg">
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-stack-sm">Welcome back</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Sign in to continue</p>
+</div>
+<form class="flex flex-col gap-stack-md flex-1 justify-center pb-stack-lg">
+<div class="flex flex-col gap-base group">
+<input class="h-[52px] bg-surface border border-outline-variant rounded-lg px-padding-h w-full font-body-md text-on-surface placeholder:text-outline focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all shadow-sm group-hover:shadow" id="email" placeholder="Email" type="email"/>
+</div>
+<div class="flex flex-col gap-base group">
+<input class="h-[52px] bg-surface border border-outline-variant rounded-lg px-padding-h w-full font-body-md text-on-surface placeholder:text-outline focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all shadow-sm group-hover:shadow" id="password" placeholder="Password" type="password"/>
+</div>
+<div class="flex justify-end mb-stack-sm">
+<a class="font-caption text-caption text-secondary hover:text-on-secondary-fixed-variant transition-colors" href="#">Forgot password?</a>
+</div>
+<button class="h-[52px] w-full bg-secondary text-on-secondary font-headline-sm text-headline-sm rounded-lg flex items-center justify-center transition-transform active:scale-[0.98] shadow-sm hover:shadow-md" type="button">
+                Sign in
+            </button>
+<div class="flex items-center my-stack-sm">
+<div class="flex-1 h-px bg-surface-container-high"></div>
+<span class="px-stack-sm font-caption text-caption text-on-surface-variant">or</span>
+<div class="flex-1 h-px bg-surface-container-high"></div>
+</div>
+<button class="h-[52px] w-full bg-surface-container-lowest border-2 border-secondary text-secondary font-headline-sm text-headline-sm rounded-lg flex items-center justify-center transition-all hover:bg-secondary/5 active:scale-[0.98]" type="button">
+                Sign up for free
+            </button>
+</form>
+</main>
+</body></html>

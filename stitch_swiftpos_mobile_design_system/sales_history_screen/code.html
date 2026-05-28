@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Employee - Sales History</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-high": "#e7e8ea",
+                      "on-primary-fixed-variant": "#45455b",
+                      "surface-dim": "#d9dadc",
+                      "surface-bright": "#f8f9fb",
+                      "error-container": "#ffdad6",
+                      "surface-container-highest": "#e1e2e4",
+                      "on-background": "#191c1e",
+                      "secondary": "#4b41e1",
+                      "primary": "#00000b",
+                      "inverse-on-surface": "#f0f1f3",
+                      "outline-variant": "#c8c5cd",
+                      "inverse-primary": "#c6c4df",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary-fixed": "#0f0069",
+                      "tertiary-fixed": "#6ffbbe",
+                      "surface-container": "#edeef0",
+                      "on-tertiary": "#ffffff",
+                      "secondary-container": "#645efb",
+                      "tertiary-container": "#002114",
+                      "on-tertiary-fixed-variant": "#005236",
+                      "inverse-surface": "#2e3132",
+                      "on-tertiary-container": "#009768",
+                      "on-secondary": "#ffffff",
+                      "primary-fixed-dim": "#c6c4df",
+                      "background": "#f8f9fb",
+                      "on-tertiary-fixed": "#002113",
+                      "primary-container": "#1a1a2e",
+                      "on-primary": "#ffffff",
+                      "error": "#ba1a1a",
+                      "secondary-fixed": "#e2dfff",
+                      "on-error": "#ffffff",
+                      "primary-fixed": "#e2e0fc",
+                      "on-primary-container": "#83829b",
+                      "outline": "#78767d",
+                      "tertiary-fixed-dim": "#4edea3",
+                      "surface-container-low": "#f2f4f6",
+                      "on-error-container": "#93000a",
+                      "tertiary": "#000000",
+                      "on-surface": "#191c1e",
+                      "on-primary-fixed": "#1a1a2e",
+                      "surface-tint": "#5d5c74",
+                      "on-secondary-container": "#fffbff",
+                      "surface-variant": "#e1e2e4",
+                      "surface": "#f8f9fb",
+                      "secondary-fixed-dim": "#c3c0ff",
+                      "on-surface-variant": "#47464c",
+                      "on-secondary-fixed-variant": "#3323cc"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-md": "16px",
+                      "padding-v": "16px",
+                      "stack-sm": "8px",
+                      "stack-lg": "24px",
+                      "base": "4px",
+                      "padding-h": "20px",
+                      "gutter": "12px"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Inter"],
+                      "body-md": ["Inter"],
+                      "micro": ["Inter"],
+                      "headline-sm": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "caption": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                      "body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+                      "micro": ["11px", { "lineHeight": "16px", "letterSpacing": "0.6px", "fontWeight": "500" }],
+                      "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+                      "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                      "caption": ["13px", { "lineHeight": "18px", "fontWeight": "400" }]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Custom scrollbar for horizontal filter row */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col pt-16 pb-14">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-background fixed top-0 w-full z-50 border-b border-outline-variant dark:border-outline shadow-sm flex justify-between items-center h-16 px-padding-h">
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-highest active:scale-95 transition-transform p-2 -ml-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary dark:text-primary-fixed">My Sales</h1>
+<button class="text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container-low dark:hover:bg-surface-container-highest active:scale-95 transition-transform p-2 -mr-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">search</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow w-full max-w-3xl mx-auto px-padding-h py-stack-md flex flex-col gap-stack-lg">
+<!-- Summary Strip (Metrics Cards) -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Today -->
+<div class="bg-secondary-fixed text-on-secondary-fixed-variant p-stack-md rounded-lg flex flex-col gap-base shadow-sm">
+<span class="font-caption text-caption opacity-80">Today</span>
+<span class="font-headline-lg text-headline-lg tracking-tight">₱3,400</span>
+</div>
+<!-- This Week -->
+<div class="bg-surface-container-lowest border border-outline-variant p-stack-md rounded-lg flex flex-col gap-base shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+<span class="font-caption text-caption text-on-surface-variant">This week</span>
+<span class="font-headline-lg text-headline-lg text-primary tracking-tight">₱12,600</span>
+</div>
+<!-- This Month -->
+<div class="bg-surface-container-lowest border border-outline-variant p-stack-md rounded-lg flex flex-col gap-base shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+<span class="font-caption text-caption text-on-surface-variant">This month</span>
+<span class="font-headline-lg text-headline-lg text-primary tracking-tight">₱48,200</span>
+</div>
+</section>
+<!-- Filter Row -->
+<section class="overflow-x-auto no-scrollbar -mx-padding-h px-padding-h pb-2">
+<div class="flex gap-stack-sm min-w-max">
+<button class="px-4 py-2 bg-secondary text-on-secondary font-caption text-caption rounded-full active:scale-95 transition-transform">
+                    Today
+                </button>
+<button class="px-4 py-2 bg-surface-container-low text-on-surface-variant font-caption text-caption rounded-full border border-outline-variant hover:bg-surface-container active:scale-95 transition-transform">
+                    This week
+                </button>
+<button class="px-4 py-2 bg-surface-container-low text-on-surface-variant font-caption text-caption rounded-full border border-outline-variant hover:bg-surface-container active:scale-95 transition-transform">
+                    This month
+                </button>
+<button class="px-4 py-2 bg-surface-container-low text-on-surface-variant font-caption text-caption rounded-full border border-outline-variant hover:bg-surface-container active:scale-95 transition-transform flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">calendar_today</span>
+                    Custom
+                </button>
+</div>
+</section>
+<!-- Transaction List -->
+<section class="flex flex-col bg-surface-container-lowest rounded-xl border border-outline-variant shadow-[0_2px_8px_rgba(0,0,0,0.02)] overflow-hidden">
+<!-- Date Header -->
+<div class="bg-surface-container-low px-stack-md py-stack-sm border-b border-outline-variant">
+<h3 class="font-micro text-micro text-on-surface-variant uppercase tracking-wider">Today, Oct 24</h3>
+</div>
+<!-- Transaction Row 1 -->
+<div class="px-stack-md py-stack-md border-b border-outline-variant flex justify-between items-center hover:bg-surface-container-low transition-colors cursor-pointer active:bg-surface-container">
+<div class="flex items-center gap-stack-md">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-primary">#ORD-4920</span>
+<span class="font-caption text-caption text-on-surface-variant">14:32 • 3 items</span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-headline-sm text-headline-sm text-primary">₱1,200</span>
+<span class="font-caption text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">credit_card</span>
+                        Card
+                    </span>
+</div>
+</div>
+<!-- Transaction Row 2 (Voided) -->
+<div class="px-stack-md py-stack-md border-b border-outline-variant flex justify-between items-center hover:bg-surface-container-low transition-colors cursor-pointer active:bg-surface-container opacity-75">
+<div class="flex items-center gap-stack-md">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">money_off</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-headline-sm text-primary line-through">#ORD-4919</span>
+<span class="bg-error-container text-on-error-container font-micro text-micro px-2 py-0.5 rounded-sm uppercase">Voided</span>
+</div>
+<span class="font-caption text-caption text-on-surface-variant">13:15 • 1 item</span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-headline-sm text-headline-sm text-on-surface-variant line-through">₱450</span>
+<span class="font-caption text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">payments</span>
+                        Cash
+                    </span>
+</div>
+</div>
+<!-- Transaction Row 3 -->
+<div class="px-stack-md py-stack-md flex justify-between items-center hover:bg-surface-container-low transition-colors cursor-pointer active:bg-surface-container">
+<div class="flex items-center gap-stack-md">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">qr_code_scanner</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-primary">#ORD-4918</span>
+<span class="font-caption text-caption text-on-surface-variant">11:45 • 5 items</span>
+</div>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-headline-sm text-headline-sm text-primary">₱1,750</span>
+<span class="font-caption text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">account_balance_wallet</span>
+                        E-Wallet
+                    </span>
+</div>
+</div>
+</section>
+<!-- Load More Button -->
+<button class="w-full py-stack-md mt-2 bg-surface-container-lowest border border-outline-variant text-secondary font-headline-sm text-headline-sm rounded-lg hover:bg-surface-container-low active:bg-surface-container transition-colors shadow-sm">
+            Load More Transactions
+        </button>
+</main>
+<!-- BottomNavBar -->
+<nav class="bg-surface-container-lowest dark:bg-surface-container-highest fixed bottom-0 w-full z-50 h-14 border-t border-outline-variant dark:border-outline shadow-[0_-2px_8px_rgba(0,0,0,0.06)] flex justify-around items-center px-gutter md:hidden">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container dark:hover:bg-inverse-surface active:opacity-80 transition-opacity w-16 h-full">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">point_of_sale</span>
+<span class="font-caption text-caption text-[10px] mt-1">Register</span>
+</button>
+<button class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim font-bold hover:bg-surface-container dark:hover:bg-inverse-surface active:opacity-80 transition-opacity w-16 h-full relative">
+<div class="absolute top-1 w-10 h-1 bg-secondary rounded-full -mt-2"></div>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+<span class="font-caption text-caption text-[10px] mt-1 font-semibold">Orders</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container dark:hover:bg-inverse-surface active:opacity-80 transition-opacity w-16 h-full">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">inventory_2</span>
+<span class="font-caption text-caption text-[10px] mt-1">Inventory</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:bg-surface-container dark:hover:bg-inverse-surface active:opacity-80 transition-opacity w-16 h-full">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span class="font-caption text-caption text-[10px] mt-1">Settings</span>
+</button>
+</nav>
+</body></html>

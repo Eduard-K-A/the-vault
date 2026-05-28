@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Checkout - POS System</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#e7e8ea",
+                        "on-primary-fixed-variant": "#45455b",
+                        "surface-dim": "#d9dadc",
+                        "surface-bright": "#f8f9fb",
+                        "error-container": "#ffdad6",
+                        "surface-container-highest": "#e1e2e4",
+                        "on-background": "#191c1e",
+                        "secondary": "#4b41e1",
+                        "primary": "#00000b",
+                        "inverse-on-surface": "#f0f1f3",
+                        "outline-variant": "#c8c5cd",
+                        "inverse-primary": "#c6c4df",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed": "#0f0069",
+                        "tertiary-fixed": "#6ffbbe",
+                        "surface-container": "#edeef0",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#645efb",
+                        "tertiary-container": "#002114",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "inverse-surface": "#2e3132",
+                        "on-tertiary-container": "#009768",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#c6c4df",
+                        "background": "#f8f9fb",
+                        "on-tertiary-fixed": "#002113",
+                        "primary-container": "#1a1a2e",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#e2dfff",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#e2e0fc",
+                        "on-primary-container": "#83829b",
+                        "outline": "#78767d",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "surface-container-low": "#f2f4f6",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#000000",
+                        "on-surface": "#191c1e",
+                        "on-primary-fixed": "#1a1a2e",
+                        "surface-tint": "#5d5c74",
+                        "on-secondary-container": "#fffbff",
+                        "surface-variant": "#e1e2e4",
+                        "surface": "#f8f9fb",
+                        "secondary-fixed-dim": "#c3c0ff",
+                        "on-surface-variant": "#47464c",
+                        "on-secondary-fixed-variant": "#3323cc"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "16px",
+                        "padding-v": "16px",
+                        "stack-sm": "8px",
+                        "stack-lg": "24px",
+                        "base": "4px",
+                        "padding-h": "20px",
+                        "gutter": "12px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "micro": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "caption": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "body-md": ["15px", {"lineHeight": "22px", "fontWeight": "400"}],
+                        "micro": ["11px", {"lineHeight": "16px", "letterSpacing": "0.6px", "fontWeight": "500"}],
+                        "headline-sm": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { -webkit-tap-highlight-color: transparent; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col font-sans antialiased pb-[120px]">
+<!-- TopAppBar (From JSON) -->
+<header class="fixed top-0 w-full z-50 bg-surface dark:bg-background border-b border-outline-variant dark:border-outline shadow-sm flex justify-between items-center h-16 px-padding-h w-full transition-transform active:scale-95">
+<button aria-label="Go back" class="text-primary dark:text-on-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest p-2 rounded-full flex items-center justify-center -ml-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary dark:text-primary-fixed tracking-tight">Checkout</h1>
+<button aria-label="Account" class="text-primary dark:text-on-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest p-2 rounded-full flex items-center justify-center -mr-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+</button>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 mt-16 px-padding-h py-padding-v max-w-md mx-auto w-full space-y-stack-lg relative z-0">
+<!-- Order Summary Card -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-lg p-padding-h shadow-[0_2px_8px_rgba(0,0,0,0.06)] flex flex-col items-center justify-center space-y-stack-sm">
+<p class="font-body-md text-body-md text-on-surface-variant">3 items</p>
+<h2 class="font-headline-lg text-headline-lg text-primary tracking-tight">₱1,200.00</h2>
+<button class="font-caption text-caption text-secondary flex items-center gap-1 mt-2">
+                View Details <span class="material-symbols-outlined text-[16px]">expand_more</span>
+</button>
+</section>
+<!-- Payment Method Section -->
+<section class="space-y-stack-md">
+<h3 class="font-headline-sm text-headline-sm text-primary">How are they paying?</h3>
+<div class="grid grid-cols-2 gap-gutter">
+<!-- Cash (Selected) -->
+<button class="bg-surface-container-lowest border-2 border-secondary rounded-lg p-padding-v flex flex-col items-center justify-center gap-2 relative overflow-hidden transition-all shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+<div class="absolute top-2 right-2 text-secondary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<span class="material-symbols-outlined text-secondary text-[28px]" style="font-variation-settings: 'FILL' 1;">payments</span>
+<span class="font-body-md text-body-md text-primary font-medium">Cash</span>
+</button>
+<!-- Card -->
+<button class="bg-surface-container-lowest border border-outline-variant rounded-lg p-padding-v flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-[28px]">credit_card</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Card</span>
+</button>
+<!-- GCash -->
+<button class="bg-surface-container-lowest border border-outline-variant rounded-lg p-padding-v flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-[28px]">account_balance_wallet</span>
+<span class="font-body-md text-body-md text-on-surface-variant">GCash</span>
+</button>
+<!-- Others -->
+<button class="bg-surface-container-lowest border border-outline-variant rounded-lg p-padding-v flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-[28px]">more_horiz</span>
+<span class="font-body-md text-body-md text-on-surface-variant">Others</span>
+</button>
+</div>
+</section>
+<!-- Cash Payment Flow (Conditional UI based on selection) -->
+<section class="space-y-stack-md bg-surface-container-lowest border border-outline-variant rounded-lg p-padding-h shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+<div class="space-y-stack-sm">
+<label class="font-micro text-micro text-on-surface-variant uppercase tracking-wider" for="amount-received">Amount Received</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="font-headline-md text-headline-md text-primary">₱</span>
+</div>
+<input class="block w-full pl-8 pr-4 py-3 h-[52px] bg-surface-bright border-2 border-secondary rounded-lg font-headline-md text-headline-md text-primary focus:ring-0 focus:border-secondary transition-colors" id="amount-received" inputmode="numeric" name="amount-received" placeholder="0.00" type="number" value="1500"/>
+</div>
+</div>
+<div class="flex justify-between items-center py-2 border-t border-outline-variant/30 mt-4">
+<span class="font-body-md text-body-md text-on-surface-variant">Change Due</span>
+<span class="font-headline-sm text-headline-sm text-tertiary-container bg-tertiary-fixed px-3 py-1 rounded-full">₱300.00</span>
+</div>
+</section>
+<!-- Optional Note -->
+<section class="space-y-stack-sm">
+<label class="font-micro text-micro text-on-surface-variant uppercase tracking-wider" for="order-note">Add a Note (Optional)</label>
+<input class="block w-full px-4 py-3 h-[52px] bg-surface-bright border border-outline-variant rounded-lg font-body-md text-body-md text-primary placeholder-on-surface-variant focus:ring-1 focus:ring-secondary focus:border-secondary transition-colors" id="order-note" name="order-note" placeholder="e.g. VIP Customer" type="text"/>
+</section>
+</main>
+<!-- Bottom Action Area (Sticky) -->
+<div class="fixed bottom-0 w-full z-40 bg-surface-container-lowest border-t border-outline-variant shadow-[0_-8px_16px_rgba(0,0,0,0.04)] px-padding-h py-padding-v space-y-3 pb-safe">
+<!-- Offline Indicator (Example) -->
+<div class="flex items-center justify-center gap-2 font-caption text-caption text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">cloud_off</span>
+<span>Saving offline. Will sync when connected.</span>
+</div>
+<button class="w-full h-[52px] bg-secondary text-on-secondary rounded-lg font-headline-sm text-headline-sm flex items-center justify-center gap-2 active:opacity-90 transition-opacity shadow-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check</span>
+            Complete Sale
+        </button>
+</div>
+<!-- Suppressed BottomNavBar due to Transactional/Checkout Intent context -->
+</body></html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>POSly - Add Product</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-low": "#f2f4f6",
+                        "on-primary-container": "#83829b",
+                        "outline": "#78767d",
+                        "on-tertiary-container": "#009768",
+                        "inverse-on-surface": "#f0f1f3",
+                        "on-secondary-fixed": "#0f0069",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "on-background": "#191c1e",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#6ffbbe",
+                        "secondary-fixed-dim": "#c3c0ff",
+                        "surface-tint": "#5d5c74",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#002114",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "on-secondary-container": "#fffbff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#45455b",
+                        "surface-variant": "#e1e2e4",
+                        "primary-fixed-dim": "#c6c4df",
+                        "primary-fixed": "#e2e0fc",
+                        "surface": "#f8f9fb",
+                        "on-secondary-fixed-variant": "#3323cc",
+                        "on-primary-fixed": "#1a1a2e",
+                        "tertiary": "#000000",
+                        "surface-container": "#edeef0",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "primary": "#00000b",
+                        "surface-dim": "#d9dadc",
+                        "secondary-container": "#645efb",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#47464c",
+                        "surface-container-high": "#e7e8ea",
+                        "surface-bright": "#f8f9fb",
+                        "inverse-primary": "#c6c4df",
+                        "surface-container-highest": "#e1e2e4",
+                        "on-surface": "#191c1e",
+                        "primary-container": "#1a1a2e",
+                        "outline-variant": "#c8c5cd",
+                        "on-primary": "#ffffff",
+                        "secondary": "#4b41e1",
+                        "secondary-fixed": "#e2dfff",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2e3132",
+                        "on-tertiary-fixed": "#002113",
+                        "background": "#f8f9fb"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "stack-md": "16px",
+                        "gutter": "12px",
+                        "stack-sm": "8px",
+                        "padding-v": "16px",
+                        "padding-h": "20px",
+                        "stack-lg": "24px",
+                        "base": "4px"
+                    },
+                    fontFamily: {
+                        "headline-lg": ["Inter"],
+                        "caption": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "micro": ["Inter"]
+                    },
+                    fontSize: {
+                        "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "caption": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "micro": ["11px", { "lineHeight": "16px", "letterSpacing": "0.6px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Hide scrollbar for clean UI but keep functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased overflow-hidden flex flex-col h-screen">
+<!-- TopAppBar (From JSON, acting as a sub-page header) -->
+<header class="bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline transition-colors duration-200 ease-in-out fixed top-0 left-0 w-full z-50 flex items-center px-padding-h h-14 justify-between">
+<button class="text-secondary dark:text-secondary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest p-base rounded-full flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<!-- Center Headline from JSON, representing brand anchor -->
+<h1 class="font-headline-md text-headline-md text-primary dark:text-on-primary-fixed absolute left-1/2 -translate-x-1/2 tracking-tight">
+            POSly
+        </h1>
+<button class="text-secondary dark:text-secondary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest p-base rounded-full flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined" data-icon="sync">sync</span>
+</button>
+</header>
+<!-- Main Scrollable Canvas -->
+<main class="flex-1 mt-14 mb-[84px] overflow-y-auto no-scrollbar w-full max-w-2xl mx-auto px-padding-h py-stack-lg">
+<!-- Screen Title Context -->
+<div class="mb-stack-lg">
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Add New Product</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-base">Enter product details to add to inventory.</p>
+</div>
+<!-- Image Upload Area (Generous touch target) -->
+<div class="w-full bg-surface-container-lowest border-2 border-dashed border-outline-variant rounded-xl h-48 flex flex-col items-center justify-center mb-stack-lg cursor-pointer hover:bg-surface-container-low hover:border-secondary transition-colors group">
+<div class="bg-primary-fixed w-12 h-12 rounded-full flex items-center justify-center mb-stack-sm text-secondary group-hover:scale-105 transition-transform">
+<span class="material-symbols-outlined" data-icon="add_photo_alternate" data-weight="fill" style="font-variation-settings: 'FILL' 1;">add_photo_alternate</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Upload Image</span>
+<span class="font-caption text-caption text-on-surface-variant mt-base">JPEG, PNG up to 5MB</span>
+</div>
+<!-- Form Fields Array -->
+<form class="flex flex-col gap-stack-lg">
+<!-- Product Name -->
+<div class="flex flex-col gap-stack-sm">
+<label class="font-headline-sm text-headline-sm text-on-surface" for="productName">Product Name</label>
+<input class="w-full h-[52px] bg-surface-container-lowest border border-outline-variant rounded-lg px-padding-h font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all shadow-sm" id="productName" placeholder="e.g. Premium Blend Coffee" type="text"/>
+</div>
+<!-- Category Dropdown -->
+<div class="flex flex-col gap-stack-sm">
+<label class="font-headline-sm text-headline-sm text-on-surface" for="category">Category</label>
+<div class="relative">
+<select class="w-full h-[52px] bg-surface-container-lowest border border-outline-variant rounded-lg px-padding-h font-body-md text-body-md text-on-surface appearance-none focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all shadow-sm" id="category">
+<option class="text-outline" disabled="" selected="" value="">Select a category...</option>
+<option value="beverages">Beverages</option>
+<option value="pastries">Pastries</option>
+<option value="merchandise">Merchandise</option>
+<option value="beans">Coffee Beans</option>
+</select>
+<span class="material-symbols-outlined absolute right-padding-h top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<!-- SKU generation -->
+<div class="flex flex-col gap-stack-sm">
+<div class="flex justify-between items-end">
+<label class="font-headline-sm text-headline-sm text-on-surface" for="sku">SKU (Stock Keeping Unit)</label>
+<button class="font-caption text-caption text-secondary hover:text-on-secondary-fixed-variant transition-colors font-semibold" onclick="document.getElementById('sku').value = 'PRD-' + Math.floor(Math.random() * 1000000)" type="button">Auto-generate</button>
+</div>
+<div class="relative">
+<input class="w-full h-[52px] bg-surface-container-lowest border border-outline-variant rounded-lg pl-padding-h pr-12 font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all shadow-sm uppercase" id="sku" placeholder="PRD-00000" type="text"/>
+<span class="material-symbols-outlined absolute right-padding-h top-1/2 -translate-y-1/2 text-outline pointer-events-none" data-icon="barcode_scanner">barcode_scanner</span>
+</div>
+</div>
+<!-- Price and Stock (2 Column Grid) -->
+<div class="grid grid-cols-2 gap-gutter">
+<div class="flex flex-col gap-stack-sm">
+<label class="font-headline-sm text-headline-sm text-on-surface" for="price">Price</label>
+<div class="relative">
+<span class="absolute left-padding-h top-1/2 -translate-y-1/2 font-body-md text-body-md text-on-surface-variant">$</span>
+<input class="w-full h-[52px] bg-surface-container-lowest border border-outline-variant rounded-lg pl-10 pr-padding-h font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-all shadow-sm" id="price" placeholder="0.00" step="0.01" type="number"/>
+</div>
+</div>
+<div class="flex flex-col gap-stack-sm">
+<label class="font-headline-sm text-headline-sm text-on-surface" for="stock">Initial Stock</label>
+<div class="relative flex items-center h-[52px] bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden focus-within:border-secondary focus-within:ring-1 focus-within:ring-secondary transition-all shadow-sm">
+<button class="w-12 h-full flex items-center justify-center bg-surface-container-low hover:bg-surface-container-high text-on-surface transition-colors border-r border-outline-variant" onclick="document.getElementById('stock').stepDown()" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="remove">remove</span>
+</button>
+<input class="w-full h-full text-center font-body-md text-body-md text-on-surface border-none focus:ring-0 appearance-none bg-transparent m-0 p-0" id="stock" min="0" type="number" value="0"/>
+<button class="w-12 h-full flex items-center justify-center bg-surface-container-low hover:bg-surface-container-high text-on-surface transition-colors border-l border-outline-variant" onclick="document.getElementById('stock').stepUp()" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="add">add</span>
+</button>
+</div>
+</div>
+</div>
+</form>
+</main>
+<!-- Fixed Bottom Action Area (Transactional) -->
+<div class="fixed bottom-0 left-0 w-full bg-surface-container-lowest border-t border-outline-variant px-padding-h py-stack-md z-50 flex justify-center pb-safe">
+<button class="w-full max-w-2xl h-[52px] bg-secondary hover:bg-on-secondary-fixed-variant text-on-secondary rounded-lg font-headline-sm text-headline-sm shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-base">
+<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span>
+            Save Product
+        </button>
+</div>
+<!-- Note: BottomNavBar is intentionally suppressed as this is a task-focused, linear sub-page (Add Product), adhering to the Semantic Shell Mandate. -->
+</body></html>

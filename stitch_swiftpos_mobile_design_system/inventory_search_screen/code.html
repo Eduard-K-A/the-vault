@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>POSly - Register</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "tertiary-container": "#002114",
+                      "on-primary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "on-tertiary-container": "#009768",
+                      "inverse-surface": "#2e3132",
+                      "on-secondary-container": "#fffbff",
+                      "on-primary-container": "#83829b",
+                      "surface-dim": "#d9dadc",
+                      "tertiary": "#000000",
+                      "on-surface-variant": "#47464c",
+                      "primary-fixed-dim": "#c6c4df",
+                      "on-secondary": "#ffffff",
+                      "tertiary-fixed": "#6ffbbe",
+                      "surface-tint": "#5d5c74",
+                      "on-error-container": "#93000a",
+                      "on-primary-fixed": "#1a1a2e",
+                      "on-secondary-fixed": "#0f0069",
+                      "surface-container": "#edeef0",
+                      "tertiary-fixed-dim": "#4edea3",
+                      "surface-bright": "#f8f9fb",
+                      "inverse-on-surface": "#f0f1f3",
+                      "surface-container-highest": "#e1e2e4",
+                      "background": "#f8f9fb",
+                      "on-tertiary-fixed": "#002113",
+                      "on-tertiary": "#ffffff",
+                      "inverse-primary": "#c6c4df",
+                      "primary-container": "#1a1a2e",
+                      "surface-container-high": "#e7e8ea",
+                      "on-surface": "#191c1e",
+                      "secondary": "#4b41e1",
+                      "primary-fixed": "#e2e0fc",
+                      "on-primary-fixed-variant": "#45455b",
+                      "surface-container-low": "#f2f4f6",
+                      "secondary-fixed-dim": "#c3c0ff",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-variant": "#e1e2e4",
+                      "error": "#ba1a1a",
+                      "secondary-container": "#645efb",
+                      "surface": "#f8f9fb",
+                      "on-tertiary-fixed-variant": "#005236",
+                      "outline-variant": "#c8c5cd",
+                      "on-secondary-fixed-variant": "#3323cc",
+                      "outline": "#78767d",
+                      "on-background": "#191c1e",
+                      "secondary-fixed": "#e2dfff",
+                      "primary": "#00000b"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "padding-v": "16px",
+                      "base": "4px",
+                      "stack-lg": "24px",
+                      "padding-h": "20px",
+                      "gutter": "12px",
+                      "stack-sm": "8px",
+                      "stack-md": "16px",
+                      "safe": "env(safe-area-inset-bottom, 0px)"
+              },
+              "fontFamily": {
+                      "micro": [
+                              "Inter"
+                      ],
+                      "headline-sm": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "caption": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "micro": [
+                              "11px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.6px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-sm": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "caption": [
+                              "13px",
+                              {
+                                      "lineHeight": "18px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "15px",
+                              {
+                                      "lineHeight": "22px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+            },
+          }
+        }
+    </script>
+<style>
+        body { -webkit-tap-highlight-color: transparent; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-[120px] font-body-md antialiased md:hidden flex flex-col">
+<!-- Top Area Custom Header (Replacing standard TopAppBar for this specific layout req) -->
+<header class="bg-secondary text-on-secondary px-padding-h pt-10 pb-4 flex flex-col gap-4 rounded-b-2xl shadow-sm z-40 relative">
+<div class="flex justify-between items-center">
+<h1 class="font-headline-sm text-headline-sm text-on-secondary">Hi, Maria 👋</h1>
+<div class="flex items-center gap-2">
+<span class="font-micro text-micro text-secondary-fixed">POSly</span>
+<div class="w-2 h-2 rounded-full bg-tertiary-fixed-dim" title="Synced"></div>
+</div>
+</div>
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" style="font-variation-settings: 'FILL' 0;">search</span>
+<input class="w-full bg-surface-container-lowest text-on-surface h-[44px] rounded-xl pl-10 pr-10 border-none focus:ring-2 focus:ring-secondary-fixed-dim font-body-md text-body-md placeholder:text-outline-variant shadow-sm outline-none transition-all" placeholder="Search products..." type="text"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">barcode_scanner</span>
+</button>
+</div>
+</header>
+<main class="flex-1 flex flex-col pt-4">
+<!-- Category Filters -->
+<div class="w-full overflow-x-auto hide-scrollbar px-padding-h mb-4">
+<div class="flex gap-2 w-max pb-2">
+<button class="h-8 px-4 rounded-full bg-secondary text-on-secondary font-caption text-caption whitespace-nowrap transition-colors">All</button>
+<button class="h-8 px-4 rounded-full bg-surface-container-lowest text-on-surface border border-surface-variant hover:bg-surface-container-high font-caption text-caption whitespace-nowrap transition-colors">Beverages</button>
+<button class="h-8 px-4 rounded-full bg-surface-container-lowest text-on-surface border border-surface-variant hover:bg-surface-container-high font-caption text-caption whitespace-nowrap transition-colors">Snacks</button>
+<button class="h-8 px-4 rounded-full bg-surface-container-lowest text-on-surface border border-surface-variant hover:bg-surface-container-high font-caption text-caption whitespace-nowrap transition-colors">Dairy</button>
+<button class="h-8 px-4 rounded-full bg-surface-container-lowest text-on-surface border border-surface-variant hover:bg-surface-container-high font-caption text-caption whitespace-nowrap transition-colors">Grains</button>
+<button class="h-8 px-4 rounded-full bg-surface-container-lowest text-on-surface border border-surface-variant hover:bg-surface-container-high font-caption text-caption whitespace-nowrap transition-colors">Bakery</button>
+</div>
+</div>
+<!-- Product Grid -->
+<div class="grid grid-cols-2 gap-gutter px-padding-h pb-24">
+<!-- Item 1 -->
+<div class="bg-surface-container-lowest rounded-2xl border border-surface-variant overflow-hidden flex flex-col shadow-sm">
+<div class="w-full aspect-square bg-surface-container-high relative">
+<img class="w-full h-full object-cover" data-alt="A clean, minimalist product shot of a carton of milk on a light gray background. Bright, even studio lighting. Professional e-commerce style. Shadows are soft." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaZszMtMWpNHLybA9Yn4UJ0LFKf_jUohs6Oe56iDwaSd4EEX8cXTCiqrZyVhcnKPncWGxe1-grDJm8C1gy47ugsMDioSWYxT4AOcyj2sEe-nnU4ucWlckE5M_kyLwzgM6W_SmPPPOuPV4tYcoSLMiyzO1IG_B8REHw9bTQ7hRykP5NfOmWPHKdXt6amwPY3Y9hPfGW4nuWmDBqXZAx5uSTz76CmM3eKQRSsq1TTqmzTK6SGoK-wIRlyhTPAfqhCny_cCqcMGeH1Le3"/>
+</div>
+<div class="p-3 flex flex-col flex-1 relative">
+<h3 class="font-headline-sm text-headline-sm text-primary-container line-clamp-2 mb-1">Fresh Whole Milk 1L</h3>
+<div class="flex items-center gap-1 mb-2">
+<span class="px-2 py-0.5 rounded-full bg-[#E6F4EA] text-[#137333] font-micro text-[10px] uppercase font-bold tracking-wider">In stock</span>
+</div>
+<div class="mt-auto pt-2">
+<span class="font-headline-sm text-headline-sm text-secondary block">₱120.00</span>
+</div>
+<button class="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center active:scale-95 transition-transform shadow-md">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="bg-surface-container-lowest rounded-2xl border border-surface-variant overflow-hidden flex flex-col shadow-sm">
+<div class="w-full aspect-square bg-surface-container-high relative">
+<img class="w-full h-full object-cover" data-alt="A clean, minimalist product shot of a loaf of sliced bread on a light gray background. Bright, even studio lighting. Professional e-commerce style. Shadows are soft." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBv7fivP1z2iDYGTXR7pau-jkwOTRp4kajZGGhiv2sfwCogBe2KDTDbaK2xAAsZqIwYO2SKGqyCeCWL48sE5Q50mTjZLWez95NKw5qNNOMftPjCUJxaXs8yXFJfOgkbDqS_Axw4lgq6T7CIoKDEFwoMhKLOuThIMaMwEKu6R3DaQM1apjUx5o-F5uxdfwr9VP9sWV8j8qmurIVH7qkUEKDMF_hj4cmrvJyOsKhPUKJjC_ZRA1_LPBVca37zj3HVqIiTXN7dcC5FeHFy"/>
+</div>
+<div class="p-3 flex flex-col flex-1 relative">
+<h3 class="font-headline-sm text-headline-sm text-primary-container line-clamp-2 mb-1">Classic White Bread</h3>
+<div class="flex items-center gap-1 mb-2">
+<span class="px-2 py-0.5 rounded-full bg-[#FEF7E0] text-[#B06000] font-micro text-[10px] uppercase font-bold tracking-wider">Low stock</span>
+</div>
+<div class="mt-auto pt-2">
+<span class="font-headline-sm text-headline-sm text-secondary block">₱85.00</span>
+</div>
+<button class="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center active:scale-95 transition-transform shadow-md">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="bg-surface-container-lowest rounded-2xl border border-surface-variant overflow-hidden flex flex-col shadow-sm">
+<div class="w-full aspect-square bg-surface-container-high relative">
+<img class="w-full h-full object-cover" data-alt="A clean, minimalist product shot of a can of soda on a light gray background. Bright, even studio lighting. Professional e-commerce style. Shadows are soft." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtGWWkzIEyofovj6uFVXhdYep4XF0Jp4MIBdTAcJXDtfTBewNdaLrEobvQHGkOgg8cWHkIkRD1AgtyC2lkmYn-8HudsywrqXVS1VW68xY2ULVI-sp9QRXceIuShqjFEe-cTvCJJjGx-tJ0DWbKAtngpfK330nHAaP_OOI7AMRKQtTlLz1GDaWsENzwCKRFILadfs_Qh_E9AhR-CakEQVg_LMrfK2s4qqtxxfOlmX54CstKS5tpi6mKnkLB4v25ZM8zFwVmjqRfBjUv"/>
+</div>
+<div class="p-3 flex flex-col flex-1 relative">
+<h3 class="font-headline-sm text-headline-sm text-primary-container line-clamp-2 mb-1">Cola Can 330ml</h3>
+<div class="flex items-center gap-1 mb-2">
+<span class="px-2 py-0.5 rounded-full bg-[#E6F4EA] text-[#137333] font-micro text-[10px] uppercase font-bold tracking-wider">In stock</span>
+</div>
+<div class="mt-auto pt-2">
+<span class="font-headline-sm text-headline-sm text-secondary block">₱45.00</span>
+</div>
+<button class="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-secondary text-on-secondary flex items-center justify-center active:scale-95 transition-transform shadow-md">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="bg-surface-container-lowest rounded-2xl border border-surface-variant overflow-hidden flex flex-col shadow-sm opacity-60">
+<div class="w-full aspect-square bg-surface-container-high relative">
+<img class="w-full h-full object-cover grayscale" data-alt="A clean, minimalist product shot of a bag of potato chips on a light gray background. Bright, even studio lighting. Professional e-commerce style. Shadows are soft." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDup-NTQ4lEMkTROlNBlnb3KBKpCN65qmBmt-v-SD_Oo5xjjpXnfJnOKWtejmM4u7Kv8dLcYVf78UI3lUqD_lZjG1EsYbzUEL9obvhFQyJkNNctFNKnkMO8C_5S5vxaty6pG_Hxwwt14pUXIHMzMcSs_eqMLMtx6Q8TxBT7WtOIi30s8qWAP0pzxQwTFTenSCM37FUROCjp-Z4orV0TFteI3GqL9D5EGbJThjfSb1ZQAkjLq5Lq7Y_CKMLoHg5eRszDaGqsPc7dbVaZ"/>
+</div>
+<div class="p-3 flex flex-col flex-1 relative">
+<h3 class="font-headline-sm text-headline-sm text-primary-container line-clamp-2 mb-1">Salted Potato Chips 150g</h3>
+<div class="flex items-center gap-1 mb-2">
+<span class="px-2 py-0.5 rounded-full bg-[#FCE8E6] text-[#C5221F] font-micro text-[10px] uppercase font-bold tracking-wider">Out</span>
+</div>
+<div class="mt-auto pt-2">
+<span class="font-headline-sm text-headline-sm text-secondary block">₱95.00</span>
+</div>
+<button class="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-surface-variant text-outline flex items-center justify-center" disabled="">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Cart Button -->
+<div class="fixed bottom-[72px] left-0 right-0 px-padding-h z-40 pointer-events-none flex justify-center">
+<button class="pointer-events-auto w-full max-w-md h-[56px] rounded-full bg-secondary text-on-secondary shadow-lg flex items-center justify-between px-6 active:scale-[0.98] transition-transform">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-on-secondary text-secondary flex items-center justify-center font-bold text-xs">3</div>
+<span class="font-headline-sm text-headline-sm">View Cart</span>
+</div>
+<span class="font-headline-sm text-headline-sm">₱850.00</span>
+</button>
+</div>
+<!-- BottomNavBar via JSON Structure mapping (Active: Register) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-surface px-base pb-safe docked full-width bottom-0 h-[56px] border-t border-outline-variant shadow-sm bg-surface dark:bg-surface-container-lowest">
+<!-- Register (Active) -->
+<div class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim font-bold active:scale-95 transition-transform duration-150 w-full h-full cursor-pointer hover:bg-surface-container-high dark:hover:bg-on-primary-fixed-variant">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">point_of_sale</span>
+<span class="font-caption text-caption">Register</span>
+</div>
+<!-- Orders (Inactive) -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline active:scale-95 transition-transform duration-150 w-full h-full cursor-pointer hover:bg-surface-container-high dark:hover:bg-on-primary-fixed-variant">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">receipt_long</span>
+<span class="font-caption text-caption">Orders</span>
+</div>
+<!-- Inventory (Inactive) -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline active:scale-95 transition-transform duration-150 w-full h-full cursor-pointer hover:bg-surface-container-high dark:hover:bg-on-primary-fixed-variant">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">inventory_2</span>
+<span class="font-caption text-caption">Inventory</span>
+</div>
+<!-- Settings (Inactive) -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline active:scale-95 transition-transform duration-150 w-full h-full cursor-pointer hover:bg-surface-container-high dark:hover:bg-on-primary-fixed-variant">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+<span class="font-caption text-caption">Settings</span>
+</div>
+</nav>
+</body></html>

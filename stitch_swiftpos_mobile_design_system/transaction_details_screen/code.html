@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Transaction Details - POSly</title>
+<!-- Google Fonts & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-low": "#f2f4f6",
+                      "on-primary-container": "#83829b",
+                      "outline": "#78767d",
+                      "on-tertiary-container": "#009768",
+                      "inverse-on-surface": "#f0f1f3",
+                      "on-secondary-fixed": "#0f0069",
+                      "error": "#ba1a1a",
+                      "error-container": "#ffdad6",
+                      "on-background": "#191c1e",
+                      "on-error": "#ffffff",
+                      "tertiary-fixed": "#6ffbbe",
+                      "secondary-fixed-dim": "#c3c0ff",
+                      "surface-tint": "#5d5c74",
+                      "on-secondary": "#ffffff",
+                      "tertiary-container": "#002114",
+                      "tertiary-fixed-dim": "#4edea3",
+                      "on-secondary-container": "#fffbff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed-variant": "#45455b",
+                      "surface-variant": "#e1e2e4",
+                      "primary-fixed-dim": "#c6c4df",
+                      "primary-fixed": "#e2e0fc",
+                      "surface": "#f8f9fb",
+                      "on-secondary-fixed-variant": "#3323cc",
+                      "on-primary-fixed": "#1a1a2e",
+                      "tertiary": "#000000",
+                      "surface-container": "#edeef0",
+                      "on-tertiary-fixed-variant": "#005236",
+                      "primary": "#00000b",
+                      "surface-dim": "#d9dadc",
+                      "secondary-container": "#645efb",
+                      "on-tertiary": "#ffffff",
+                      "on-surface-variant": "#47464c",
+                      "surface-container-high": "#e7e8ea",
+                      "surface-bright": "#f8f9fb",
+                      "inverse-primary": "#c6c4df",
+                      "surface-container-highest": "#e1e2e4",
+                      "on-surface": "#191c1e",
+                      "primary-container": "#1a1a2e",
+                      "outline-variant": "#c8c5cd",
+                      "on-primary": "#ffffff",
+                      "secondary": "#4b41e1",
+                      "secondary-fixed": "#e2dfff",
+                      "on-error-container": "#93000a",
+                      "inverse-surface": "#2e3132",
+                      "on-tertiary-fixed": "#002113",
+                      "background": "#f8f9fb"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "stack-md": "16px",
+                      "gutter": "12px",
+                      "stack-sm": "8px",
+                      "padding-v": "16px",
+                      "padding-h": "20px",
+                      "stack-lg": "24px",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Inter"],
+                      "caption": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "headline-sm": ["Inter"],
+                      "body-md": ["Inter"],
+                      "micro": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                      "caption": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                      "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                      "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+                      "body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+                      "micro": ["11px", { "lineHeight": "16px", "letterSpacing": "0.6px", "fontWeight": "500" }]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background min-h-screen text-on-surface antialiased font-sans">
+<!-- 
+      TopAppBar: Rendered strictly according to JSON properties.
+      "style_shell_layout": "fixed top-0 left-0 w-full z-50 flex items-center px-padding-h h-14"
+      ...
+    -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center px-padding-h h-14 bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline justify-between">
+<!-- Leading Action -->
+<button class="text-secondary dark:text-secondary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors duration-200 ease-in-out p-2 -ml-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<!-- Headline -->
+<h1 class="font-headline-md text-headline-md text-primary dark:text-on-primary-fixed tracking-tight">POSly</h1>
+<!-- Trailing Action -->
+<button class="text-secondary dark:text-secondary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors duration-200 ease-in-out p-2 -mr-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="sync">sync</span>
+</button>
+</header>
+<!-- Main Content Canvas (Navigation Shells Suppressed due to Transactional Detail context) -->
+<main class="pt-[80px] pb-[100px] px-padding-h max-w-lg mx-auto flex flex-col gap-stack-lg">
+<!-- Page Context -->
+<div class="flex flex-col items-center justify-center mt-stack-sm mb-stack-sm text-center">
+<div class="w-16 h-16 bg-surface-container-low rounded-full flex items-center justify-center mb-stack-sm border border-outline-variant">
+<span class="material-symbols-outlined text-[32px] text-secondary">receipt_long</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Transaction Details</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">View full breakdown of this order</p>
+</div>
+<!-- The "Receipt" Card -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm flex flex-col overflow-hidden relative">
+<!-- Receipt Header -->
+<div class="p-padding-h flex justify-between items-start border-b border-dashed border-outline-variant bg-surface-bright">
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">#ORD-2023-1024</span>
+<span class="font-body-md text-body-md text-on-surface-variant mt-1">Oct 24, 2023 at 14:32 PM</span>
+</div>
+<!-- Status Chip -->
+<div class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-3 py-1 rounded-full flex items-center gap-1 border border-tertiary-fixed-dim bg-opacity-20">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-caption text-caption font-semibold">Paid</span>
+</div>
+</div>
+<!-- Items List -->
+<div class="p-padding-h flex flex-col gap-stack-md">
+<!-- Item Row 1 -->
+<div class="flex items-center gap-gutter min-h-[64px]">
+<div class="w-14 h-14 bg-surface-container rounded-lg border border-outline-variant bg-cover bg-center flex-shrink-0" data-alt="A close up, high resolution shot of a minimalist matte black bag of premium coffee beans resting on a clean, light grey studio background. The lighting is soft and modern, casting a gentle shadow that emphasizes the product's high-end corporate feel. The aesthetic relies on a crisp contrast between the dark product and the bright, airy environment, perfectly aligning with a sophisticated light-mode interface." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDIrr7Ui7OJSMPBdn_Wx7XehxT_RnVif-6Q3b1wvQr3ZArozm-wgykUr9YW8dap7cynSbhm5rqgfQNxzH-MK5X2cCP0oNLWSjPtfW5Kx2Ponf3c0AM7_K13TNWyygxbYhGVObFvYzFWQBVBYkg0AdXdclrWX69peit9oVxrH3cVcna3t9dugJzimqM2KMX0XKmMrkzPyzFA9fTwUARQcnjqYNf54qUMe4Q48w41eOsz0PKBsyodqIKsQR0c1Z2FW5h8A6TDUftXwYYa');">
+</div>
+<div class="flex-1 flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface line-clamp-1">Premium Espresso Blend</span>
+<span class="font-body-md text-body-md text-on-surface-variant mt-0.5">250g • Whole Bean</span>
+</div>
+<div class="flex flex-col items-end flex-shrink-0 pl-2">
+<span class="font-headline-sm text-headline-sm text-on-surface">$18.50</span>
+<span class="font-body-md text-body-md text-on-surface-variant mt-0.5">x 2</span>
+</div>
+</div>
+<!-- Item Row 2 -->
+<div class="flex items-center gap-gutter min-h-[64px]">
+<div class="w-14 h-14 bg-surface-container rounded-lg border border-outline-variant bg-cover bg-center flex-shrink-0" data-alt="A sleek, modern white ceramic coffee mug sitting on a pristine white surface, bathed in bright, diffused studio light. The aesthetic is extremely minimalist and corporate, utilizing a highly restricted palette of whites and soft greys to evoke a sense of quiet efficiency. The overall composition is clean and devoid of visual noise, matching a professional light-theme design system." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCZpovGEqajB67Dl8ytHFSKUJnqvS3H2Sxc9WlrMt1iTiegUI_E67YdD0QIyjziyWRxKevl326MK9ww0yIhCDlOzSo0RFH_T-5dXf0XKXwjGpsIhqfZg3nVuo6FIDDfqz6Nhfu_yUDnOdetIFYhXwxVrgo2aSJIpfkOi3hbE9XSDAvjvfu9mVGOt8sLpYufdsi2r9y3i9YaHOjNqt9oG1L3QZiYE3RUbn5yHT74CU4u94RSTh43hOJwq-L5WCHJtNq7e1KjJ2yB1gVo');">
+</div>
+<div class="flex-1 flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface line-clamp-1">Ceramic Pour-Over Mug</span>
+<span class="font-body-md text-body-md text-on-surface-variant mt-0.5">White • 12oz</span>
+</div>
+<div class="flex flex-col items-end flex-shrink-0 pl-2">
+<span class="font-headline-sm text-headline-sm text-on-surface">$24.00</span>
+<span class="font-body-md text-body-md text-on-surface-variant mt-0.5">x 1</span>
+</div>
+</div>
+<!-- Item Row 3 -->
+<div class="flex items-center gap-gutter min-h-[64px]">
+<div class="w-14 h-14 bg-surface-container rounded-lg border border-outline-variant flex items-center justify-center flex-shrink-0 text-outline">
+<span class="material-symbols-outlined">local_cafe</span>
+</div>
+<div class="flex-1 flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface line-clamp-1">Oat Milk Substitute</span>
+<span class="font-body-md text-body-md text-on-surface-variant mt-0.5">Add-on</span>
+</div>
+<div class="flex flex-col items-end flex-shrink-0 pl-2">
+<span class="font-headline-sm text-headline-sm text-on-surface">$1.50</span>
+<span class="font-body-md text-body-md text-on-surface-variant mt-0.5">x 1</span>
+</div>
+</div>
+</div>
+<!-- Cost Breakdown -->
+<div class="p-padding-h border-t border-dashed border-outline-variant bg-surface-bright flex flex-col gap-stack-sm">
+<div class="flex justify-between items-center text-on-surface-variant">
+<span class="font-body-md text-body-md">Subtotal</span>
+<span class="font-body-md text-body-md text-on-surface">$62.50</span>
+</div>
+<div class="flex justify-between items-center text-on-surface-variant">
+<span class="font-body-md text-body-md">Tax (VAT 12%)</span>
+<span class="font-body-md text-body-md text-on-surface">$7.50</span>
+</div>
+<div class="flex justify-between items-center mt-stack-sm pt-stack-sm border-t border-surface-container-high">
+<span class="font-headline-lg text-headline-lg text-on-surface">Total</span>
+<span class="font-headline-lg text-headline-lg text-primary">$70.00</span>
+</div>
+</div>
+<!-- Payment Method Footer -->
+<div class="p-padding-h bg-surface-container-low border-t border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-gutter">
+<div class="w-10 h-10 rounded-full bg-secondary text-on-secondary flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">GCash</span>
+<span class="font-body-md text-body-md text-on-surface-variant mt-0.5">Ref: 992837110</span>
+</div>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">$70.00</span>
+</div>
+<!-- Receipt Edge Detail (CSS Decoration) -->
+<div class="absolute bottom-0 left-0 w-full h-1 bg-[radial-gradient(circle,transparent_2px,#e1e2e4_3px)] bg-[length:8px_8px] -mb-1 z-10 opacity-50 hidden"></div>
+</section>
+<!-- Secondary Action -->
+<section class="mt-stack-sm">
+<button class="w-full h-[52px] bg-surface-container-lowest border-[1.5px] border-secondary text-secondary font-headline-sm text-headline-sm rounded-lg hover:bg-surface-container-low active:bg-surface-variant transition-colors duration-200 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">undo</span>
+                Issue Refund
+            </button>
+</section>
+</main>
+</body></html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>Branch Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f2f4f6",
+                        "on-primary-container": "#83829b",
+                        "outline": "#78767d",
+                        "on-tertiary-container": "#009768",
+                        "inverse-on-surface": "#f0f1f3",
+                        "on-secondary-fixed": "#0f0069",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "on-background": "#191c1e",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#6ffbbe",
+                        "secondary-fixed-dim": "#c3c0ff",
+                        "surface-tint": "#5d5c74",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#002114",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "on-secondary-container": "#fffbff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#45455b",
+                        "surface-variant": "#e1e2e4",
+                        "primary-fixed-dim": "#c6c4df",
+                        "primary-fixed": "#e2e0fc",
+                        "surface": "#f8f9fb",
+                        "on-secondary-fixed-variant": "#3323cc",
+                        "on-primary-fixed": "#1a1a2e",
+                        "tertiary": "#000000",
+                        "surface-container": "#edeef0",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "primary": "#00000b",
+                        "surface-dim": "#d9dadc",
+                        "secondary-container": "#645efb",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#47464c",
+                        "surface-container-high": "#e7e8ea",
+                        "surface-bright": "#f8f9fb",
+                        "inverse-primary": "#c6c4df",
+                        "surface-container-highest": "#e1e2e4",
+                        "on-surface": "#191c1e",
+                        "primary-container": "#1a1a2e",
+                        "outline-variant": "#c8c5cd",
+                        "on-primary": "#ffffff",
+                        "secondary": "#4b41e1",
+                        "secondary-fixed": "#e2dfff",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2e3132",
+                        "on-tertiary-fixed": "#002113",
+                        "background": "#f8f9fb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "16px",
+                        "gutter": "12px",
+                        "stack-sm": "8px",
+                        "padding-v": "16px",
+                        "padding-h": "20px",
+                        "stack-lg": "24px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "caption": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "micro": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "headline-sm": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "body-md": ["15px", {"lineHeight": "22px", "fontWeight": "400"}],
+                        "micro": ["11px", {"lineHeight": "16px", "letterSpacing": "0.6px", "fontWeight": "500"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Ambient elevation for surface cards */
+        .ambient-shadow {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        
+        /* Subtle grid pattern for premium background feel */
+        .bg-grid-pattern {
+            background-size: 24px 24px;
+            background-image: 
+                linear-gradient(to right, rgba(200, 197, 205, 0.2) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(200, 197, 205, 0.2) 1px, transparent 1px);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md antialiased selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-padding-h h-14 bg-surface border-b border-outline-variant transition-colors duration-200 ease-in-out">
+<button aria-label="Go Back" class="text-on-surface-variant hover:bg-surface-container-low p-2 -ml-2 rounded-full transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-secondary/50">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<div class="font-headline-sm text-headline-sm text-secondary flex-1 text-center font-extrabold tracking-tight">
+            POSly
+        </div>
+<button aria-label="Sync Data" class="text-on-surface-variant hover:bg-surface-container-low p-2 -mr-2 rounded-full transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-secondary/50">
+<span class="material-symbols-outlined" data-icon="sync">sync</span>
+</button>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 pt-[72px] px-padding-h pb-[100px] bg-grid-pattern">
+<!-- Page Context Header -->
+<div class="mb-stack-lg flex flex-col gap-stack-sm">
+<h1 class="font-headline-md text-headline-md text-on-surface tracking-tight">Branch Management</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md">
+                Monitor and configure your active retail locations. Select a branch to edit settings.
+            </p>
+</div>
+<!-- Branch Grid (Bento/Card Layout) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-stack-md">
+<!-- Branch Item 1 (Open) -->
+<button class="group relative bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md text-left transition-all duration-200 hover:border-secondary hover:ambient-shadow focus:outline-none focus:ring-2 focus:ring-secondary/50 flex flex-col gap-stack-md overflow-hidden">
+<!-- Decorative Map Overlay -->
+<div class="absolute top-0 right-0 w-32 h-32 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-300 rounded-bl-full bg-cover bg-center" data-alt="A minimalist, high-contrast digital map rendering of a modern urban street grid. The map uses a light mode color palette with pristine whites, soft greys, and subtle indigo accents representing commerce zones. The visual style is clean, geometric, and professional, focusing purely on topological layout without terrain details. The mood is highly organized and efficient, resembling a premium corporate logistics dashboard interface." data-location="New York" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBOJVAYn8wmYbYsV0j0L85ntgxNka8oBhPS-Q2ZXOnTRsON0f5sUldFWw3c_7nJwrDiI98IttjNzEakkKGytu_tU6-f-0aPdfQX_10CGcPAnX9bYBVuRsAxpDZGJgVm1fbdSbbj42N-1dI-e_CEXXs7pJ9qRjVbvO5TRWQ5CGgu4dq8-GZ_t-vigEfW3sPBKK5-_7vPyhpYw972RuGQaQD8iaTf-p_g5bvD0vh_yuYGLjglXN8RBSeb1FhH4krpvfIL1mp2Fl3EU_6N');">
+</div>
+<div class="flex justify-between items-start z-10 relative">
+<div class="flex flex-col gap-base">
+<h2 class="font-headline-sm text-headline-sm text-on-surface group-hover:text-secondary transition-colors">Main Street Flagship</h2>
+<span class="inline-flex items-center gap-1 bg-tertiary-fixed text-on-tertiary-fixed font-micro text-micro px-2 py-0.5 rounded-full uppercase tracking-wider w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-fixed"></span> Open
+                        </span>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:bg-secondary-fixed group-hover:text-secondary transition-colors shrink-0">
+<span class="material-symbols-outlined" data-icon="storefront">storefront</span>
+</div>
+</div>
+<div class="flex items-end justify-between mt-auto z-10 relative border-t border-surface-variant pt-stack-sm">
+<div class="flex flex-col gap-1">
+<p class="font-caption text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+                            1204 Broadway, NY 10001
+                        </p>
+<p class="font-caption text-caption text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="group">group</span>
+                            14 Staff Active
+                        </p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-secondary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+</button>
+<!-- Branch Item 2 (Open) -->
+<button class="group relative bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md text-left transition-all duration-200 hover:border-secondary hover:ambient-shadow focus:outline-none focus:ring-2 focus:ring-secondary/50 flex flex-col gap-stack-md overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-300 rounded-bl-full bg-cover bg-center" data-alt="A minimalist, high-contrast digital map rendering of a modern urban street grid. The map uses a light mode color palette with pristine whites, soft greys, and subtle indigo accents representing commerce zones. The visual style is clean, geometric, and professional, focusing purely on topological layout without terrain details. The mood is highly organized and efficient, resembling a premium corporate logistics dashboard interface." data-location="Brooklyn" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC24om3G7AbJ7Z8JvqzyfB2DDNB1VbNa7dW0UQwbvMnZS0Nyaula_OWVynsj6JMLB8D9PwjmGfD3PNCQPqMEtt6dYsNzB147bGxrKy_CjkJxauh0N0hke61NwD5ZY3fRFDFKiWT6ktzgQyORHdySbLYhqR7IANfReK56gVX6zuC3nNNNsmPCNwkADUlQxIIgPtQHZiwR59lfpoOeZ0bCJ7FfgCGL9R7eaTl8-6A00m7uzSMweUrsB3B7PiC-v_AVLTSRNgHU11RcZhS');">
+</div>
+<div class="flex justify-between items-start z-10 relative">
+<div class="flex flex-col gap-base">
+<h2 class="font-headline-sm text-headline-sm text-on-surface group-hover:text-secondary transition-colors">Westside Kiosk</h2>
+<span class="inline-flex items-center gap-1 bg-tertiary-fixed text-on-tertiary-fixed font-micro text-micro px-2 py-0.5 rounded-full uppercase tracking-wider w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-fixed"></span> Open
+                        </span>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant group-hover:bg-secondary-fixed group-hover:text-secondary transition-colors shrink-0">
+<span class="material-symbols-outlined" data-icon="kiosk">jamboard_kiosk</span>
+</div>
+</div>
+<div class="flex items-end justify-between mt-auto z-10 relative border-t border-surface-variant pt-stack-sm">
+<div class="flex flex-col gap-1">
+<p class="font-caption text-caption text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+                            Hudson Yards Level 2
+                        </p>
+<p class="font-caption text-caption text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="group">group</span>
+                            2 Staff Active
+                        </p>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-secondary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+</button>
+<!-- Branch Item 3 (Closed) -->
+<button class="group relative bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md text-left transition-all duration-200 hover:border-secondary hover:ambient-shadow focus:outline-none focus:ring-2 focus:ring-secondary/50 flex flex-col gap-stack-md overflow-hidden bg-opacity-75">
+<div class="absolute inset-0 bg-surface-container-low opacity-40 z-0"></div>
+<div class="flex justify-between items-start z-10 relative">
+<div class="flex flex-col gap-base">
+<h2 class="font-headline-sm text-headline-sm text-on-surface/80 group-hover:text-secondary transition-colors">Downtown Outlet</h2>
+<span class="inline-flex items-center gap-1 bg-error-container text-on-error-container font-micro text-micro px-2 py-0.5 rounded-full uppercase tracking-wider w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-on-error-container"></span> Closed
+                        </span>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant/50 shrink-0">
+<span class="material-symbols-outlined" data-icon="lock">lock</span>
+</div>
+</div>
+<div class="flex items-end justify-between mt-auto z-10 relative border-t border-surface-variant/50 pt-stack-sm">
+<div class="flex flex-col gap-1">
+<p class="font-caption text-caption text-on-surface-variant/80 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="location_on">location_on</span>
+                            450 Wall St, NY 10005
+                        </p>
+<p class="font-caption text-caption text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" data-icon="schedule">schedule</span>
+                            Opens at 9:00 AM
+                        </p>
+</div>
+<span class="material-symbols-outlined text-outline/50 group-hover:text-secondary transition-colors" data-icon="chevron_right">chevron_right</span>
+</div>
+</button>
+</div>
+</main>
+<!-- Floating Action Button (FAB) -->
+<button aria-label="Add New Branch" class="fixed bottom-[max(env(safe-area-inset-bottom,24px),24px)] right-padding-h w-14 h-14 bg-secondary text-on-secondary rounded-[16px] ambient-shadow flex items-center justify-center hover:bg-on-secondary-fixed-variant transition-all duration-200 active:scale-95 z-50 focus:outline-none focus:ring-4 focus:ring-primary-fixed">
+<span class="material-symbols-outlined text-[28px]" data-icon="add" style="font-variation-settings: 'wght' 600;">add</span>
+</button>
+</body></html>

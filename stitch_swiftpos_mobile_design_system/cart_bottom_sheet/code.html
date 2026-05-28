@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>POSly - Cart Bottom Sheet</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-primary": "#c6c4df",
+                    "outline": "#78767d",
+                    "surface-container-low": "#f2f4f6",
+                    "secondary": "#4b41e1",
+                    "background": "#f8f9fb",
+                    "on-tertiary": "#ffffff",
+                    "on-surface-variant": "#47464c",
+                    "on-background": "#191c1e",
+                    "inverse-on-surface": "#f0f1f3",
+                    "on-error": "#ffffff",
+                    "surface-dim": "#d9dadc",
+                    "secondary-fixed": "#e2dfff",
+                    "on-primary-container": "#83829b",
+                    "on-tertiary-fixed": "#002113",
+                    "tertiary-fixed": "#6ffbbe",
+                    "surface-container-high": "#e7e8ea",
+                    "surface-container": "#edeef0",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "tertiary": "#000000",
+                    "surface-variant": "#e1e2e4",
+                    "surface-container-highest": "#e1e2e4",
+                    "on-tertiary-container": "#009768",
+                    "on-secondary-fixed-variant": "#3323cc",
+                    "primary-fixed": "#e2e0fc",
+                    "error": "#ba1a1a",
+                    "tertiary-container": "#002114",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "secondary-fixed-dim": "#c3c0ff",
+                    "on-error-container": "#93000a",
+                    "primary": "#00000b",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-container": "#fffbff",
+                    "on-primary-fixed": "#1a1a2e",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-container": "#645efb",
+                    "surface-tint": "#5d5c74",
+                    "inverse-surface": "#2e3132",
+                    "surface-bright": "#f8f9fb",
+                    "primary-fixed-dim": "#c6c4df",
+                    "outline-variant": "#c8c5cd",
+                    "on-primary": "#ffffff",
+                    "primary-container": "#1a1a2e",
+                    "on-primary-fixed-variant": "#45455b",
+                    "error-container": "#ffdad6",
+                    "on-surface": "#191c1e",
+                    "surface": "#f8f9fb",
+                    "on-secondary-fixed": "#0f0069"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "padding-h": "20px",
+                    "stack-sm": "8px",
+                    "padding-v": "16px",
+                    "gutter": "12px",
+                    "base": "4px",
+                    "stack-md": "16px",
+                    "stack-lg": "24px"
+            },
+            "fontFamily": {
+                    "micro": ["Inter"],
+                    "caption": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "headline-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "micro": ["11px", { "lineHeight": "16px", "letterSpacing": "0.6px", "fontWeight": "500" }],
+                    "caption": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                    "body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+                    "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                    "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+                    "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "700" }]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-variant font-body-md text-body-md text-on-surface h-screen flex flex-col antialiased">
+<!-- Simulated Background Content (Darkened by Scrim) -->
+<div aria-hidden="true" class="flex-1 bg-surface relative overflow-hidden">
+<header class="fixed top-0 left-0 w-full z-50 flex items-center px-padding-h h-14 bg-surface border-b border-outline-variant">
+<button aria-label="Menu" class="mr-4 text-on-surface-variant">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary flex-1">POSly</h1>
+</header>
+<div class="pt-20 px-padding-h">
+<!-- Dummy content representing the active POS screen -->
+<div class="grid grid-cols-2 gap-gutter opacity-30">
+<div class="h-32 bg-surface-container-low rounded-lg border border-outline-variant"></div>
+<div class="h-32 bg-surface-container-low rounded-lg border border-outline-variant"></div>
+<div class="h-32 bg-surface-container-low rounded-lg border border-outline-variant"></div>
+<div class="h-32 bg-surface-container-low rounded-lg border border-outline-variant"></div>
+</div>
+</div>
+</div>
+<!-- Backdrop Scrim -->
+<div aria-hidden="true" class="fixed inset-0 bg-primary/40 z-40 transition-opacity"></div>
+<!-- Bottom Sheet -->
+<div aria-labelledby="cart-title" aria-modal="true" class="fixed bottom-0 left-0 w-full z-50 bg-surface-container-lowest rounded-t-[24px] shadow-2xl flex flex-col h-[751px] transition-transform duration-300 ease-out transform translate-y-0" role="dialog">
+<!-- Drag Handle -->
+<div aria-hidden="true" class="w-full flex justify-center pt-3 pb-1">
+<div class="w-[36px] h-[4px] bg-outline-variant rounded-full"></div>
+</div>
+<!-- Header -->
+<div class="flex items-center justify-between px-padding-h py-padding-v border-b border-surface-container">
+<h2 class="font-headline-lg text-headline-lg text-primary" id="cart-title">Your cart</h2>
+<button class="font-body-md text-body-md text-error hover:text-on-error-container transition-colors focus:outline-none">
+                Clear
+            </button>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto px-padding-h py-stack-md space-y-stack-md">
+<!-- Cart Item 1 -->
+<div class="flex items-center gap-gutter min-h-[64px]">
+<img alt="Artisan Coffee" class="w-16 h-16 object-cover rounded-lg border border-surface-container shadow-sm shrink-0" data-alt="A meticulously curated cup of artisan pour-over coffee sitting on a clean, modern white ceramic saucer. The shot is well-lit, emphasizing the rich amber tones of the coffee against a sterile, bright background suitable for a sleek point-of-sale interface. The composition is highly focused, showcasing the product clearly without distracting elements." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDX_SX1PTLRcr_FuShdSeZmxb4Y4-ZyNazL3dh2Mg05MhHxejVYWzxBVzOlpzQx8pCHh6O4whPkXvN1joE48xAAbeZXcdbCTPpED_dU-SAY3ojbeP7_og_6sEgTGe4LoIXq_DJW-TAR9Ia3VcuQIBMF6rDfA0XtN7xU5otdvRY0HhPEvi2tKBstmniTRnC0olrCwKrs5X7tlGHUDbfpfBPVOVMj7jKcPpShfn4unZFNAndPYSZi5jKXgHueU_WEGYo0iC_0KWkfir4q"/>
+<div class="flex-1 min-w-0">
+<h3 class="font-headline-sm text-headline-sm text-on-surface truncate">Artisan Pour-Over</h3>
+<p class="font-caption text-caption text-on-surface-variant">$4.50</p>
+</div>
+<div class="flex flex-col items-end gap-2 shrink-0">
+<span class="font-headline-sm text-headline-sm text-secondary font-bold">$9.00</span>
+<div class="flex items-center bg-surface-container-low rounded-lg border border-surface-variant">
+<button aria-label="Decrease quantity" class="w-8 h-8 flex items-center justify-center text-on-surface hover:bg-surface-variant transition-colors rounded-l-lg">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<span class="w-8 text-center font-body-md text-body-md text-on-surface font-medium">2</span>
+<button aria-label="Increase quantity" class="w-8 h-8 flex items-center justify-center text-on-surface hover:bg-surface-variant transition-colors rounded-r-lg">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Divider -->
+<hr class="border-surface-container"/>
+<!-- Cart Item 2 -->
+<div class="flex items-center gap-gutter min-h-[64px]">
+<img alt="Almond Croissant" class="w-16 h-16 object-cover rounded-lg border border-surface-container shadow-sm shrink-0" data-alt="A modern, high-contrast overhead shot of a freshly baked almond croissant resting on a pristine white surface. Flaky layers and toasted almonds are sharply in focus, evoking a premium bakery experience. The lighting is soft and neutral, ensuring the image integrates seamlessly into a minimalist commercial app environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCO0SQEP59glHLJPgkDh1ASjsukluTh57JKgDczwGgeY0tytOUqxzok12WYgpOrvQtFLa9qWFAuqjujWzwbXqFQhQxCRoUxRA7C4YGEna_jXGkN6aEyYc9zOoIRSaXlkIdtWOehRRi4du9h0LXwK9Rg-32UVv6AyJrJiMCVmu0iTsvhZ0ZadpvNVDxx5i7lznvQIkrELvhxl7Suedd8UwrRr3U_AsA9HPtTxPCMokxiMU1eJ4jetwODvEyX4c65r_s1v0fWTCfeqGDk"/>
+<div class="flex-1 min-w-0">
+<h3 class="font-headline-sm text-headline-sm text-on-surface truncate">Almond Croissant</h3>
+<p class="font-caption text-caption text-on-surface-variant">$3.75</p>
+</div>
+<div class="flex flex-col items-end gap-2 shrink-0">
+<span class="font-headline-sm text-headline-sm text-secondary font-bold">$3.75</span>
+<div class="flex items-center bg-surface-container-low rounded-lg border border-surface-variant">
+<button aria-label="Decrease quantity" class="w-8 h-8 flex items-center justify-center text-on-surface hover:bg-surface-variant transition-colors rounded-l-lg">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<span class="w-8 text-center font-body-md text-body-md text-on-surface font-medium">1</span>
+<button aria-label="Increase quantity" class="w-8 h-8 flex items-center justify-center text-on-surface hover:bg-surface-variant transition-colors rounded-r-lg">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Divider -->
+<hr class="border-surface-container"/>
+<!-- Cart Item 3 -->
+<div class="flex items-center gap-gutter min-h-[64px]">
+<div class="w-16 h-16 flex items-center justify-center bg-surface-container rounded-lg border border-surface-variant text-on-surface-variant shrink-0">
+<span class="material-symbols-outlined">local_cafe</span>
+</div>
+<div class="flex-1 min-w-0">
+<h3 class="font-headline-sm text-headline-sm text-on-surface truncate">Iced Matcha Latte</h3>
+<p class="font-caption text-caption text-on-surface-variant">$5.25</p>
+</div>
+<div class="flex flex-col items-end gap-2 shrink-0">
+<span class="font-headline-sm text-headline-sm text-secondary font-bold">$5.25</span>
+<div class="flex items-center bg-surface-container-low rounded-lg border border-surface-variant">
+<button aria-label="Decrease quantity" class="w-8 h-8 flex items-center justify-center text-on-surface hover:bg-surface-variant transition-colors rounded-l-lg">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</button>
+<span class="w-8 text-center font-body-md text-body-md text-on-surface font-medium">1</span>
+<button aria-label="Increase quantity" class="w-8 h-8 flex items-center justify-center text-on-surface hover:bg-surface-variant transition-colors rounded-r-lg">
+<span class="material-symbols-outlined text-[18px]">add</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Summary -->
+<div class="bg-surface-container-lowest px-padding-h py-padding-v border-t border-surface-container shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+<div class="space-y-stack-sm mb-stack-md">
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md text-on-surface-variant">Subtotal</span>
+<span class="font-body-md text-body-md text-on-surface">$18.00</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-md text-on-surface-variant">Tax (8%)</span>
+<span class="font-body-md text-body-md text-on-surface">$1.44</span>
+</div>
+<div class="flex justify-between items-center text-[#009768]">
+<span class="font-body-md text-body-md">Loyalty Discount</span>
+<span class="font-body-md text-body-md">-$2.00</span>
+</div>
+</div>
+<hr class="border-surface-container border-dashed mb-stack-sm"/>
+<div class="flex justify-between items-center mb-stack-lg">
+<span class="font-headline-lg text-headline-lg text-primary">Total</span>
+<span class="font-headline-lg text-headline-lg text-secondary">$17.44</span>
+</div>
+<!-- Primary Action -->
+<button class="w-full h-[52px] bg-secondary hover:bg-secondary-container text-on-secondary font-headline-sm text-headline-sm rounded-lg flex items-center justify-center gap-2 transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-secondary focus:outline-none mb-safe">
+                Proceed to Checkout
+                <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</body></html>

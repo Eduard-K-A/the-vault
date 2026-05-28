@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>POSly - Store Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f2f4f6",
+                        "on-primary-container": "#83829b",
+                        "outline": "#78767d",
+                        "on-tertiary-container": "#009768",
+                        "inverse-on-surface": "#f0f1f3",
+                        "on-secondary-fixed": "#0f0069",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "on-background": "#191c1e",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#6ffbbe",
+                        "secondary-fixed-dim": "#c3c0ff",
+                        "surface-tint": "#5d5c74",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#002114",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "on-secondary-container": "#fffbff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-fixed-variant": "#45455b",
+                        "surface-variant": "#e1e2e4",
+                        "primary-fixed-dim": "#c6c4df",
+                        "primary-fixed": "#e2e0fc",
+                        "surface": "#f8f9fb",
+                        "on-secondary-fixed-variant": "#3323cc",
+                        "on-primary-fixed": "#1a1a2e",
+                        "tertiary": "#000000",
+                        "surface-container": "#edeef0",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "primary": "#00000b",
+                        "surface-dim": "#d9dadc",
+                        "secondary-container": "#645efb",
+                        "on-tertiary": "#ffffff",
+                        "on-surface-variant": "#47464c",
+                        "surface-container-high": "#e7e8ea",
+                        "surface-bright": "#f8f9fb",
+                        "inverse-primary": "#c6c4df",
+                        "surface-container-highest": "#e1e2e4",
+                        "on-surface": "#191c1e",
+                        "primary-container": "#1a1a2e",
+                        "outline-variant": "#c8c5cd",
+                        "on-primary": "#ffffff",
+                        "secondary": "#4b41e1",
+                        "secondary-fixed": "#e2dfff",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2e3132",
+                        "on-tertiary-fixed": "#002113",
+                        "background": "#f8f9fb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "16px",
+                        "gutter": "12px",
+                        "stack-sm": "8px",
+                        "padding-v": "16px",
+                        "padding-h": "20px",
+                        "stack-lg": "24px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "caption": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "micro": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", { "lineHeight": "32px", "fontWeight": "700" }],
+                        "caption": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "headline-sm": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "body-md": ["15px", { "lineHeight": "22px", "fontWeight": "400" }],
+                        "micro": ["11px", { "lineHeight": "16px", "letterSpacing": "0.6px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
+            .pt-safe { padding-top: env(safe-area-inset-top, 20px); }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex flex-col pt-safe pb-safe selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex items-center px-padding-h h-14 bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-outline flat no shadows transition-colors duration-200 ease-in-out">
+<button aria-label="Go back" class="text-secondary dark:text-secondary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest p-2 rounded-full flex items-center justify-center transition-colors duration-200 ease-in-out -ml-2">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<div class="flex-1 text-center font-headline-sm text-headline-sm-mobile font-headline-md text-headline-md text-primary dark:text-on-primary-fixed">
+            POSly
+        </div>
+<button aria-label="Sync settings" class="text-secondary dark:text-secondary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest p-2 rounded-full flex items-center justify-center transition-colors duration-200 ease-in-out -mr-2">
+<span class="material-symbols-outlined" data-icon="sync">sync</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto mt-14 mb-[56px] md:mb-0 px-padding-h py-stack-md flex justify-center">
+<div class="w-full max-w-2xl space-y-stack-lg pb-stack-lg">
+<!-- Page Header -->
+<div class="space-y-stack-sm pt-stack-sm">
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Store Settings</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage your business preferences and configurations.</p>
+</div>
+<!-- Bento Grid Settings Layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Business Info Card -->
+<button class="group bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md flex flex-col justify-between items-start text-left hover:border-secondary hover:shadow-sm transition-all duration-200 h-32 relative overflow-hidden">
+<div class="bg-surface-container w-10 h-10 rounded-full flex items-center justify-center mb-stack-sm group-hover:bg-secondary-fixed transition-colors duration-200">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-secondary-fixed" data-icon="storefront">storefront</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Business Information</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-1 truncate max-w-[200px]">Name, address, contact details</p>
+</div>
+<span class="material-symbols-outlined absolute top-4 right-4 text-outline-variant group-hover:text-secondary opacity-0 group-hover:opacity-100 transition-opacity duration-200 transform translate-x-2 group-hover:translate-x-0" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- Branch Management Card -->
+<button class="group bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md flex flex-col justify-between items-start text-left hover:border-secondary hover:shadow-sm transition-all duration-200 h-32 relative overflow-hidden">
+<div class="bg-surface-container w-10 h-10 rounded-full flex items-center justify-center mb-stack-sm group-hover:bg-secondary-fixed transition-colors duration-200">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-secondary-fixed" data-icon="location_city">location_city</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Branch Management</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-1 truncate max-w-[200px]">Add or configure locations</p>
+</div>
+<span class="material-symbols-outlined absolute top-4 right-4 text-outline-variant group-hover:text-secondary opacity-0 group-hover:opacity-100 transition-opacity duration-200 transform translate-x-2 group-hover:translate-x-0" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- Hardware & Devices -->
+<button class="group bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md flex flex-col justify-between items-start text-left hover:border-secondary hover:shadow-sm transition-all duration-200 h-32 relative overflow-hidden">
+<div class="bg-surface-container w-10 h-10 rounded-full flex items-center justify-center mb-stack-sm group-hover:bg-secondary-fixed transition-colors duration-200">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-secondary-fixed" data-icon="print">print</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Printer Settings</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-1 truncate max-w-[200px]">Receipts, KOT, and hardware</p>
+</div>
+<span class="material-symbols-outlined absolute top-4 right-4 text-outline-variant group-hover:text-secondary opacity-0 group-hover:opacity-100 transition-opacity duration-200 transform translate-x-2 group-hover:translate-x-0" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- Financial Configuration -->
+<button class="group bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md flex flex-col justify-between items-start text-left hover:border-secondary hover:shadow-sm transition-all duration-200 h-32 relative overflow-hidden">
+<div class="bg-surface-container w-10 h-10 rounded-full flex items-center justify-center mb-stack-sm group-hover:bg-secondary-fixed transition-colors duration-200">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-secondary-fixed" data-icon="account_balance">account_balance</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Tax &amp; Service Charges</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-1 truncate max-w-[200px]">GST, VAT, automated fees</p>
+</div>
+<span class="material-symbols-outlined absolute top-4 right-4 text-outline-variant group-hover:text-secondary opacity-0 group-hover:opacity-100 transition-opacity duration-200 transform translate-x-2 group-hover:translate-x-0" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- Security & Logs -->
+<button class="group bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md flex flex-col justify-between items-start text-left hover:border-secondary hover:shadow-sm transition-all duration-200 h-32 relative overflow-hidden">
+<div class="bg-surface-container w-10 h-10 rounded-full flex items-center justify-center mb-stack-sm group-hover:bg-secondary-fixed transition-colors duration-200">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-secondary-fixed" data-icon="manage_search">manage_search</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Audit Logs</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-1 truncate max-w-[200px]">View operator activity history</p>
+</div>
+<span class="material-symbols-outlined absolute top-4 right-4 text-outline-variant group-hover:text-secondary opacity-0 group-hover:opacity-100 transition-opacity duration-200 transform translate-x-2 group-hover:translate-x-0" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- Support -->
+<button class="group bg-surface-container-lowest border border-outline-variant rounded-xl p-stack-md flex flex-col justify-between items-start text-left hover:border-secondary hover:shadow-sm transition-all duration-200 h-32 relative overflow-hidden">
+<div class="bg-surface-container w-10 h-10 rounded-full flex items-center justify-center mb-stack-sm group-hover:bg-secondary-fixed transition-colors duration-200">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-on-secondary-fixed" data-icon="support_agent">support_agent</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Help &amp; Support</h3>
+<p class="font-caption text-caption text-on-surface-variant mt-1 truncate max-w-[200px]">FAQs, live chat, ticketing</p>
+</div>
+<span class="material-symbols-outlined absolute top-4 right-4 text-outline-variant group-hover:text-secondary opacity-0 group-hover:opacity-100 transition-opacity duration-200 transform translate-x-2 group-hover:translate-x-0" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+<!-- Destructive Action Container -->
+<div class="pt-stack-lg border-t border-outline-variant mt-stack-lg">
+<button class="w-full h-[52px] flex items-center justify-center gap-2 bg-error-container text-on-error-container font-headline-sm text-headline-sm rounded-lg hover:bg-error hover:text-on-error transition-colors duration-200 active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+                    Sign Out
+                </button>
+<p class="text-center font-micro text-micro text-on-surface-variant mt-stack-sm uppercase tracking-wider">POSly Terminal v2.4.0</p>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Visible only on mobile/md:hidden per instructions, if considered top-level destination) -->
+<!-- However, since the user intent is "Store Settings" which maps to the "Settings" tab, we render it. -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-surface px-base pb-safe border-t border-outline-variant dark:border-outline shadow-sm docked full-width bottom-0 h-[56px]">
+<button aria-label="Register" class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-high dark:hover:bg-on-primary-fixed-variant active:scale-95 transition-transform duration-150 flex-1 h-full rounded-lg mx-1">
+<span class="material-symbols-outlined mb-1" data-icon="point_of_sale">point_of_sale</span>
+<span class="font-caption text-caption">Register</span>
+</button>
+<button aria-label="Orders" class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-high dark:hover:bg-on-primary-fixed-variant active:scale-95 transition-transform duration-150 flex-1 h-full rounded-lg mx-1">
+<span class="material-symbols-outlined mb-1" data-icon="receipt_long">receipt_long</span>
+<span class="font-caption text-caption">Orders</span>
+</button>
+<button aria-label="Inventory" class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-high dark:hover:bg-on-primary-fixed-variant active:scale-95 transition-transform duration-150 flex-1 h-full rounded-lg mx-1">
+<span class="material-symbols-outlined mb-1" data-icon="inventory_2">inventory_2</span>
+<span class="font-caption text-caption">Inventory</span>
+</button>
+<!-- Active State for Settings -->
+<button aria-label="Settings" class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim font-bold hover:bg-surface-container-high dark:hover:bg-on-primary-fixed-variant active:scale-95 transition-transform duration-150 flex-1 h-full rounded-lg mx-1 relative">
+<div class="absolute inset-0 bg-secondary-container opacity-10 rounded-lg"></div>
+<span class="material-symbols-outlined mb-1" data-icon="settings" data-weight="fill" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="font-caption text-caption">Settings</span>
+</button>
+</nav>
+<!-- Side Navigation Shell (Web/md:flex) -->
+<nav class="hidden md:flex fixed left-0 top-0 bottom-0 z-[60] flex-col py-stack-lg bg-surface-container-low dark:bg-surface-container-lowest shadow-lg rounded-r-xl h-full w-72 transition-all duration-200 border-r border-surface-container dark:border-surface-container-high">
+<!-- Header Profile -->
+<div class="px-padding-h mb-stack-lg flex items-center gap-stack-sm cursor-pointer hover:bg-surface-variant dark:hover:bg-surface-container-highest p-2 rounded-lg mx-2 transition-colors duration-200">
+<div class="w-12 h-12 rounded-full bg-primary-fixed-dim flex items-center justify-center text-on-primary-fixed font-headline-md text-headline-md">
+                SO
+            </div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm text-on-surface">Store Owner</span>
+<span class="font-caption text-caption text-on-surface-variant">POSly Premium</span>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto space-y-1 px-2">
+<button class="w-full flex items-center gap-stack-sm text-on-surface-variant hover:bg-surface-variant rounded-lg mx-2 my-1 px-4 py-3 font-body-md text-body-md transition-colors duration-200 text-left">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span>Sales Reports</span>
+</button>
+<button class="w-full flex items-center gap-stack-sm text-on-surface-variant hover:bg-surface-variant rounded-lg mx-2 my-1 px-4 py-3 font-body-md text-body-md transition-colors duration-200 text-left">
+<span class="material-symbols-outlined" data-icon="badge">badge</span>
+<span>Team Management</span>
+</button>
+<!-- Active State for Settings in SideNav -->
+<button class="w-full flex items-center gap-stack-sm bg-secondary-container text-on-secondary-container rounded-lg mx-2 my-1 px-4 py-3 font-body-md text-body-md font-semibold transition-colors duration-200 text-left">
+<span class="material-symbols-outlined" data-icon="store" data-weight="fill" style="font-variation-settings: 'FILL' 1;">store</span>
+<span>Store Settings</span>
+</button>
+</div>
+<div class="mt-auto px-padding-h pt-stack-md border-t border-surface-container dark:border-surface-container-high mx-2">
+<div class="font-micro text-micro text-on-surface-variant uppercase tracking-wider pl-2">v2.4.0</div>
+</div>
+</nav>
+</body></html>

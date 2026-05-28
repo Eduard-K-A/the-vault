@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>POSly - Welcome</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-container": "#1a1a2e",
+                      "on-primary-fixed-variant": "#45455b",
+                      "surface-container": "#edeef0",
+                      "on-tertiary": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-tint": "#5d5c74",
+                      "primary-fixed": "#e2e0fc",
+                      "on-surface": "#191c1e",
+                      "tertiary-container": "#002114",
+                      "on-secondary-fixed": "#0f0069",
+                      "surface-variant": "#e1e2e4",
+                      "on-secondary": "#ffffff",
+                      "secondary-fixed-dim": "#c3c0ff",
+                      "surface-container-high": "#e7e8ea",
+                      "on-error-container": "#93000a",
+                      "surface": "#f8f9fb",
+                      "outline-variant": "#c8c5cd",
+                      "tertiary-fixed-dim": "#4edea3",
+                      "inverse-primary": "#c6c4df",
+                      "on-error": "#ffffff",
+                      "on-tertiary-container": "#009768",
+                      "surface-bright": "#f8f9fb",
+                      "surface-container-highest": "#e1e2e4",
+                      "on-secondary-container": "#fffbff",
+                      "secondary-container": "#645efb",
+                      "outline": "#78767d",
+                      "primary-fixed-dim": "#c6c4df",
+                      "on-primary-fixed": "#1a1a2e",
+                      "on-tertiary-fixed": "#002113",
+                      "secondary": "#4b41e1",
+                      "background": "#f8f9fb",
+                      "on-tertiary-fixed-variant": "#005236",
+                      "secondary-fixed": "#e2dfff",
+                      "primary": "#00000b",
+                      "tertiary-fixed": "#6ffbbe",
+                      "tertiary": "#000000",
+                      "on-background": "#191c1e",
+                      "on-primary-container": "#83829b",
+                      "inverse-surface": "#2e3132",
+                      "error-container": "#ffdad6",
+                      "surface-dim": "#d9dadc",
+                      "error": "#ba1a1a",
+                      "surface-container-low": "#f2f4f6",
+                      "on-surface-variant": "#47464c",
+                      "on-secondary-fixed-variant": "#3323cc",
+                      "on-primary": "#ffffff",
+                      "inverse-on-surface": "#f0f1f3"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "base": "4px",
+                      "stack-sm": "8px",
+                      "stack-lg": "24px",
+                      "padding-h": "20px",
+                      "padding-v": "16px",
+                      "stack-md": "16px",
+                      "gutter": "12px"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Inter"],
+                      "caption": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "body-md": ["Inter"],
+                      "micro": ["Inter"],
+                      "headline-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "caption": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "body-md": ["15px", {"lineHeight": "22px", "fontWeight": "400"}],
+                      "micro": ["11px", {"lineHeight": "16px", "letterSpacing": "0.6px", "fontWeight": "500"}],
+                      "headline-sm": ["16px", {"lineHeight": "24px", "fontWeight": "600"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .slide-up-panel {
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            transform: translateY(100%);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+            opacity: 0;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-primary h-screen w-full overflow-hidden flex flex-col font-sans antialiased text-on-surface">
+<!-- Top 55%: Illustration Area -->
+<div class="h-[55%] w-full relative flex items-center justify-center bg-primary fade-in">
+<!-- Abstract glowing orb effect behind illustration -->
+<div class="absolute inset-0 bg-gradient-to-b from-transparent to-primary/80 z-10 pointer-events-none"></div>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-secondary/20 rounded-full blur-[80px]"></div>
+<img alt="Abstract POS illustration" class="w-full h-full object-cover opacity-60 mix-blend-luminosity" data-alt="A clean, abstract isometric illustration of a modern point-of-sale terminal and retail counter. The scene is rendered in deep navy and indigo tones, aligning with a professional, minimal corporate aesthetic. Soft, volumetric lighting casts gentle shadows, creating a high-end, quiet efficiency mood. The composition focuses on essential commerce workflows, devoid of unnecessary clutter or distracting elements." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBaXls0E6gq4NJuXCzovsF9HtI41DY8E7b7pptGGABmUxFuqtrtdAiQZqgMovecO3OJVN3LrfHtuVVejT5n12u8ND681tp77g_NiacmKOtuspfW-YL0X5dOnb8nREGysDGtCkM6PVMcNpTlKH9UILj_gsNsIQRXPqr0EemUGm5MXCSBKnT4HKxRo0rBI6a8AFm2FKaXTtIJLvPqTUzF-igTm1TvGwS-rFCueLy_H2i8U0tn2TbqvUcc8ZRUd-s1JNAiXK0uiC22WISu"/>
+</div>
+<!-- Bottom 45%: Sliding Card Panel -->
+<div class="h-[45%] w-full bg-surface absolute bottom-0 rounded-t-[24px] shadow-[0_-4px_24px_rgba(0,0,0,0.1)] slide-up-panel z-20 flex flex-col px-padding-h py-stack-lg justify-between">
+<!-- Drag handle indicator for bottom sheet metaphor -->
+<div class="w-full flex justify-center absolute top-4 left-0">
+<div class="w-9 h-1 bg-outline-variant rounded-full"></div>
+</div>
+<div class="mt-4 flex flex-col gap-stack-md text-center">
+<h1 class="font-headline-lg text-headline-lg text-on-primary-fixed">
+                Manage your business from your pocket
+            </h1>
+<p class="font-body-md text-body-md text-on-surface-variant px-2">
+                Accept payments, track inventory, and grow your team — even offline.
+            </p>
+</div>
+<div class="flex flex-col gap-stack-sm pb-8 w-full mt-auto">
+<!-- Primary Button -->
+<button class="w-full h-[52px] bg-secondary text-on-secondary font-headline-sm text-headline-sm rounded-lg flex items-center justify-center transition-transform active:scale-[0.98]">
+                Get started
+            </button>
+<!-- Secondary Button -->
+<button class="w-full h-[52px] bg-surface text-secondary border-[1.5px] border-secondary font-headline-sm text-headline-sm rounded-lg flex items-center justify-center transition-transform active:scale-[0.98]">
+                I already have an account
+            </button>
+</div>
+</div>
+</body></html>
