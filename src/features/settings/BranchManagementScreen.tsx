@@ -5,10 +5,10 @@ import { useNavigation } from '@react-navigation/native';
 
 import { Badge, Button, Card, Screen } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
-import { getLocalDbState } from '@/db/localDb';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
-import { useAuthStore } from '@/store/authStore';
+import { typography } from '@/constants/typography';
+import { getLocalDbState } from '@/db/localDb';
 import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
 
@@ -16,7 +16,6 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function BranchManagementScreen() {
   const navigation = useNavigation<Navigation>();
-  const role = useAuthStore((state) => state.role);
   const businessId = useBusinessStore((state) => state.activeBusiness?.id ?? null);
   const branches = getLocalDbState().branches.filter((branch) => branch.business_id === businessId);
 
@@ -30,7 +29,11 @@ export default function BranchManagementScreen() {
   }
 
   return (
-    <Screen title="Branches" subtitle="Manage branches and stock locations." onBack={handleBack}>
+    <Screen title="POSly" onBack={handleBack}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Branches</Text>
+        <Text style={styles.subtitle}>Manage branches and stock locations.</Text>
+      </View>
       {branches.length === 0 ? (
         <EmptyState title="No branches" description="Create a branch when the business is set up." />
       ) : (
@@ -41,7 +44,10 @@ export default function BranchManagementScreen() {
           renderItem={({ item }) => (
             <Card style={styles.card}>
               <View style={styles.row}>
-                <Text style={styles.name}>{item.name}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.name}>{item.name}</Text>
+                  <Text style={styles.meta}>Branch location and inventory pool</Text>
+                </View>
                 <Badge label={item.is_active ? 'Active' : 'Inactive'} tone={item.is_active ? 'success' : 'neutral'} />
               </View>
               <Button label="Edit" variant="secondary" />
@@ -54,6 +60,17 @@ export default function BranchManagementScreen() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    gap: dimensions.xs,
+  },
+  title: {
+    ...typography.title,
+    color: colors.text,
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
   card: {
     gap: dimensions.sm,
   },
@@ -63,7 +80,10 @@ const styles = StyleSheet.create({
     gap: dimensions.sm,
   },
   name: {
+    ...typography.subtitle,
     color: colors.text,
-    fontWeight: '700',
+  },
+  meta: {
+    color: colors.textMuted,
   },
 });

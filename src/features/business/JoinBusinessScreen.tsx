@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Text, View, StyleSheet } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
 import { Button, Card, Input, Screen } from '@/components/ui';
+import { colors } from '@/constants/colors';
+import { dimensions } from '@/constants/dimensions';
+import { typography } from '@/constants/typography';
 import { joinBusiness } from '@/services/business.service';
 import { useAuthStore } from '@/store/authStore';
 import type { RootStackParamList } from '@/types/navigation';
@@ -46,8 +49,12 @@ export default function JoinBusinessScreen() {
   }
 
   return (
-    <Screen title="Join business" subtitle="Enter the 6-character join code from the owner." onBack={handleBack}>
-      <Card style={{ gap: 16 }}>
+    <Screen title="POSly" onBack={handleBack}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Join business</Text>
+        <Text style={styles.subtitle}>Enter the 6-character join code from the owner.</Text>
+      </View>
+      <Card style={styles.card}>
         <Input
           label="Join code"
           value={joinCode}
@@ -55,8 +62,45 @@ export default function JoinBusinessScreen() {
           autoCapitalize="characters"
           maxLength={6}
         />
+        <View style={styles.helperCard}>
+          <Text style={styles.helperTitle}>Need a code?</Text>
+          <Text style={styles.helperBody}>Ask the owner to create a workspace and share the code from the confirmation screen.</Text>
+        </View>
         <Button label="Join" onPress={handleJoin} loading={loading} />
       </Card>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    gap: dimensions.xs,
+  },
+  title: {
+    ...typography.title,
+    color: colors.text,
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
+  card: {
+    gap: dimensions.md,
+  },
+  helperCard: {
+    gap: dimensions.xs,
+    padding: dimensions.md,
+    borderRadius: dimensions.radiusMd,
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  helperTitle: {
+    ...typography.subtitle,
+    color: colors.text,
+  },
+  helperBody: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
+});

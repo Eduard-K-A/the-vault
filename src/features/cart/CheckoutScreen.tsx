@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
 import { Badge, Button, Card, Screen, SectionHeader } from '@/components/ui';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
+import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useCart } from '@/hooks/useCart';
 import { useAuthStore } from '@/store/authStore';
@@ -24,6 +25,8 @@ export default function CheckoutScreen() {
   const business = useBusinessStore((state) => state.activeBusiness);
   const branch = useBusinessStore((state) => state.activeBranch);
   const [loading, setLoading] = useState(false);
+  const [amountReceived, setAmountReceived] = useState('1500');
+  const changeDue = Math.max(0, Number(amountReceived || 0) - total);
 
   async function handleCheckout() {
     try {
@@ -47,15 +50,28 @@ export default function CheckoutScreen() {
   }
 
   return (
-    <Screen title="Checkout" subtitle="All writes happen locally before sync." onBack={handleBack}>
-      <ScrollView contentContainerStyle={{ gap: 16 }}>
-        <Card style={{ gap: dimensions.sm }}>
+    <Screen title="POSly" onBack={handleBack}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.pageHeader}>
+          <Text style={styles.pageTitle}>Checkout</Text>
+          <Text style={styles.pageSubtitle}>All writes happen locally before sync.</Text>
+        </View>
+        <Card style={styles.summaryHero}>
+          <Text style={styles.heroKicker}>{items.length} items</Text>
+          <Text style={styles.heroTotal}>{formatCurrency(total)}</Text>
+          <Pressable onPress={() => {}} hitSlop={8}>
+            <Text style={styles.heroLink}>View Details ˅</Text>
+          </Pressable>
+        </Card>
+
+        <Card style={styles.card}>
           <SectionHeader title={business?.name ?? 'No business selected'} subtitle={branch?.name ?? 'No branch selected'} />
-          <Badge label={`Items ${items.length}`} tone="primary" />
           {items.map((item) => (
             <View key={item.product_id} style={styles.itemRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.itemName}>{item.name}</Text>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={styles.itemName} numberOfLines={1}>
+                  {item.name}
+                </Text>
                 <Text style={styles.itemMeta}>
                   {item.quantity} x {formatCurrency(item.selling_price)}
                 </Text>
@@ -65,34 +81,98 @@ export default function CheckoutScreen() {
           ))}
         </Card>
 
-        <Card style={styles.summaryCard}>
-          <Text style={styles.summaryLine}>Subtotal {formatCurrency(subtotal)}</Text>
-          <Text style={styles.summaryLine}>Discount {formatCurrency(discountAmount)}</Text>
-          <Text style={styles.summaryTotal}>Total {formatCurrency(total)}</Text>
-        </Card>
+        <Text style={styles.sectionTitle}>How are they paying?</Text>
+        <View style={styles.paymentGrid}>
+          {paymentMethods.map((method) => (
+            <Pressable
+              key={method}
+              onPress={() => setPaymentMethod(method)}
+              style={[styles.paymentTile, paymentMethod === method && styles.paymentTileActive]}
+            >
+              <Text style={styles.paymentIcon}>{method === 'cash' ? '▭' : method === 'card' ? '▤' : method === 'gcash' ? '◫' : '•••'}</Text>
+              <Text style={styles.paymentLabel}>{method === 'gcash' ? 'GCash' : method === 'others' ? 'Others' : method[0].toUpperCase() + method.slice(1)}</Text>
+            </Pressable>
+          ))}
+        </View>
 
-        <Card style={styles.paymentCard}>
-          <SectionHeader title="Payment method" subtitle="Cashier chooses the tender type at checkout." />
-          <View style={styles.paymentRow}>
-            {paymentMethods.map((method) => (
-              <Button
-                key={method}
-                label={method}
-                variant={paymentMethod === method ? 'primary' : 'secondary'}
-                onPress={() => setPaymentMethod(method)}
-                fullWidth={false}
-              />
-            ))}
+        <Card style={styles.amountCard}>
+          <Text style={styles.amountLabel}>Amount Received</Text>
+          <View style={styles.amountField}>
+            <Text style={styles.peso}>₱</Text>
+            <Text style={styles.amountValue}>{amountReceived}</Text>
+          </View>
+          <View style={styles.changeRow}>
+            <Text style={styles.changeLabel}>Change Due</Text>
+            <Text style={styles.changeValue}>{formatCurrency(changeDue)}</Text>
           </View>
         </Card>
 
-        <Button label="Complete sale" onPress={handleCheckout} loading={loading} />
+        <Text style={styles.noteLabel}>Add a note (optional)</Text>
+        <Card style={styles.noteCard}>
+          <Text style={styles.notePlaceholder}>e.g. VIP Customer</Text>
+        </Card>
+
+        <Card style={styles.summaryCard}>
+          <View style={styles.totalsRow}>
+            <Text style={styles.summaryLine}>Subtotal</Text>
+            <Text style={styles.summaryLine}>{formatCurrency(subtotal)}</Text>
+          </View>
+          <View style={styles.totalsRow}>
+            <Text style={styles.summaryLine}>Discount</Text>
+            <Text style={styles.summaryLine}>{formatCurrency(discountAmount)}</Text>
+          </View>
+          <View style={styles.totalsRowTotal}>
+            <Text style={styles.summaryTotal}>Total</Text>
+            <Text style={styles.summaryTotal}>{formatCurrency(total)}</Text>
+          </View>
+        </Card>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerNote}>Saving offline. Will sync when connected.</Text>
+          <Button label="Complete Sale" onPress={handleCheckout} loading={loading} />
+        </View>
       </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  content: {
+    gap: dimensions.lg,
+    paddingBottom: dimensions.xl,
+  },
+  pageHeader: {
+    gap: dimensions.xs,
+  },
+  pageTitle: {
+    ...typography.title,
+    color: colors.text,
+  },
+  pageSubtitle: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
+  summaryHero: {
+    gap: dimensions.xs,
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    paddingVertical: dimensions.lg,
+  },
+  heroKicker: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
+  heroTotal: {
+    ...typography.title,
+    color: colors.text,
+  },
+  heroLink: {
+    ...typography.body,
+    color: colors.accent,
+  },
+  card: {
+    gap: dimensions.md,
+  },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -100,7 +180,7 @@ const styles = StyleSheet.create({
   },
   itemName: {
     color: colors.text,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   itemMeta: {
     color: colors.textMuted,
@@ -109,8 +189,111 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: '700',
   },
-  summaryCard: {
+  sectionTitle: {
+    ...typography.subtitle,
+    color: colors.text,
+  },
+  paymentGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: dimensions.sm,
+  },
+  paymentTile: {
+    width: '48%',
+    minHeight: 112,
+    borderRadius: dimensions.radiusMd,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: dimensions.sm,
+  },
+  paymentTileActive: {
+    borderColor: colors.accent,
+    borderWidth: 2,
+  },
+  paymentIcon: {
+    ...typography.title,
+    color: colors.accent,
+  },
+  paymentLabel: {
+    ...typography.body,
+    color: colors.text,
+  },
+  amountCard: {
+    gap: dimensions.md,
+  },
+  amountLabel: {
+    ...typography.label,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+  },
+  amountField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.accent,
+    borderRadius: dimensions.radiusMd,
+    minHeight: 64,
+    paddingHorizontal: dimensions.md,
     gap: dimensions.xs,
+  },
+  peso: {
+    ...typography.title,
+    color: colors.text,
+  },
+  amountValue: {
+    ...typography.title,
+    color: colors.text,
+  },
+  changeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: dimensions.xs,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  changeLabel: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
+  changeValue: {
+    ...typography.subtitle,
+    color: '#065F46',
+    backgroundColor: '#A7F3D0',
+    paddingHorizontal: dimensions.md,
+    paddingVertical: dimensions.xs,
+    borderRadius: dimensions.radiusFull,
+    overflow: 'hidden',
+  },
+  noteLabel: {
+    ...typography.label,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+  },
+  noteCard: {
+    minHeight: 56,
+    justifyContent: 'center',
+  },
+  notePlaceholder: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
+  summaryCard: {
+    gap: dimensions.sm,
+  },
+  totalsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  totalsRowTotal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: dimensions.xs,
   },
   summaryLine: {
     color: colors.textMuted,
@@ -119,12 +302,13 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: '700',
   },
-  paymentCard: {
-    gap: dimensions.md,
-  },
-  paymentRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  footer: {
     gap: dimensions.sm,
+    paddingTop: dimensions.sm,
+  },
+  footerNote: {
+    ...typography.caption,
+    color: colors.textMuted,
+    textAlign: 'center',
   },
 });

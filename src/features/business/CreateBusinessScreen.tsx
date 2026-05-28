@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Text, View, StyleSheet } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
 import { Button, Card, Input, Screen } from '@/components/ui';
+import { colors } from '@/constants/colors';
+import { dimensions } from '@/constants/dimensions';
+import { typography } from '@/constants/typography';
 import { createBusiness } from '@/services/business.service';
 import type { RootStackParamList } from '@/types/navigation';
 
@@ -38,13 +41,59 @@ export default function CreateBusinessScreen() {
   }
 
   return (
-    <Screen title="Create business" subtitle="Set up your first workspace." onBack={handleBack}>
-      <Card style={{ gap: 16 }}>
-        <Input label="Business name" value={name} onChangeText={setName} />
-        <Input label="Address" value={address} onChangeText={setAddress} />
-        <Input label="First branch" value={branchName} onChangeText={setBranchName} />
+    <Screen title="POSly" onBack={handleBack}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Create business</Text>
+        <Text style={styles.subtitle}>Set up your first workspace.</Text>
+      </View>
+      <Card style={styles.card}>
+        <View style={styles.stack}>
+          <Input label="Business name" value={name} onChangeText={setName} />
+          <Input label="Address" value={address} onChangeText={setAddress} />
+          <Input label="First branch" value={branchName} onChangeText={setBranchName} />
+        </View>
+        <View style={styles.infoCard}>
+          <Text style={styles.infoTitle}>What happens next?</Text>
+          <Text style={styles.infoBody}>A join code is generated, then your team can join and start selling immediately.</Text>
+        </View>
         <Button label="Create" onPress={handleCreate} loading={loading} />
       </Card>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    gap: dimensions.xs,
+  },
+  title: {
+    ...typography.title,
+    color: colors.text,
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
+  card: {
+    gap: dimensions.md,
+  },
+  stack: {
+    gap: dimensions.md,
+  },
+  infoCard: {
+    gap: dimensions.xs,
+    padding: dimensions.md,
+    borderRadius: dimensions.radiusMd,
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  infoTitle: {
+    ...typography.subtitle,
+    color: colors.text,
+  },
+  infoBody: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
+});

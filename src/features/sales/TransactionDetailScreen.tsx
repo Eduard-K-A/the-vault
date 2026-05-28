@@ -8,9 +8,9 @@ import { Badge, Card, Screen, SectionHeader } from '@/components/ui';
 import { getLocalDbState } from '@/db/localDb';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
+import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatDate';
-import { useAuthStore } from '@/store/authStore';
 import type { RootStackParamList } from '@/types/navigation';
 
 type Route = NativeStackScreenProps<RootStackParamList, 'TransactionDetail'>['route'];
@@ -19,7 +19,6 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 export default function TransactionDetailScreen() {
   const navigation = useNavigation<Navigation>();
   const route = useRoute<Route>();
-  const role = useAuthStore((state) => state.role);
   const sale = getLocalDbState().sales.find((entry) => entry.id === route.params.saleId) ?? null;
   const items = getLocalDbState().saleItems.filter((entry) => entry.sale_id === route.params.saleId);
 
@@ -34,7 +33,11 @@ export default function TransactionDetailScreen() {
 
   if (!sale) {
     return (
-      <Screen title="Transaction detail" subtitle="Transaction not found." onBack={handleBack}>
+    <Screen title="POSly" onBack={handleBack}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Transaction detail</Text>
+          <Text style={styles.subtitle}>Transaction not found.</Text>
+        </View>
         <Card>
           <Text style={styles.empty}>This sale is unavailable.</Text>
         </Card>
@@ -43,10 +46,17 @@ export default function TransactionDetailScreen() {
   }
 
   return (
-    <Screen title="Transaction detail" subtitle="Review transaction data and sale items." onBack={handleBack}>
-      <Card style={{ gap: dimensions.md }}>
+    <Screen title="POSly" onBack={handleBack}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Transaction detail</Text>
+        <Text style={styles.subtitle}>Review transaction data and sale items.</Text>
+      </View>
+      <Card style={styles.card}>
         <SectionHeader title={formatCurrency(sale.total_amount)} subtitle={formatDate(sale.created_at)} />
-        <Badge label={sale.status} tone={sale.status === 'completed' ? 'success' : 'neutral'} />
+        <View style={styles.metaRow}>
+          <Badge label={sale.status} tone={sale.status === 'completed' ? 'success' : 'neutral'} />
+          <Text style={styles.meta}>{sale.payment_method}</Text>
+        </View>
         <FlatList
           data={items}
           keyExtractor={(item) => item.id}
@@ -64,7 +74,30 @@ export default function TransactionDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    gap: dimensions.xs,
+  },
+  title: {
+    ...typography.title,
+    color: colors.text,
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
   empty: {
+    color: colors.textMuted,
+  },
+  card: {
+    gap: dimensions.md,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: dimensions.sm,
+  },
+  meta: {
     color: colors.textMuted,
   },
   row: {

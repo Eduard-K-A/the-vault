@@ -3,6 +3,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
+import { BrandMark } from '@/components/BrandMark';
 import { Badge, Button, Card, Input, Screen } from '@/components/ui';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
@@ -44,15 +45,21 @@ export default function SignupScreen() {
   }
 
   return (
-    <Screen title="Create account" subtitle="Choose a role to tailor the workspace." onBack={handleBack}>
+    <Screen onBack={handleBack} action={<BrandMark compact />}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Create account</Text>
+        <Text style={styles.subtitle}>Choose a role to tailor the workspace.</Text>
+      </View>
       <Card style={styles.card}>
-        <Input label="Full name" value={fullname} onChangeText={setFullname} />
-        <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
-        <Input label="Password" value={password} onChangeText={setPassword} secureTextEntry />
+        <View style={styles.stack}>
+          <Input label="Full name" value={fullname} onChangeText={setFullname} />
+          <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+          <Input label="Password" value={password} onChangeText={setPassword} secureTextEntry />
+        </View>
         <View style={styles.roleRow}>
           {roles.map((candidate) => (
             <Pressable key={candidate} onPress={() => setRole(candidate)} style={styles.roleButton}>
-              <Badge label={candidate === role ? `${candidate} selected` : candidate} tone={candidate === role ? 'primary' : 'neutral'} />
+              <Badge label={candidate === role ? `${candidate} selected` : candidate} tone={candidate === role ? 'accent' : 'neutral'} />
             </Pressable>
           ))}
         </View>
@@ -64,7 +71,26 @@ export default function SignupScreen() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    alignItems: 'center',
+    gap: dimensions.xs,
+    paddingTop: dimensions.md,
+    paddingBottom: dimensions.lg,
+  },
+  title: {
+    ...typography.title,
+    color: colors.text,
+    textAlign: 'center',
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
   card: {
+    gap: dimensions.md,
+  },
+  stack: {
     gap: dimensions.md,
   },
   roleRow: {

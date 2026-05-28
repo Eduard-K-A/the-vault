@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Alert, ScrollView } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
 import { Button, Card, Input, Screen } from '@/components/ui';
+import { colors } from '@/constants/colors';
+import { typography } from '@/constants/typography';
 import { db } from '@/db/powersync';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
@@ -80,9 +82,13 @@ export default function AddProductScreen() {
   }
 
   return (
-    <Screen title="Add product" subtitle="Owners can create products for the workspace." onBack={handleBack}>
-      <ScrollView contentContainerStyle={{ gap: 16 }}>
-        <Card style={{ gap: 16 }}>
+    <Screen title="POSly" onBack={handleBack}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Add New Product</Text>
+          <Text style={styles.subtitle}>Enter product details to add to inventory.</Text>
+        </View>
+        <Card style={styles.card}>
           <Input label="Product name" value={name} onChangeText={setName} />
           <Input label="Barcode" value={barcode} onChangeText={setBarcode} autoCapitalize="characters" />
           <Input label="SKU" value={sku} onChangeText={setSku} autoCapitalize="characters" />
@@ -95,3 +101,26 @@ export default function AddProductScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  content: {
+    gap: 16,
+    paddingBottom: 8,
+  },
+  header: {
+    gap: 4,
+  },
+  title: {
+    fontSize: 28,
+    lineHeight: 36,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
+  card: {
+    gap: 16,
+  },
+});

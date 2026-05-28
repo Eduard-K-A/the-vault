@@ -1,15 +1,15 @@
 import React from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
-import { Badge, Card, Screen, StatCard } from '@/components/ui';
-import { BarChart } from '@/components/charts';
+import { Button, Card, Screen } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
 import { getLocalDbState } from '@/db/localDb';
 import { getOwnerAnalytics } from '@/db/queries/analyticsQueries';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
+import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useAuthStore } from '@/store/authStore';
 import type { RootStackParamList } from '@/types/navigation';
@@ -18,11 +18,11 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function PerformanceDashboard() {
   const navigation = useNavigation<Navigation>();
-  const role = useAuthStore((state) => state.role);
   const state = getLocalDbState();
   const business = state.businesses[0];
   const branch = state.branches[0];
   const analytics = business && branch ? getOwnerAnalytics(state, business.id, branch.id) : null;
+  useAuthStore((store) => store.role);
 
   function handleBack() {
     if (navigation.canGoBack()) {
@@ -41,57 +41,196 @@ export default function PerformanceDashboard() {
     );
   }
 
+  const teamCount = analytics.leaderboard.length;
+  const activeToday = Math.max(1, analytics.leaderboard.filter((item) => item.revenue > 0).length);
+
   return (
-    <Screen title="Performance" subtitle="Employee leaderboard and category trends." onBack={handleBack}>
-      <View style={styles.metrics}>
-        <StatCard label="Revenue today" value={formatCurrency(analytics.summary.revenue)} tone="primary" />
-        <StatCard label="Top sellers" value={String(analytics.topProducts.length)} tone="accent" />
+      <Screen
+        title="Store POS"
+        onBack={handleBack}
+        action={<Button label="Invite" variant="primary" fullWidth={false} />}
+      >
+      <View style={styles.stack}>
+        <View style={styles.pageHeader}>
+          <Text style={styles.pageTitle}>Team</Text>
+        </View>
+        <View style={styles.statsRow}>
+          <Card style={styles.statCard}>
+            <Text style={styles.statLabel}>Total team</Text>
+            <Text style={styles.statValue}>{teamCount} Employees</Text>
+          </Card>
+          <Card style={[styles.statCard, styles.statCardStatus]}>
+            <Text style={styles.statLabel}>Status</Text>
+            <Text style={styles.statValue}>{activeToday} Online Today</Text>
+          </Card>
+        </View>
+
+        <View style={styles.list}>
+          {analytics.leaderboard.map((item, index) => (
+            <Card key={item.employee_id} style={[styles.memberCard, index >= 2 && styles.memberCardMuted]}>
+              <View style={styles.memberRow}>
+                <View style={[styles.avatar, avatarPalette[index % avatarPalette.length], index >= 2 && styles.avatarMuted]}>
+                  <Text style={styles.avatarText}>{getInitials(item.fullname)}</Text>
+                  <View style={styles.onlineDot} />
+                </View>
+                <View style={styles.memberCopy}>
+                  <View style={styles.memberHeader}>
+                    <Text style={[styles.memberName, index >= 2 && styles.memberNameMuted]}>{item.fullname}</Text>
+                    <View style={styles.roleChip}>
+                      <Text style={styles.roleText}>{getRoleLabel(index)}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.memberMeta}>Sales this month: {formatCurrency(item.revenue)}</Text>
+                </View>
+                <Text style={styles.chevron}>›</Text>
+              </View>
+            </Card>
+          ))}
+        </View>
       </View>
-      <Card style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Top products</Text>
-        <BarChart data={analytics.topProducts.slice(0, 5).map((item) => ({ label: item.name, value: item.total_qty }))} />
-      </Card>
-      <Card style={styles.chartCard}>
-        <Badge label="Leaderboard" tone="neutral" />
-        <FlatList
-          data={analytics.leaderboard}
-          keyExtractor={(item) => item.employee_id}
-          ItemSeparatorComponent={() => <View style={{ height: dimensions.xs }} />}
-          renderItem={({ item }) => (
-            <View style={styles.row}>
-              <Text style={styles.label}>{item.fullname}</Text>
-              <Text style={styles.amount}>{formatCurrency(item.revenue)}</Text>
-            </View>
-          )}
-        />
-      </Card>
     </Screen>
   );
 }
 
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
+function getRoleLabel(index: number): string {
+  if (index === 0) {
+    return 'Cashier';
+  }
+  if (index === 1) {
+    return 'Manager';
+  }
+
+  return index % 2 === 0 ? 'Cashier' : 'Inventory';
+}
+
+const avatarPalette = [
+  { backgroundColor: '#D9D6FF' },
+  { backgroundColor: '#F7D7D3' },
+  { backgroundColor: '#E1E4E8' },
+  { backgroundColor: '#D9D8F0' },
+];
+
 const styles = StyleSheet.create({
-  metrics: {
+  stack: {
+    gap: dimensions.lg,
+  },
+  pageHeader: {
+    gap: dimensions.xs,
+  },
+  pageTitle: {
+    ...typography.title,
+    color: colors.text,
+  },
+  statsRow: {
     flexDirection: 'row',
+    gap: dimensions.sm,
+  },
+  statCard: {
+    flex: 1,
+    minHeight: 126,
+    justifyContent: 'center',
+    gap: dimensions.sm,
+  },
+  statCardStatus: {
+    backgroundColor: '#F8FFF9',
+  },
+  statLabel: {
+    ...typography.label,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+  },
+  statValue: {
+    ...typography.subtitle,
+    color: colors.text,
+  },
+  list: {
+    gap: dimensions.md,
+  },
+  memberCard: {
+    padding: dimensions.md,
+  },
+  memberCardMuted: {
+    opacity: 0.82,
+  },
+  memberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: dimensions.md,
+  },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  avatarMuted: {
+    opacity: 0.85,
+  },
+  avatarText: {
+    color: colors.accent,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  onlineDot: {
+    position: 'absolute',
+    right: 2,
+    bottom: 2,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#58D39B',
+    borderWidth: 2,
+    borderColor: colors.surface,
+  },
+  memberCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: dimensions.xs,
+  },
+  memberHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: dimensions.sm,
     flexWrap: 'wrap',
   },
-  chartCard: {
-    gap: dimensions.md,
-  },
-  chartTitle: {
+  memberName: {
     color: colors.text,
+    fontSize: 20,
     fontWeight: '700',
   },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: dimensions.sm,
-  },
-  label: {
+  memberNameMuted: {
     color: colors.textMuted,
   },
-  amount: {
+  roleChip: {
+    backgroundColor: colors.surfaceMuted,
+    paddingHorizontal: dimensions.sm,
+    paddingVertical: 4,
+    borderRadius: dimensions.radiusFull,
+  },
+  roleText: {
+    ...typography.label,
     color: colors.text,
-    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  memberMeta: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
+  chevron: {
+    color: colors.textMuted,
+    fontSize: 32,
+    lineHeight: 32,
+    marginTop: -2,
   },
 });

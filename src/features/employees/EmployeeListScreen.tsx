@@ -5,9 +5,10 @@ import { useNavigation } from '@react-navigation/native';
 
 import { Badge, Button, Card, Screen } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
-import { getLocalDbState } from '@/db/localDb';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
+import { typography } from '@/constants/typography';
+import { getLocalDbState } from '@/db/localDb';
 import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
 
@@ -25,7 +26,11 @@ export default function EmployeeListScreen() {
     .filter((entry) => Boolean(entry.profile));
 
   return (
-    <Screen title="Employees" subtitle="Manage the team and view member performance.">
+    <Screen title="POSly">
+      <View style={styles.header}>
+        <Text style={styles.title}>Team</Text>
+        <Text style={styles.subtitle}>Manage the team and view member performance.</Text>
+      </View>
       <Button label="Performance dashboard" onPress={() => navigation.navigate('PerformanceDashboard')} />
       {employees.length === 0 ? (
         <EmptyState title="No employees found" description="Invite employees with a join code." />
@@ -55,6 +60,17 @@ export default function EmployeeListScreen() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    gap: dimensions.xs,
+  },
+  title: {
+    ...typography.title,
+    color: colors.text,
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
   card: {
     gap: dimensions.sm,
   },
@@ -63,8 +79,8 @@ const styles = StyleSheet.create({
     gap: dimensions.sm,
   },
   name: {
+    ...typography.subtitle,
     color: colors.text,
-    fontWeight: '700',
   },
   meta: {
     color: colors.textMuted,

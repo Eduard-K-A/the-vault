@@ -10,6 +10,7 @@ import { getLocalDbState } from '@/db/localDb';
 import { getEmployeeAnalytics, getOwnerAnalytics } from '@/db/queries/analyticsQueries';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
+import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
@@ -54,64 +55,122 @@ export default function AnalyticsScreen() {
       : analytics.leaderboard.map((item) => ({ label: item.fullname.slice(0, 8), value: item.revenue }));
 
   return (
-    <Screen
-      title="Analytics"
-      subtitle="Local analytics from SQLite-style queries."
-      action={<Badge label={role ?? 'member'} tone="primary" />}
-      onBack={handleBack}
-    >
-      <View style={styles.metrics}>
-        {'summary' in analytics ? (
-          <>
-            <StatCard label="Revenue" value={formatCurrency(analytics.summary.revenue)} tone="primary" />
-            <StatCard label="Transactions" value={String(analytics.summary.transactions)} tone="accent" />
-            <StatCard label="Net" value={formatCurrency(analytics.summary.netRevenue)} tone="success" />
-          </>
-        ) : (
-          <>
-            <StatCard label="Today" value={formatCurrency(analytics.todayTotal)} tone="primary" />
-            <StatCard label="Week" value={formatCurrency(analytics.weeklyTotal)} tone="accent" />
-            <StatCard label="Month" value={formatCurrency(analytics.monthlyTotal)} tone="success" />
-          </>
-        )}
-      </View>
+    <Screen title="Analytics" action={<Badge label={role ?? 'member'} tone="primary" />} onBack={handleBack}>
+      <View style={styles.stack}>
+        <Card style={styles.selectorCard}>
+          <View style={styles.selectorRow}>
+            <Text style={styles.selectorActive}>Daily</Text>
+            <Text style={styles.selectorItem}>Weekly</Text>
+            <Text style={styles.selectorItem}>Monthly</Text>
+            <Text style={styles.selectorItem}>☷</Text>
+          </View>
+        </Card>
 
-      <Card style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Trend</Text>
-        <LineChart data={trendData.slice(0, 7)} />
-      </Card>
+        <View style={styles.revenueHeader}>
+          <View>
+            <Text style={styles.revenueLabel}>Total Revenue</Text>
+            <Text style={styles.revenueValue}>{'summary' in analytics ? formatCurrency(analytics.summary.revenue) : formatCurrency(analytics.todayTotal)}</Text>
+          </View>
+          <Badge label="+12.5%" tone="success" />
+        </View>
 
-      <Card style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Top products</Text>
-        <BarChart
-          data={('topProducts' in analytics ? analytics.topProducts : []).slice(0, 5).map((item) => ({
-            label: item.name,
-            value: item.total_qty,
-          }))}
-        />
-      </Card>
+        <View style={styles.metrics}>
+          {'summary' in analytics ? (
+            <>
+              <StatCard label="Revenue" value={formatCurrency(analytics.summary.revenue)} tone="primary" />
+              <StatCard label="Transactions" value={String(analytics.summary.transactions)} tone="accent" />
+              <StatCard label="Net" value={formatCurrency(analytics.summary.netRevenue)} tone="success" />
+            </>
+          ) : (
+            <>
+              <StatCard label="Today" value={formatCurrency(analytics.todayTotal)} tone="primary" />
+              <StatCard label="Week" value={formatCurrency(analytics.weeklyTotal)} tone="accent" />
+              <StatCard label="Month" value={formatCurrency(analytics.monthlyTotal)} tone="success" />
+            </>
+          )}
+        </View>
 
-      {'paymentBreakdown' in analytics ? (
         <Card style={styles.chartCard}>
-          <Text style={styles.chartTitle}>Payment breakdown</Text>
-          <FlatList
-            data={analytics.paymentBreakdown}
-            keyExtractor={(item) => item.payment_method}
-            ItemSeparatorComponent={() => <View style={{ height: dimensions.xs }} />}
-            renderItem={({ item }) => (
-              <View style={styles.row}>
-                <Text style={styles.label}>{item.payment_method}</Text>
-                <Text style={styles.amount}>{formatCurrency(item.total_revenue)}</Text>
-              </View>
-            )}
+          <View style={styles.chartHeader}>
+            <Text style={styles.chartTitle}>Top 5 Products</Text>
+            <Text style={styles.chartLink}>View All</Text>
+          </View>
+          <LineChart data={trendData.slice(0, 7)} />
+        </Card>
+
+        <Card style={styles.chartCard}>
+          <Text style={styles.chartTitle}>Top Performers</Text>
+          <BarChart
+            data={('topProducts' in analytics ? analytics.topProducts : []).slice(0, 5).map((item) => ({
+              label: item.name,
+              value: item.total_qty,
+            }))}
           />
         </Card>
-      ) : null}
+
+        {'paymentBreakdown' in analytics ? (
+          <Card style={styles.chartCard}>
+            <Text style={styles.chartTitle}>Payment breakdown</Text>
+            <FlatList
+              data={analytics.paymentBreakdown}
+              keyExtractor={(item) => item.payment_method}
+              ItemSeparatorComponent={() => <View style={{ height: dimensions.xs }} />}
+              renderItem={({ item }) => (
+                <View style={styles.row}>
+                  <Text style={styles.label}>{item.payment_method}</Text>
+                  <Text style={styles.amount}>{formatCurrency(item.total_revenue)}</Text>
+                </View>
+              )}
+            />
+          </Card>
+        ) : null}
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  stack: {
+    gap: dimensions.lg,
+  },
+  selectorCard: {
+    padding: dimensions.sm,
+  },
+  selectorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: dimensions.md,
+  },
+  selectorActive: {
+    ...typography.body,
+    color: colors.text,
+    fontWeight: '700',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: dimensions.radiusMd,
+    paddingHorizontal: dimensions.md,
+    paddingVertical: dimensions.xs,
+  },
+  selectorItem: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
+  revenueHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  revenueLabel: {
+    ...typography.label,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+  },
+  revenueValue: {
+    ...typography.title,
+    color: colors.text,
+    marginTop: 2,
+  },
   metrics: {
     flexDirection: 'row',
     gap: dimensions.sm,
@@ -120,9 +179,18 @@ const styles = StyleSheet.create({
   chartCard: {
     gap: dimensions.md,
   },
+  chartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   chartTitle: {
+    ...typography.subtitle,
     color: colors.text,
-    fontWeight: '700',
+  },
+  chartLink: {
+    ...typography.body,
+    color: colors.accent,
   },
   row: {
     flexDirection: 'row',

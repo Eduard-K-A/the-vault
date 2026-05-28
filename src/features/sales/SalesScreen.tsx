@@ -7,6 +7,7 @@ import { Badge, Button, Card, Screen, StatCard } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
+import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useSales } from '@/hooks/useSales';
 import type { RootStackParamList } from '@/types/navigation';
@@ -32,40 +33,46 @@ export default function SalesScreen() {
   }, [sales]);
 
   return (
-    <Screen title="Sales" subtitle="Your local transaction history." action={<Badge label="Employee view" tone="primary" />}>
-      <View style={styles.metrics}>
-        <StatCard label="Today" value={formatCurrency(metrics.today)} tone="primary" />
-        <StatCard label="Week" value={formatCurrency(metrics.week)} tone="accent" />
-        <StatCard label="Month" value={formatCurrency(metrics.month)} tone="success" />
-      </View>
-      {sales.length === 0 ? (
-        <EmptyState title="No sales yet" description="Checkout completed sales will appear here." />
-      ) : (
-        <FlatList
-          data={sales}
-          keyExtractor={(item) => item.id}
-          ItemSeparatorComponent={() => <View style={{ height: dimensions.sm }} />}
-          renderItem={({ item }) => (
-            <Card style={styles.rowCard}>
-              <View style={styles.row}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.saleId}>{item.id.slice(0, 8).toUpperCase()}</Text>
-                  <Text style={styles.saleMeta}>{item.created_at}</Text>
+    <Screen title="My Sales" action={<Badge label="Employee view" tone="primary" />}>
+      <View style={styles.stack}>
+        <View style={styles.metrics}>
+          <StatCard label="Today" value={formatCurrency(metrics.today)} tone="primary" />
+          <StatCard label="Week" value={formatCurrency(metrics.week)} tone="accent" />
+          <StatCard label="Month" value={formatCurrency(metrics.month)} tone="success" />
+        </View>
+        <Card style={styles.summaryCard}>
+          <Text style={styles.summaryTitle}>Daily sales pulse</Text>
+          <Text style={styles.summaryBody}>Completed sales are listed below with payment method and status chips for quick scanning.</Text>
+        </Card>
+        {sales.length === 0 ? (
+          <EmptyState title="No sales yet" description="Checkout completed sales will appear here." />
+        ) : (
+          <FlatList
+            data={sales}
+            keyExtractor={(item) => item.id}
+            ItemSeparatorComponent={() => <View style={{ height: dimensions.sm }} />}
+            renderItem={({ item }) => (
+              <Card style={styles.rowCard}>
+                <View style={styles.row}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.saleId}>{item.id.slice(0, 8).toUpperCase()}</Text>
+                    <Text style={styles.saleMeta}>{item.created_at}</Text>
+                  </View>
+                  <Text style={styles.amount}>{formatCurrency(item.total_amount)}</Text>
                 </View>
-                <Text style={styles.amount}>{formatCurrency(item.total_amount)}</Text>
-              </View>
-              <Badge label={item.payment_method} tone="neutral" />
-              <Badge
-                label={item.status}
-                tone={item.status === 'completed' ? 'success' : item.status === 'voided' ? 'warning' : 'danger'}
-              />
-            </Card>
-          )}
-        />
-      )}
-      <Card>
+                <View style={styles.badges}>
+                  <Badge label={item.payment_method} tone="neutral" />
+                  <Badge
+                    label={item.status}
+                    tone={item.status === 'completed' ? 'success' : item.status === 'voided' ? 'warning' : 'danger'}
+                  />
+                </View>
+              </Card>
+            )}
+          />
+        )}
         <Button label="View analytics" onPress={() => navigation.navigate('Analytics')} />
-      </Card>
+      </View>
     </Screen>
   );
 }
@@ -88,10 +95,24 @@ function getWeekKey(value: Date): string {
 }
 
 const styles = StyleSheet.create({
+  stack: {
+    gap: dimensions.lg,
+  },
   metrics: {
     flexDirection: 'row',
     gap: dimensions.sm,
     flexWrap: 'wrap',
+  },
+  summaryCard: {
+    gap: dimensions.xs,
+  },
+  summaryTitle: {
+    ...typography.subtitle,
+    color: colors.text,
+  },
+  summaryBody: {
+    ...typography.body,
+    color: colors.textMuted,
   },
   rowCard: {
     gap: dimensions.sm,
@@ -111,5 +132,10 @@ const styles = StyleSheet.create({
   amount: {
     color: colors.text,
     fontWeight: '700',
+  },
+  badges: {
+    flexDirection: 'row',
+    gap: dimensions.xs,
+    flexWrap: 'wrap',
   },
 });

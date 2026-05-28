@@ -8,8 +8,8 @@ import { EmptyState } from '@/components/EmptyState';
 import { getLocalDbState } from '@/db/localDb';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
+import { typography } from '@/constants/typography';
 import { formatDate } from '@/utils/formatDate';
-import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
 
@@ -17,7 +17,6 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function AuditLogScreen() {
   const navigation = useNavigation<Navigation>();
-  const role = useAuthStore((state) => state.role);
   const businessId = useBusinessStore((state) => state.activeBusiness?.id ?? null);
   const logs = getLocalDbState().auditLogs.filter((log) => log.business_id === businessId);
 
@@ -31,7 +30,11 @@ export default function AuditLogScreen() {
   }
 
   return (
-    <Screen title="Audit log" subtitle="Owner-only trace of business actions." onBack={handleBack}>
+    <Screen title="POSly" onBack={handleBack}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Audit log</Text>
+        <Text style={styles.subtitle}>Trace of business actions.</Text>
+      </View>
       {logs.length === 0 ? (
         <EmptyState title="No audit events" description="Actions will appear here when changes are recorded." />
       ) : (
@@ -45,7 +48,9 @@ export default function AuditLogScreen() {
                 <Text style={styles.type}>{item.event_type}</Text>
                 <Badge label={formatDate(item.created_at)} tone="neutral" />
               </View>
-              <Text style={styles.meta}>{JSON.stringify(item.payload)}</Text>
+              <Text style={styles.meta} numberOfLines={3}>
+                {JSON.stringify(item.payload)}
+              </Text>
             </Card>
           )}
         />
@@ -55,6 +60,17 @@ export default function AuditLogScreen() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    gap: dimensions.xs,
+  },
+  title: {
+    ...typography.title,
+    color: colors.text,
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
   card: {
     gap: dimensions.xs,
   },
@@ -64,8 +80,8 @@ const styles = StyleSheet.create({
     gap: dimensions.sm,
   },
   type: {
+    ...typography.subtitle,
     color: colors.text,
-    fontWeight: '700',
   },
   meta: {
     color: colors.textMuted,

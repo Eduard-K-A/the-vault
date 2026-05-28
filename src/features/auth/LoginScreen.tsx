@@ -39,15 +39,21 @@ export default function LoginScreen() {
   }
 
   return (
-    <Screen title="Log in" subtitle="Use your Supabase-backed account to access the workspace." onBack={handleBack}>
+    <Screen onBack={handleBack}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Welcome back</Text>
+        <Text style={styles.subtitle}>Sign in to continue</Text>
+      </View>
       <Card style={styles.card}>
-        <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
-        <Input label="Password" value={password} onChangeText={setPassword} secureTextEntry />
-        <Button label="Continue" onPress={handleSignIn} loading={loading} />
-        <View style={styles.inlineLinks}>
+        <View style={styles.stack}>
+          <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
+          <Input label="Password" value={password} onChangeText={setPassword} secureTextEntry />
+        </View>
+        <View style={styles.linkRow}>
           <Button label="Forgot password" variant="ghost" onPress={() => navigation.navigate('ForgotPassword')} fullWidth={false} />
           <Button label="Create account" variant="secondary" onPress={() => navigation.navigate('Signup')} fullWidth={false} />
         </View>
+        <Button label="Continue" onPress={handleSignIn} loading={loading} />
       </Card>
       <Text style={styles.helper}>Demo credentials: owner@thevault.local or cashier@thevault.local</Text>
     </Screen>
@@ -55,10 +61,29 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  header: {
+    alignItems: 'center',
+    gap: dimensions.xs,
+    paddingTop: dimensions.md,
+    paddingBottom: dimensions.lg,
+  },
+  title: {
+    ...typography.title,
+    color: colors.text,
+    textAlign: 'center',
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
   card: {
     gap: dimensions.md,
   },
-  inlineLinks: {
+  stack: {
+    gap: dimensions.md,
+  },
+  linkRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: dimensions.sm,

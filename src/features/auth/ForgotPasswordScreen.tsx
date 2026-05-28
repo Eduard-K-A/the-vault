@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
 import { Button, Card, Input, Screen } from '@/components/ui';
+import { colors } from '@/constants/colors';
+import { typography } from '@/constants/typography';
 import { resetPassword } from '@/services/auth.service';
 import type { RootStackParamList } from '@/types/navigation';
 
@@ -37,11 +39,45 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <Screen title="Forgot password" subtitle="Request a reset link for your account." onBack={handleBack}>
-      <Card style={{ gap: 16 }}>
+    <Screen onBack={handleBack}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Forgot password</Text>
+        <Text style={styles.subtitle}>Request a reset link for your account.</Text>
+      </View>
+      <Card style={styles.card}>
         <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
         <Button label="Send reset link" onPress={handleReset} loading={loading} />
       </Card>
+      <Text style={styles.helper}>
+        Use the same email that you used to sign up.
+      </Text>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    alignItems: 'center',
+    gap: 4,
+    paddingTop: 8,
+    paddingBottom: 12,
+  },
+  title: {
+    ...typography.title,
+    color: colors.text,
+    textAlign: 'center',
+  },
+  subtitle: {
+    ...typography.body,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+  card: {
+    gap: 16,
+  },
+  helper: {
+    ...typography.caption,
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+});

@@ -33,14 +33,17 @@ export default function CartSheet({ visible, onClose }: CartSheetProps) {
             ItemSeparatorComponent={() => <View style={{ height: dimensions.sm }} />}
             renderItem={({ item }) => (
               <View style={styles.row}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.name}>{item.name}</Text>
+                <View style={styles.rowCopy}>
+                  <Text style={styles.name} numberOfLines={2}>
+                    {item.name}
+                  </Text>
                   <Text style={styles.meta}>
-                    Qty {item.quantity} x {item.selling_price.toFixed(2)}
+                    {item.quantity} x {item.selling_price.toFixed(2)}
                   </Text>
                 </View>
                 <View style={styles.rowActions}>
                   <Button label="-" variant="secondary" onPress={() => setQuantity(item.product_id, item.quantity - 1)} fullWidth={false} />
+                  <Text style={styles.quantity}>{item.quantity}</Text>
                   <Button label="+" variant="secondary" onPress={() => setQuantity(item.product_id, item.quantity + 1)} fullWidth={false} />
                   <Button label="Remove" variant="ghost" onPress={() => removeItem(item.product_id)} fullWidth={false} />
                 </View>
@@ -48,9 +51,18 @@ export default function CartSheet({ visible, onClose }: CartSheetProps) {
             )}
           />
           <View style={styles.summary}>
-            <Text style={styles.summaryLine}>Subtotal: {subtotal.toFixed(2)}</Text>
-            <Text style={styles.summaryLine}>Discount: {discountAmount.toFixed(2)}</Text>
-            <Text style={styles.summaryTotal}>Total: {total.toFixed(2)}</Text>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Subtotal</Text>
+              <Text style={styles.summaryValue}>{subtotal.toFixed(2)}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Discount</Text>
+              <Text style={styles.summaryValue}>{discountAmount.toFixed(2)}</Text>
+            </View>
+            <View style={styles.summaryRowTotal}>
+              <Text style={styles.summaryTotalLabel}>Total</Text>
+              <Text style={styles.summaryTotalValue}>{total.toFixed(2)}</Text>
+            </View>
           </View>
           <Button
             label="Checkout"
@@ -74,11 +86,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: dimensions.sm,
     alignItems: 'center',
+    paddingVertical: dimensions.xs,
+  },
+  rowCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
   },
   name: {
     ...typography.body,
     color: colors.text,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   meta: {
     ...typography.caption,
@@ -87,7 +105,15 @@ const styles = StyleSheet.create({
   rowActions: {
     flexDirection: 'row',
     gap: dimensions.xs,
+    alignItems: 'center',
     flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+  },
+  quantity: {
+    ...typography.subtitle,
+    color: colors.text,
+    minWidth: 20,
+    textAlign: 'center',
   },
   summary: {
     gap: dimensions.xs,
@@ -95,14 +121,31 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
-  summaryLine: {
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  summaryRowTotal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: dimensions.xs,
+  },
+  summaryLabel: {
     ...typography.body,
     color: colors.textMuted,
   },
-  summaryTotal: {
+  summaryValue: {
     ...typography.body,
     color: colors.text,
-    fontWeight: '700',
+  },
+  summaryTotalLabel: {
+    ...typography.subtitle,
+    color: colors.text,
+  },
+  summaryTotalValue: {
+    ...typography.subtitle,
+    color: colors.accent,
   },
 });
-
