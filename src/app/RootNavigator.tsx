@@ -1,4 +1,5 @@
 import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -43,22 +44,58 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const EmployeeTabs = createBottomTabNavigator<EmployeeTabParamList>();
 const OwnerTabs = createBottomTabNavigator<OwnerTabParamList>();
 
+function TabIcon({ active, glyph }: { active: boolean; glyph: string }) {
+  return (
+    <View style={[styles.tabIcon, active && styles.tabIconActive]}>
+      <Text style={[styles.tabGlyph, active && styles.tabGlyphActive]}>{glyph}</Text>
+      {active ? <View style={styles.tabDot} /> : null}
+    </View>
+  );
+}
+
+const tabBarOptions = {
+  headerShown: false,
+  tabBarActiveTintColor: colors.accent,
+  tabBarInactiveTintColor: colors.textMuted,
+  tabBarHideOnKeyboard: true,
+  tabBarLabelStyle: {
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: '500' as const,
+    letterSpacing: 0.15,
+    marginBottom: 2,
+  },
+  tabBarStyle: {
+    backgroundColor: colors.surface,
+    borderTopColor: colors.border,
+    borderTopWidth: 1,
+    height: dimensions.tabBarHeight + 8,
+    paddingBottom: 8,
+    paddingTop: 6,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 8,
+  },
+  tabBarItemStyle: {
+    borderRadius: dimensions.radiusMd,
+    marginHorizontal: 6,
+    marginVertical: 4,
+  },
+  tabBarShowLabel: true,
+};
+
 function EmployeeTabNavigator() {
   return (
     <EmployeeTabs.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-          paddingBottom: dimensions.xs,
-          paddingTop: dimensions.xs,
-          height: 70,
+      screenOptions={({ route }) => ({
+        ...tabBarOptions,
+        tabBarIcon: ({ focused }) => {
+          const glyph = route.name === 'Inventory' ? '▦' : route.name === 'Sales' ? '▤' : '⚙';
+          return <TabIcon active={focused} glyph={glyph} />;
         },
-      }}
+      })}
     >
       <EmployeeTabs.Screen name="Inventory" component={InventoryScreen} options={{ title: 'Inventory' }} />
       <EmployeeTabs.Screen name="Sales" component={SalesScreen} options={{ title: 'Sales' }} />
@@ -70,19 +107,20 @@ function EmployeeTabNavigator() {
 function OwnerTabNavigator() {
   return (
     <OwnerTabs.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-          paddingBottom: dimensions.xs,
-          paddingTop: dimensions.xs,
-          height: 70,
+      screenOptions={({ route }) => ({
+        ...tabBarOptions,
+        tabBarIcon: ({ focused }) => {
+          const glyph =
+            route.name === 'Inventory'
+              ? '▦'
+              : route.name === 'Sales'
+                ? '▤'
+                : route.name === 'Employees'
+                  ? '◫'
+                  : '⚙';
+          return <TabIcon active={focused} glyph={glyph} />;
         },
-      }}
+      })}
     >
       <OwnerTabs.Screen name="Inventory" component={InventoryScreen} options={{ title: 'Inventory' }} />
       <OwnerTabs.Screen name="Sales" component={SalesOverviewScreen} options={{ title: 'Sales' }} />
@@ -91,6 +129,36 @@ function OwnerTabNavigator() {
     </OwnerTabs.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  tabIcon: {
+    width: 38,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 1,
+    marginBottom: 0,
+  },
+  tabIconActive: {
+    backgroundColor: '#E2E0FC',
+  },
+  tabGlyph: {
+    color: colors.textMuted,
+    fontSize: 16,
+    lineHeight: 16,
+    fontWeight: '600',
+  },
+  tabGlyphActive: {
+    color: colors.accent,
+  },
+  tabDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: colors.accent,
+  },
+});
 
 export function RootNavigator() {
   const status = useAuthStore((state) => state.status);

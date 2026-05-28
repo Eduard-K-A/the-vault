@@ -18,14 +18,16 @@ export function BarChart({ data }: { data: BarDatum[] }) {
     <View style={styles.chartCard}>
       {data.map((item) => (
         <View key={item.label} style={styles.barRow}>
-          <Text style={styles.barLabel}>{item.label}</Text>
+          <Text style={styles.barLabel} numberOfLines={1}>
+            {item.label}
+          </Text>
           <View style={styles.barTrack}>
             <View
               style={[
                 styles.barFill,
                 {
                   width: `${Math.max(4, (item.value / max) * 100)}%`,
-                  backgroundColor: item.color ?? colors.primary,
+                  backgroundColor: item.color ?? colors.accent,
                 },
               ]}
             />
@@ -67,14 +69,16 @@ export function DonutChart({ data }: DonutChartProps) {
   return (
     <View style={styles.chartCard}>
       <View style={styles.donutBody}>
-        <Text style={styles.donutTitle}>{Math.round(total)} total</Text>
-        <Text style={styles.donutSubtitle}>Distribution</Text>
+        <Text style={styles.donutTitle}>{Math.round(total)}</Text>
+        <Text style={styles.donutSubtitle}>Total</Text>
       </View>
       <View style={styles.legend}>
         {data.map((item) => (
           <View key={item.label} style={styles.legendRow}>
-            <View style={[styles.legendSwatch, { backgroundColor: item.color ?? colors.primary }]} />
-            <Text style={styles.legendLabel}>{item.label}</Text>
+            <View style={[styles.legendSwatch, { backgroundColor: item.color ?? colors.accent }]} />
+            <Text style={styles.legendLabel} numberOfLines={1}>
+              {item.label}
+            </Text>
             <Text style={styles.legendValue}>{Math.round((item.value / total) * 100)}%</Text>
           </View>
         ))}
@@ -87,10 +91,15 @@ const styles = StyleSheet.create({
   chartCard: {
     backgroundColor: colors.surface,
     borderColor: colors.border,
-    borderWidth: 1,
+    borderWidth: dimensions.cardBorderWidth,
     borderRadius: dimensions.radiusLg,
     padding: dimensions.md,
     gap: dimensions.md,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 1,
   },
   barRow: {
     flexDirection: 'row',
@@ -100,24 +109,25 @@ const styles = StyleSheet.create({
   barLabel: {
     ...typography.caption,
     color: colors.textMuted,
-    width: 88,
+    width: 92,
   },
   barTrack: {
     flex: 1,
     height: 10,
     backgroundColor: colors.surfaceMuted,
-    borderRadius: 999,
+    borderRadius: dimensions.radiusFull,
     overflow: 'hidden',
   },
   barFill: {
     height: '100%',
-    borderRadius: 999,
+    borderRadius: dimensions.radiusFull,
   },
   barValue: {
     ...typography.caption,
     color: colors.text,
     width: 44,
     textAlign: 'right',
+    fontWeight: '700',
   },
   linePlaceholder: {
     gap: dimensions.sm,
@@ -130,7 +140,7 @@ const styles = StyleSheet.create({
   lineDot: {
     width: 10,
     height: 10,
-    borderRadius: 999,
+    borderRadius: dimensions.radiusFull,
   },
   lineLabel: {
     ...typography.caption,
@@ -150,13 +160,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceMuted,
   },
   donutTitle: {
-    ...typography.subtitle,
+    ...typography.title,
     color: colors.text,
   },
   donutSubtitle: {
-    ...typography.caption,
+    ...typography.label,
     color: colors.textMuted,
     marginTop: dimensions.xs,
+    textTransform: 'uppercase',
   },
   legend: {
     gap: dimensions.xs,
@@ -169,7 +180,7 @@ const styles = StyleSheet.create({
   legendSwatch: {
     width: 10,
     height: 10,
-    borderRadius: 999,
+    borderRadius: dimensions.radiusFull,
   },
   legendLabel: {
     ...typography.caption,
@@ -182,4 +193,3 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
-

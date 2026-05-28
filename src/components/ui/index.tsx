@@ -8,10 +8,11 @@ import {
   TextInput,
   View,
   type StyleProp,
-  type TextStyle,
   type TextInputProps,
+  type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
@@ -29,27 +30,45 @@ interface ScreenProps {
 }
 
 export function Screen({ children, title, subtitle, action, onBack, backLabel = 'Back' }: ScreenProps) {
+  const insets = useSafeAreaInsets();
+  const showHeader = Boolean(title || onBack || action);
+  const rightAction = action ?? (showHeader ? <View style={styles.headerSpacer} /> : null);
+
   return (
-    <View style={styles.screen}>
-      <View style={styles.screenHeader}>
-        <View style={styles.screenHeaderRow}>
-          {onBack ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={onBack}
-              style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
-            >
-              <Text style={styles.backButtonText}>{backLabel}</Text>
-            </Pressable>
-          ) : null}
-          <View style={styles.screenHeaderContent}>
-            {title ? <Text style={styles.screenTitle}>{title}</Text> : null}
-            {subtitle ? <Text style={styles.screenSubtitle}>{subtitle}</Text> : null}
+    <View
+      style={[
+        styles.screen,
+        {
+          paddingTop: insets.top + dimensions.screenPaddingV,
+          paddingBottom: insets.bottom + dimensions.screenPaddingV,
+        },
+      ]}
+    >
+      <View pointerEvents="none" style={styles.decorLeft} />
+      <View pointerEvents="none" style={styles.decorRight} />
+      <View style={styles.shell}>
+        {showHeader ? (
+          <View style={styles.topBar}>
+            {onBack ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={onBack}
+                style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}
+              >
+                <Text style={styles.iconText}>←</Text>
+              </Pressable>
+            ) : (
+              <View style={styles.iconButton} />
+            )}
+            <View style={styles.titleWrap}>
+              {title ? <Text style={styles.title}>{title}</Text> : null}
+              {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+            </View>
+            <View style={styles.rightAction}>{rightAction}</View>
           </View>
-          {action}
-        </View>
+        ) : null}
+        <View style={styles.body}>{children}</View>
       </View>
-      {children}
     </View>
   );
 }
@@ -95,20 +114,26 @@ export function Button({
   fullWidth = true,
 }: ButtonProps) {
   const isDisabled = disabled || loading;
+
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
+      disabled={isDisabled}
       style={({ pressed }) => [
         styles.button,
         variantStyles[variant],
         fullWidth && styles.buttonFullWidth,
+        !fullWidth && styles.buttonInline,
         pressed && !isDisabled && styles.buttonPressed,
         isDisabled && styles.buttonDisabled,
       ]}
-      disabled={isDisabled}
     >
-      {loading ? <ActivityIndicator color={variant === 'primary' ? '#FFF' : colors.text} /> : <Text style={[styles.buttonText, buttonTextStyles[variant]]}>{label}</Text>}
+      {loading ? (
+        <ActivityIndicator color={variant === 'primary' || variant === 'danger' ? '#FFFFFF' : colors.accent} />
+      ) : (
+        <Text style={[styles.buttonText, buttonTextStyles[variant]]}>{label}</Text>
+      )}
     </Pressable>
   );
 }
@@ -117,11 +142,25 @@ interface InputProps extends TextInputProps {
   label?: string;
 }
 
-export function Input({ label, style, ...props }: InputProps) {
+export function Input({ label, style, onFocus, onBlur, ...props }: InputProps) {
+  const [focused, setFocused] = React.useState(false);
+
   return (
     <View style={styles.inputWrapper}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
-      <TextInput placeholderTextColor={colors.textMuted} style={[styles.input, style]} {...props} />
+      <TextInput
+        placeholderTextColor={colors.textMuted}
+        onFocus={(event) => {
+          setFocused(true);
+          onFocus?.(event);
+        }}
+        onBlur={(event) => {
+          setFocused(false);
+          onBlur?.(event);
+        }}
+        style={[styles.input, focused && styles.inputFocused, style]}
+        {...props}
+      />
     </View>
   );
 }
@@ -134,10 +173,15 @@ interface ModalSheetProps {
 }
 
 export function ModalSheet({ visible, title, children, onClose }: ModalSheetProps) {
+  const insets = useSafeAreaInsets();
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.sheetOverlay} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={(event) => event.stopPropagation()}>
+        <Pressable
+          style={[styles.sheet, { paddingBottom: insets.bottom + dimensions.screenPaddingV }]}
+          onPress={(event) => event.stopPropagation()}
+        >
           <View style={styles.sheetHandle} />
           {title ? <Text style={styles.sheetTitle}>{title}</Text> : null}
           {children}
@@ -156,11 +200,11 @@ interface SectionHeaderProps {
 export function SectionHeader({ title, subtitle, action }: SectionHeaderProps) {
   return (
     <View style={styles.sectionHeader}>
-      <View style={{ flex: 1 }}>
+      <View style={styles.sectionHeaderCopy}>
         <Text style={styles.sectionTitle}>{title}</Text>
         {subtitle ? <Text style={styles.sectionSubtitle}>{subtitle}</Text> : null}
       </View>
-      {action}
+      {action ? <View style={styles.sectionAction}>{action}</View> : null}
     </View>
   );
 }
@@ -184,35 +228,64 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
-    padding: dimensions.lg,
+    paddingHorizontal: dimensions.screenPaddingH,
+    overflow: 'hidden',
+  },
+  shell: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 720,
+    alignSelf: 'center',
     gap: dimensions.lg,
   },
-  screenHeader: {
-    gap: dimensions.sm,
-  },
-  screenHeaderRow: {
+  topBar: {
+    minHeight: 54,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: dimensions.sm,
+    paddingBottom: dimensions.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  screenHeaderContent: {
+  titleWrap: {
     flex: 1,
     minWidth: 0,
+    alignItems: 'center',
   },
-  screenTitle: {
-    ...typography.title,
+  rightAction: {
+    minWidth: 38,
+    alignItems: 'flex-end',
+  },
+  headerSpacer: {
+    width: 38,
+    height: 38,
+  },
+  title: {
+    ...typography.subtitle,
     color: colors.text,
+    textAlign: 'center',
   },
-  screenSubtitle: {
-    ...typography.body,
+  subtitle: {
+    ...typography.caption,
     color: colors.textMuted,
-    marginTop: dimensions.xs,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+  body: {
+    flex: 1,
+    gap: dimensions.lg,
   },
   sectionHeader: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    marginBottom: dimensions.md,
+    alignItems: 'flex-start',
     gap: dimensions.md,
+  },
+  sectionHeaderCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  sectionAction: {
+    alignItems: 'flex-end',
   },
   sectionTitle: {
     ...typography.subtitle,
@@ -225,36 +298,48 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.surface,
-    borderRadius: dimensions.radiusLg,
-    borderWidth: 1,
+    borderRadius: dimensions.radiusXl,
+    borderWidth: dimensions.cardBorderWidth,
     borderColor: colors.border,
+    shadowColor: colors.shadow,
+    shadowOpacity: 0.035,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+    overflow: 'hidden',
   },
   cardPadded: {
-    padding: dimensions.md,
+    padding: dimensions.md + 2,
   },
   badge: {
-    borderRadius: 999,
+    borderRadius: dimensions.radiusFull,
     paddingHorizontal: dimensions.sm,
-    paddingVertical: dimensions.xs,
+    paddingVertical: 4,
     alignSelf: 'flex-start',
   },
   badgeText: {
-    ...typography.caption,
+    ...typography.label,
     color: colors.text,
-    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   button: {
-    minHeight: 48,
-    borderRadius: dimensions.radiusMd,
+    minHeight: dimensions.buttonHeight,
+    borderRadius: dimensions.radiusLg,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: dimensions.lg,
+    flexDirection: 'row',
+    gap: dimensions.xs,
   },
   buttonFullWidth: {
     alignSelf: 'stretch',
   },
+  buttonInline: {
+    alignSelf: 'flex-start',
+  },
   buttonPressed: {
-    opacity: 0.88,
+    opacity: 0.94,
     transform: [{ scale: 0.99 }],
   },
   buttonDisabled: {
@@ -262,91 +347,127 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     ...typography.body,
-    fontWeight: '700',
+    fontWeight: '600',
+    letterSpacing: 0.1,
   },
   inputWrapper: {
     gap: dimensions.xs,
   },
   label: {
-    ...typography.caption,
+    ...typography.label,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   input: {
-    minHeight: 48,
-    borderRadius: dimensions.radiusMd,
+    minHeight: dimensions.buttonHeight,
+    borderRadius: dimensions.radiusLg,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceMuted,
     color: colors.text,
     paddingHorizontal: dimensions.md,
     ...typography.body,
   },
+  inputFocused: {
+    borderColor: colors.accent,
+    shadowColor: colors.accent,
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
   sheetOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(17, 24, 39, 0.45)',
+    backgroundColor: colors.scrim,
   },
   sheet: {
-    borderTopLeftRadius: dimensions.radiusLg,
-    borderTopRightRadius: dimensions.radiusLg,
+    borderTopLeftRadius: dimensions.radiusXl,
+    borderTopRightRadius: dimensions.radiusXl,
     backgroundColor: colors.surface,
-    padding: dimensions.lg,
+    paddingHorizontal: dimensions.screenPaddingH,
+    paddingTop: dimensions.md,
     gap: dimensions.md,
     maxHeight: '86%',
   },
   sheetHandle: {
     alignSelf: 'center',
-    width: 56,
-    height: 5,
-    borderRadius: 999,
-    backgroundColor: colors.border,
+    width: dimensions.sheetHandleWidth,
+    height: dimensions.sheetHandleHeight,
+    borderRadius: dimensions.radiusFull,
+    backgroundColor: colors.borderStrong,
+    marginBottom: dimensions.xs,
   },
   sheetTitle: {
     ...typography.subtitle,
     color: colors.text,
   },
-  backButton: {
-    minHeight: 36,
-    paddingHorizontal: dimensions.sm,
-    borderRadius: dimensions.radiusMd,
+  iconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: dimensions.radiusFull,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backButtonPressed: {
-    opacity: 0.88,
+  iconButtonPressed: {
+    opacity: 0.9,
   },
-  backButtonText: {
-    ...typography.caption,
+  iconText: {
+    ...typography.subtitle,
     color: colors.text,
-    fontWeight: '700',
+    lineHeight: 20,
   },
   statCard: {
     minWidth: 140,
   },
   statLabel: {
-    ...typography.caption,
+    ...typography.label,
     color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   statValue: {
     ...typography.subtitle,
     color: colors.text,
     marginTop: dimensions.xs,
   },
+  decorLeft: {
+    position: 'absolute',
+    top: -80,
+    left: -90,
+    width: 220,
+    height: 220,
+    borderRadius: 220,
+    backgroundColor: 'rgba(75, 65, 225, 0.04)',
+  },
+  decorRight: {
+    position: 'absolute',
+    top: 110,
+    right: -110,
+    width: 260,
+    height: 260,
+    borderRadius: 260,
+    backgroundColor: 'rgba(0, 0, 11, 0.03)',
+  },
 });
 
 const variantStyles: Record<ButtonVariant, ViewStyle> = {
   primary: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.accent,
+    shadowColor: colors.accent,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 2,
   },
   secondary: {
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.accent,
   },
   ghost: {
     backgroundColor: 'transparent',
@@ -358,23 +479,23 @@ const variantStyles: Record<ButtonVariant, ViewStyle> = {
 
 const buttonTextStyles: Record<ButtonVariant, TextStyle> = {
   primary: { color: '#FFFFFF' },
-  secondary: { color: colors.text },
-  ghost: { color: colors.primary },
+  secondary: { color: colors.accent },
+  ghost: { color: colors.text },
   danger: { color: '#FFFFFF' },
 };
 
 const badgeToneStyles = StyleSheet.create({
   neutral: { backgroundColor: colors.surfaceMuted },
-  success: { backgroundColor: '#DCFCE7' },
-  warning: { backgroundColor: '#FEF3C7' },
-  danger: { backgroundColor: '#FEE2E2' },
-  primary: { backgroundColor: '#D7F5F3' },
-  accent: { backgroundColor: '#FFEDD5' },
+  success: { backgroundColor: colors.successSoft },
+  warning: { backgroundColor: colors.warningSoft },
+  danger: { backgroundColor: colors.dangerSoft },
+  primary: { backgroundColor: '#E2E0FC' },
+  accent: { backgroundColor: '#E2DFFF' },
 });
 
 const statToneStyles = StyleSheet.create({
-  primary: { borderColor: '#CDEDEA' },
-  accent: { borderColor: '#FFD8B1' },
-  success: { borderColor: '#BBF7D0' },
-  warning: { borderColor: '#FDE68A' },
+  primary: { borderColor: '#C6C4DF' },
+  accent: { borderColor: '#C3C0FF' },
+  success: { borderColor: '#BEEAD3' },
+  warning: { borderColor: '#F7D77A' },
 });

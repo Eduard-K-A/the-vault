@@ -24,7 +24,7 @@ export function SearchBar({ value, onChangeText, placeholder, onScanPress }: Sea
         autoCorrect={false}
       />
       {onScanPress ? (
-        <Pressable onPress={onScanPress} style={styles.scanButton}>
+        <Pressable onPress={onScanPress} style={({ pressed }) => [styles.scanButton, pressed && styles.scanButtonPressed]}>
           <Text style={styles.scanLabel}>Scan</Text>
         </Pressable>
       ) : null}
@@ -39,19 +39,21 @@ const styles = StyleSheet.create({
     gap: dimensions.sm,
   },
   scanButton: {
-    height: 48,
+    height: dimensions.buttonHeight,
     paddingHorizontal: dimensions.md,
     borderRadius: dimensions.radiusMd,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  scanButtonPressed: {
+    opacity: 0.9,
+  },
   scanLabel: {
     ...typography.body,
-    color: colors.text,
-    fontWeight: '700',
+    color: colors.accent,
+    fontWeight: '600',
   },
 });
-

@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Button, Card } from '@/components/ui';
+import { Badge, Button, Card } from '@/components/ui';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
@@ -17,6 +17,7 @@ export function EmptyState({ title, description, actionLabel, onAction }: EmptyS
   return (
     <Card style={styles.card}>
       <View style={styles.content}>
+        <Badge label="Empty state" tone="neutral" />
         <Text style={styles.title}>{title}</Text>
         {description ? <Text style={styles.description}>{description}</Text> : null}
         {actionLabel && onAction ? <Button label={actionLabel} onPress={onAction} /> : null}
@@ -44,4 +45,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
