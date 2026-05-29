@@ -35,7 +35,7 @@ export default function PerformanceDashboard() {
 
   if (!analytics) {
     return (
-      <Screen title="Performance" subtitle="Employee performance dashboard." onBack={handleBack}>
+      <Screen title="Performance" subtitle="Employee performance dashboard." onBack={handleBack} scrollable contentStyle={styles.content}>
         <EmptyState title="No data" description="Performance charts appear after sales are recorded." />
       </Screen>
     );
@@ -49,6 +49,8 @@ export default function PerformanceDashboard() {
         title="Store POS"
         onBack={handleBack}
         action={<Button label="Invite" variant="primary" fullWidth={false} />}
+        scrollable
+        contentStyle={styles.content}
       >
       <View style={styles.stack}>
         <View style={styles.pageHeader}>
@@ -120,6 +122,9 @@ const avatarPalette = [
 ];
 
 const styles = StyleSheet.create({
+  content: {
+    paddingBottom: dimensions.xl + 24,
+  },
   stack: {
     gap: dimensions.lg,
   },
@@ -133,9 +138,11 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     gap: dimensions.sm,
+    flexWrap: 'wrap',
   },
   statCard: {
     flex: 1,
+    minWidth: 140,
     minHeight: 126,
     justifyContent: 'center',
     gap: dimensions.sm,

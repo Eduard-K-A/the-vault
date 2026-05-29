@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -27,9 +28,20 @@ interface ScreenProps {
   action?: React.ReactNode;
   onBack?: () => void | Promise<void>;
   backLabel?: string;
+  scrollable?: boolean;
+  contentStyle?: StyleProp<ViewStyle>;
 }
 
-export function Screen({ children, title, subtitle, action, onBack, backLabel = 'Back' }: ScreenProps) {
+export function Screen({
+  children,
+  title,
+  subtitle,
+  action,
+  onBack,
+  backLabel = 'Back',
+  scrollable = false,
+  contentStyle,
+}: ScreenProps) {
   const insets = useSafeAreaInsets();
   const showHeader = Boolean(title || onBack || action);
   const rightAction = action ?? (showHeader ? <View style={styles.headerSpacer} /> : null);
@@ -67,7 +79,16 @@ export function Screen({ children, title, subtitle, action, onBack, backLabel = 
             <View style={styles.rightAction}>{rightAction}</View>
           </View>
         ) : null}
-        <View style={styles.body}>{children}</View>
+        {scrollable ? (
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[styles.scrollBody, contentStyle]}
+          >
+            {children}
+          </ScrollView>
+        ) : (
+          <View style={[styles.body, contentStyle]}>{children}</View>
+        )}
       </View>
     </View>
   );
@@ -213,11 +234,12 @@ interface StatCardProps {
   label: string;
   value: string;
   tone?: 'primary' | 'accent' | 'success' | 'warning';
+  style?: StyleProp<ViewStyle>;
 }
 
-export function StatCard({ label, value, tone = 'primary' }: StatCardProps) {
+export function StatCard({ label, value, tone = 'primary', style }: StatCardProps) {
   return (
-    <Card style={[styles.statCard, statToneStyles[tone]]}>
+    <Card style={[styles.statCard, statToneStyles[tone], style]}>
       <Text style={styles.statLabel}>{label}</Text>
       <Text style={styles.statValue}>{value}</Text>
     </Card>
@@ -274,6 +296,11 @@ const styles = StyleSheet.create({
   body: {
     flex: 1,
     gap: dimensions.lg,
+  },
+  scrollBody: {
+    flexGrow: 1,
+    gap: dimensions.lg,
+    paddingBottom: dimensions.screenPaddingV,
   },
   sectionHeader: {
     flexDirection: 'row',

@@ -59,7 +59,7 @@ export default function ReportsScreen() {
   }
 
   return (
-    <Screen title="POSly" onBack={handleBack}>
+    <Screen title="POSly" onBack={handleBack} scrollable contentStyle={styles.content}>
       <View style={styles.header}>
         <Text style={styles.title}>Reports</Text>
         <Text style={styles.subtitle}>Export business data to Excel.</Text>
@@ -74,6 +74,9 @@ export default function ReportsScreen() {
 }
 
 const styles = StyleSheet.create({
+  content: {
+    paddingBottom: dimensions.xl + 24,
+  },
   header: {
     gap: dimensions.xs,
   },

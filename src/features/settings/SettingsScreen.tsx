@@ -32,7 +32,7 @@ export default function SettingsScreen() {
   }
 
   return (
-    <Screen title="POSly" action={<Badge label={role ?? 'member'} tone="primary" />}>
+    <Screen title="POSly" action={<Badge label={role ?? 'member'} tone="primary" />} scrollable contentStyle={styles.content}>
       <View style={styles.stack}>
         <View style={styles.header}>
           <Text style={styles.title}>Store Settings</Text>
@@ -97,6 +97,9 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
+  content: {
+    paddingBottom: dimensions.xl + 24,
+  },
   stack: {
     gap: dimensions.lg,
   },

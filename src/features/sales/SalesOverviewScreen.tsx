@@ -74,14 +74,14 @@ export default function SalesOverviewScreen() {
 
   if (!analytics) {
     return (
-      <Screen title="Sales overview" subtitle="Business-wide sales and analytics.">
+      <Screen title="Sales overview" subtitle="Business-wide sales and analytics." scrollable contentStyle={styles.content}>
         <EmptyState title="Select a business" description="Owners need an active business to view sales data." />
       </Screen>
     );
   }
 
   return (
-      <Screen title="Store POS">
+      <Screen title="Store POS" scrollable contentStyle={styles.content}>
       <View style={styles.stack}>
         <View style={styles.pageHeader}>
           <Text style={styles.pageTitle}>Sales Overview</Text>
@@ -375,6 +375,9 @@ const performerAvatarStyles = [
 ];
 
 const styles = StyleSheet.create({
+  content: {
+    paddingBottom: dimensions.xl + 24,
+  },
   stack: {
     gap: dimensions.lg,
   },

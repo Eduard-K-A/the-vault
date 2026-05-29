@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
@@ -12,6 +12,7 @@ import CartSheet from '@/features/cart/CartSheet';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { useCart } from '@/hooks/useCart';
 import { useProducts } from '@/hooks/useProducts';
 import { useAuthStore } from '@/store/authStore';
@@ -31,7 +32,7 @@ export default function InventoryScreen() {
   const [cartVisible, setCartVisible] = useState(false);
   const [search, setSearch] = useState('');
   const { products, findByBarcode } = useProducts(search);
-  const { addItem } = useCart();
+  const { addItem, items, total } = useCart();
 
   const inventoryByProductId = useMemo(() => {
     if (!branchId) {
@@ -53,6 +54,7 @@ export default function InventoryScreen() {
 
   function handleAdd(product: Product) {
     addItem(product, 1);
+    Alert.alert('Added to cart', `${product.name} was added to the current sale.`);
   }
 
   const header = (
@@ -74,17 +76,29 @@ export default function InventoryScreen() {
       </View>
 
       <View style={styles.summaryStrip}>
-        <Card style={styles.metricCard}>
-          <Text style={styles.metricLabel}>Total Products</Text>
+        <Card style={[styles.metricCard, styles.totalCard]}>
+          <View style={styles.metricTopRow}>
+            <Text style={styles.metricGlyph}>▦</Text>
+            <Text style={styles.metricLabel}>Products</Text>
+          </View>
           <Text style={styles.metricValue}>{summary.total}</Text>
+          <Text style={styles.metricFootnote}>Visible in this workspace</Text>
         </Card>
         <Card style={[styles.metricCard, styles.warningCard]}>
-          <Text style={styles.metricLabelWarning}>Low Stock</Text>
+          <View style={styles.metricTopRow}>
+            <Text style={styles.metricGlyphWarning}>◔</Text>
+            <Text style={styles.metricLabelWarning}>Low stock</Text>
+          </View>
           <Text style={styles.metricValueWarning}>{summary.lowStock}</Text>
+          <Text style={styles.metricFootnoteWarning}>Needs replenishment soon</Text>
         </Card>
         <Card style={[styles.metricCard, styles.dangerCard]}>
-          <Text style={styles.metricLabelDanger}>Out of Stock</Text>
+          <View style={styles.metricTopRow}>
+            <Text style={styles.metricGlyphDanger}>⚠</Text>
+            <Text style={styles.metricLabelDanger}>Out of stock</Text>
+          </View>
           <Text style={styles.metricValueDanger}>{summary.outOfStock}</Text>
+          <Text style={styles.metricFootnoteDanger}>Unavailable for checkout</Text>
         </Card>
       </View>
 
@@ -144,7 +158,15 @@ export default function InventoryScreen() {
         onPress={() => (role === 'owner' ? navigation.navigate('AddProduct') : setCartVisible(true))}
         style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
       >
-        <Text style={styles.fabLabel}>+</Text>
+        <View style={styles.fabCopy}>
+          <Text style={styles.fabLabel}>{role === 'owner' ? 'Add product' : 'Open cart'}</Text>
+          <Text style={styles.fabMeta}>
+            {role === 'owner'
+              ? 'Create or edit inventory'
+              : `${items.length} item${items.length === 1 ? '' : 's'} • ${formatCurrency(total)}`}
+          </Text>
+        </View>
+        <Text style={styles.fabGlyph}>{role === 'owner' ? '＋' : '🛒'}</Text>
       </Pressable>
     </Screen>
   );
@@ -204,46 +226,85 @@ const styles = StyleSheet.create({
     gap: dimensions.sm,
     overflow: 'hidden',
     marginTop: dimensions.xs,
+    flexWrap: 'wrap',
   },
   metricCard: {
     flex: 1,
-    minWidth: 120,
-    minHeight: 92,
+    minWidth: 104,
+    minHeight: 124,
     justifyContent: 'space-between',
-    gap: dimensions.sm,
+    gap: dimensions.xs,
     borderRadius: dimensions.radiusMd,
   },
+  totalCard: {
+    backgroundColor: '#F7F6FF',
+  },
+  metricTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: dimensions.xs,
+  },
+  metricGlyph: {
+    color: colors.accent,
+    fontSize: 16,
+    fontWeight: '700',
+  },
   metricLabel: {
-    ...typography.body,
+    ...typography.label,
     color: colors.textMuted,
+    textTransform: 'uppercase',
   },
   metricValue: {
     ...typography.title,
     color: colors.text,
   },
+  metricFootnote: {
+    ...typography.caption,
+    color: colors.textMuted,
+  },
   warningCard: {
     backgroundColor: colors.warningSoft,
     borderColor: '#FCD34D',
+  },
+  metricGlyphWarning: {
+    color: '#B45309',
+    fontSize: 16,
+    fontWeight: '700',
   },
   dangerCard: {
     backgroundColor: '#FDE8E8',
     borderColor: '#FCA5A5',
   },
+  metricGlyphDanger: {
+    color: '#B91C1C',
+    fontSize: 16,
+    fontWeight: '700',
+  },
   metricLabelWarning: {
-    ...typography.body,
+    ...typography.label,
     color: '#9A3412',
+    textTransform: 'uppercase',
   },
   metricValueWarning: {
     ...typography.title,
     color: '#B45309',
   },
+  metricFootnoteWarning: {
+    ...typography.caption,
+    color: '#9A3412',
+  },
   metricLabelDanger: {
-    ...typography.body,
+    ...typography.label,
     color: '#991B1B',
+    textTransform: 'uppercase',
   },
   metricValueDanger: {
     ...typography.title,
     color: '#B91C1C',
+  },
+  metricFootnoteDanger: {
+    ...typography.caption,
+    color: '#991B1B',
   },
   searchCard: {
     padding: dimensions.md,
@@ -251,18 +312,21 @@ const styles = StyleSheet.create({
   },
   listContent: {
     gap: dimensions.md,
-    paddingBottom: dimensions.xl,
+    paddingBottom: dimensions.xl + 96,
   },
   fab: {
     position: 'absolute',
     right: dimensions.screenPaddingH,
     bottom: dimensions.screenPaddingV + 56,
-    width: 56,
-    height: 56,
+    minHeight: 60,
     borderRadius: dimensions.radiusXl,
     backgroundColor: colors.accent,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    paddingHorizontal: dimensions.md,
+    paddingVertical: dimensions.sm,
+    minWidth: 182,
     shadowColor: colors.primary,
     shadowOpacity: 0.18,
     shadowRadius: 10,
@@ -273,9 +337,24 @@ const styles = StyleSheet.create({
     opacity: 0.9,
     transform: [{ scale: 0.98 }],
   },
+  fabCopy: {
+    flex: 1,
+    minWidth: 0,
+    marginRight: dimensions.sm,
+  },
   fabLabel: {
     color: '#FFFFFF',
-    ...typography.title,
-    lineHeight: 28,
+    ...typography.body,
+    fontWeight: '700',
+  },
+  fabMeta: {
+    ...typography.caption,
+    color: '#DAD8FF',
+    marginTop: 2,
+  },
+  fabGlyph: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    lineHeight: 22,
   },
 });

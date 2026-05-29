@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -35,7 +35,7 @@ export default function ReceiptScreen() {
 
   if (!sale) {
     return (
-      <Screen title="POSly" onBack={handleBack}>
+      <Screen title="POSly" onBack={handleBack} scrollable contentStyle={styles.content}>
         <View style={styles.stack}>
           <View style={styles.pageHeader}>
             <Text style={styles.pageTitle}>Receipt</Text>
@@ -50,7 +50,7 @@ export default function ReceiptScreen() {
   }
 
   return (
-    <Screen title="POSly" onBack={handleBack}>
+    <Screen title="POSly" onBack={handleBack} scrollable contentStyle={styles.content}>
       <View style={styles.stack}>
         <View style={styles.pageHeader}>
           <Text style={styles.pageTitle}>Receipt</Text>
@@ -138,9 +138,11 @@ export default function ReceiptScreen() {
 }
 
 const styles = StyleSheet.create({
+  content: {
+    paddingBottom: dimensions.xl + 24,
+  },
   stack: {
     gap: dimensions.lg,
-    paddingBottom: dimensions.xl,
   },
   pageHeader: {
     gap: dimensions.xs,
@@ -264,6 +266,7 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: dimensions.sm,
   },
   empty: {
