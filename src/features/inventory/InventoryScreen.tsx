@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
-import { Card, Screen, StatCard } from '@/components/ui';
+import { Button, Card, Input, ModalSheet, Screen, StatCard } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
 import { ProductCard } from '@/components/ProductCard';
 import { SearchBar } from '@/components/SearchBar';
@@ -13,6 +13,7 @@ import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
+import { db } from '@/db/powersync';
 import { useCart } from '@/hooks/useCart';
 import { useProducts } from '@/hooks/useProducts';
 import { useAuthStore } from '@/store/authStore';
@@ -32,6 +33,9 @@ export default function InventoryScreen() {
   const [cartVisible, setCartVisible] = useState(false);
   const [search, setSearch] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [restockProduct, setRestockProduct] = useState<Product | null>(null);
+  const [restockQuantity, setRestockQuantity] = useState('1');
+  const [restockLoading, setRestockLoading] = useState(false);
   const { products, findByBarcode } = useProducts(search);
   const { addItem, items, total } = useCart();
 
@@ -56,6 +60,46 @@ export default function InventoryScreen() {
   function handleAdd(product: Product) {
     addItem(product, 1);
     setToastMessage(`${product.name} added to cart`);
+  }
+
+  function openRestock(product: Product) {
+    setRestockProduct(product);
+    setRestockQuantity('1');
+  }
+
+  function closeRestock() {
+    if (restockLoading) {
+      return;
+    }
+    setRestockProduct(null);
+    setRestockQuantity('1');
+  }
+
+  async function handleRestock() {
+    if (!restockProduct || !branchId || !useAuthStore.getState().userId) {
+      return;
+    }
+
+    const quantity = Math.max(1, Math.trunc(Number(restockQuantity) || 0));
+
+    try {
+      setRestockLoading(true);
+      await db.writeTransaction(async (tx) => {
+        tx.restockInventory({
+          productId: restockProduct.id,
+          branchId,
+          quantity,
+          actorId: useAuthStore.getState().userId as string,
+        });
+      });
+      setToastMessage(`${quantity} added to ${restockProduct.name}`);
+      setRestockProduct(null);
+      setRestockQuantity('1');
+    } catch (error) {
+      Alert.alert('Restock failed', error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setRestockLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -139,20 +183,48 @@ export default function InventoryScreen() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
-            <ProductCard
-              product={item}
-              stockQuantity={inventoryByProductId.get(item.id)}
-              onPress={
-                role === 'employee'
-                  ? handleAdd
-                  : () => navigation.navigate('EditProduct', { productId: item.id })
-              }
-            />
+            <View style={styles.productBlock}>
+              <ProductCard
+                product={item}
+                stockQuantity={inventoryByProductId.get(item.id)}
+                onPress={
+                  role === 'employee'
+                    ? handleAdd
+                    : () => navigation.navigate('EditProduct', { productId: item.id })
+                }
+                onAdd={role === 'owner' ? openRestock : undefined}
+              />
+            </View>
           )}
         />
       )}
 
       <CartSheet visible={cartVisible} onClose={() => setCartVisible(false)} />
+      <ModalSheet
+        visible={restockProduct !== null}
+        title="Restock product"
+        onClose={closeRestock}
+      >
+        <View style={styles.restockSheet}>
+          <View style={styles.restockHeader}>
+            <Text style={styles.restockTitle}>{restockProduct?.name ?? 'Product'}</Text>
+            <Text style={styles.restockMeta}>
+              Add stock to the active branch with a single quantity update.
+            </Text>
+          </View>
+          <Input
+            label="How many to add?"
+            value={restockQuantity}
+            onChangeText={setRestockQuantity}
+            keyboardType="numeric"
+            autoFocus
+          />
+          <View style={styles.restockActions}>
+            <Button label="Cancel" variant="ghost" onPress={closeRestock} fullWidth={false} />
+            <Button label="Add stock" onPress={handleRestock} loading={restockLoading} />
+          </View>
+        </View>
+      </ModalSheet>
       {toastMessage ? (
         <View pointerEvents="none" style={styles.toast}>
           <Text style={styles.toastLabel}>{toastMessage}</Text>
@@ -241,9 +313,30 @@ const styles = StyleSheet.create({
     padding: dimensions.md,
     marginTop: dimensions.xs,
   },
+  productBlock: {
+    gap: dimensions.xs,
+  },
   listContent: {
     gap: dimensions.md,
     paddingBottom: dimensions.xl + 96,
+  },
+  restockSheet: {
+    gap: dimensions.md,
+  },
+  restockHeader: {
+    gap: dimensions.xs,
+  },
+  restockTitle: {
+    ...typography.subtitle,
+    color: colors.text,
+  },
+  restockMeta: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
+  restockActions: {
+    flexDirection: 'row',
+    gap: dimensions.sm,
   },
   toast: {
     position: 'absolute',

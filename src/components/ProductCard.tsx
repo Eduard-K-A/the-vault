@@ -19,6 +19,8 @@ interface ProductCardProps {
 export function ProductCard({ product, stockQuantity, onPress, onAdd, onEdit }: ProductCardProps) {
   const isLowStock = typeof stockQuantity === 'number' && stockQuantity <= 5;
   const isOutOfStock = typeof stockQuantity === 'number' && stockQuantity <= 0;
+  const statusTone = product.is_active ? (isOutOfStock ? 'danger' : isLowStock ? 'warning' : 'success') : 'neutral';
+  const statusLabel = product.is_active ? (isOutOfStock ? 'Out of stock' : isLowStock ? 'Low stock' : 'In stock') : 'Archived';
 
   return (
     <Pressable onPress={() => onPress?.(product)} style={styles.pressable}>
@@ -32,6 +34,7 @@ export function ProductCard({ product, stockQuantity, onPress, onAdd, onEdit }: 
             </View>
           )}
         </View>
+
         <View style={styles.content}>
           <View style={styles.headlineRow}>
             <View style={styles.titleBlock}>
@@ -45,16 +48,28 @@ export function ProductCard({ product, stockQuantity, onPress, onAdd, onEdit }: 
             </View>
             <Text style={styles.price}>{formatCurrency(product.selling_price)}</Text>
           </View>
+
           <View style={styles.footer}>
-            <Badge
-              label={product.is_active ? (isOutOfStock ? 'Out of stock' : isLowStock ? 'Low stock' : 'In stock') : 'Archived'}
-              tone={product.is_active ? (isOutOfStock ? 'danger' : isLowStock ? 'warning' : 'success') : 'neutral'}
-            />
+            <Badge label={statusLabel} tone={statusTone} />
             {typeof stockQuantity === 'number' ? <Text style={styles.stock}>{stockQuantity} units</Text> : null}
           </View>
         </View>
-        <View style={styles.chevron}>
-          <Text style={styles.chevronText}>{onAdd || onEdit ? '+' : '›'}</Text>
+
+        <View style={styles.actions}>
+          {onAdd ? (
+            <Pressable
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={(event) => {
+                event.stopPropagation();
+                onAdd(product);
+              }}
+              style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
+            >
+              <Text style={styles.actionButtonText}>＋</Text>
+            </Pressable>
+          ) : null}
+          <Text style={styles.actionLabel}>{onAdd ? 'Restock' : onEdit ? 'Edit' : 'View'}</Text>
         </View>
       </Card>
     </Pressable>
@@ -69,21 +84,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: dimensions.md,
-    minHeight: 96,
+    minHeight: 92,
     padding: dimensions.md,
     borderRadius: dimensions.radiusMd,
+    backgroundColor: colors.surface,
   },
   cardLow: {
-    borderLeftWidth: 4,
+    borderLeftWidth: 3,
     borderLeftColor: colors.warning,
   },
   cardOut: {
-    borderLeftWidth: 4,
+    borderLeftWidth: 3,
     borderLeftColor: colors.danger,
   },
   media: {
-    width: 56,
-    height: 56,
+    width: 52,
+    height: 52,
     borderRadius: dimensions.radiusMd,
     overflow: 'hidden',
     flexShrink: 0,
@@ -105,7 +121,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     minWidth: 0,
-    gap: 6,
+    gap: 4,
   },
   headlineRow: {
     flexDirection: 'row',
@@ -115,7 +131,7 @@ const styles = StyleSheet.create({
   titleBlock: {
     flex: 1,
     minWidth: 0,
-    gap: 4,
+    gap: 2,
   },
   name: {
     ...typography.body,
@@ -139,7 +155,7 @@ const styles = StyleSheet.create({
     ...typography.subtitle,
     color: colors.text,
     fontVariant: ['tabular-nums'],
-    minWidth: 88,
+    minWidth: 84,
     textAlign: 'right',
   },
   stock: {
@@ -147,13 +163,37 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textTransform: 'uppercase',
   },
-  chevron: {
-    width: 24,
+  actions: {
+    alignSelf: 'stretch',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: dimensions.xs,
+    minWidth: 52,
+  },
+  actionButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chevronText: {
-    ...typography.subtitle,
+  actionButtonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
+  actionButtonText: {
+    color: colors.accent,
+    fontSize: 20,
+    lineHeight: 20,
+    fontWeight: '700',
+  },
+  actionLabel: {
+    ...typography.label,
     color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
 });

@@ -38,6 +38,20 @@ export default function SettingsScreen() {
           <Text style={styles.title}>Store Settings</Text>
           <Text style={styles.subtitle}>Manage your business preferences and configurations.</Text>
         </View>
+        {role === 'owner' && business?.join_code ? (
+          <Card style={styles.joinCodeCard}>
+            <View style={styles.joinCodeRow}>
+              <View style={styles.joinCodeCopy}>
+                <Text style={styles.joinCodeLabel}>Join code</Text>
+                <Text style={styles.joinCodeValue}>{business.join_code}</Text>
+              </View>
+              <Badge label="Share with team" tone="accent" />
+            </View>
+            <Text style={styles.joinCodeMeta}>
+              Employees can use this code when joining your workspace.
+            </Text>
+          </Card>
+        ) : null}
         <Card style={styles.profileCard}>
           <View style={styles.profileTop}>
             <View style={styles.profileAvatar}>
@@ -116,6 +130,35 @@ const styles = StyleSheet.create({
   },
   profileCard: {
     gap: dimensions.md,
+  },
+  joinCodeCard: {
+    gap: dimensions.sm,
+    backgroundColor: '#F6F5FF',
+  },
+  joinCodeRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: dimensions.sm,
+  },
+  joinCodeCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
+  },
+  joinCodeLabel: {
+    ...typography.label,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+  },
+  joinCodeValue: {
+    ...typography.title,
+    color: colors.accent,
+    letterSpacing: 4,
+  },
+  joinCodeMeta: {
+    ...typography.caption,
+    color: colors.textMuted,
   },
   profileTop: {
     flexDirection: 'row',
