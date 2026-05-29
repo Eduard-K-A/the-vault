@@ -91,15 +91,33 @@ export default function AnalyticsScreen() {
         <View style={styles.metrics}>
           {'summary' in analytics ? (
             <>
-              <StatCard label="Revenue" value={formatCurrency(analytics.summary.revenue)} tone="primary" />
-              <StatCard label="Transactions" value={String(analytics.summary.transactions)} tone="accent" />
-              <StatCard label="Net" value={formatCurrency(analytics.summary.netRevenue)} tone="success" />
+              <StatCard
+                label="Revenue"
+                value={formatCurrency(analytics.summary.revenue)}
+                tone="primary"
+                style={styles.metricCard}
+                compact
+              />
+              <StatCard
+                label="Transactions"
+                value={String(analytics.summary.transactions)}
+                tone="accent"
+                style={styles.metricCard}
+                compact
+              />
+              <StatCard
+                label="Net"
+                value={formatCurrency(analytics.summary.netRevenue)}
+                tone="success"
+                style={styles.metricCard}
+                compact
+              />
             </>
           ) : (
             <>
-              <StatCard label="Today" value={formatCurrency(analytics.todayTotal)} tone="primary" />
-              <StatCard label="Week" value={formatCurrency(analytics.weeklyTotal)} tone="accent" />
-              <StatCard label="Month" value={formatCurrency(analytics.monthlyTotal)} tone="success" />
+              <StatCard label="Today" value={formatCurrency(analytics.todayTotal)} tone="primary" style={styles.metricCard} compact />
+              <StatCard label="Week" value={formatCurrency(analytics.weeklyTotal)} tone="accent" style={styles.metricCard} compact />
+              <StatCard label="Month" value={formatCurrency(analytics.monthlyTotal)} tone="success" style={styles.metricCard} compact />
             </>
           )}
         </View>
@@ -244,7 +262,12 @@ const styles = StyleSheet.create({
   metrics: {
     flexDirection: 'row',
     gap: dimensions.sm,
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
+  },
+  metricCard: {
+    flex: 1,
+    minWidth: 0,
+    flexBasis: 0,
   },
   chartCard: {
     gap: dimensions.md,

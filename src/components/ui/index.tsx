@@ -235,13 +235,21 @@ interface StatCardProps {
   value: string;
   tone?: 'primary' | 'accent' | 'success' | 'warning';
   style?: StyleProp<ViewStyle>;
+  compact?: boolean;
 }
 
-export function StatCard({ label, value, tone = 'primary', style }: StatCardProps) {
+export function StatCard({ label, value, tone = 'primary', style, compact = false }: StatCardProps) {
   return (
-    <Card style={[styles.statCard, statToneStyles[tone], style]}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
+    <Card style={[styles.statCard, compact && styles.statCardCompact, statToneStyles[tone], style]}>
+      <Text style={[styles.statLabel, compact && styles.statLabelCompact]}>{label}</Text>
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit={compact}
+        minimumFontScale={0.78}
+        style={[styles.statValue, compact && styles.statValueCompact]}
+      >
+        {value}
+      </Text>
     </Card>
   );
 }
@@ -451,16 +459,32 @@ const styles = StyleSheet.create({
   statCard: {
     minWidth: 140,
   },
+  statCardCompact: {
+    minWidth: 0,
+    padding: dimensions.sm + 2,
+    gap: dimensions.xs,
+    alignItems: 'center',
+  },
   statLabel: {
     ...typography.label,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  statLabelCompact: {
+    fontSize: 10,
+    lineHeight: 14,
+  },
   statValue: {
     ...typography.subtitle,
     color: colors.text,
     marginTop: dimensions.xs,
+  },
+  statValueCompact: {
+    fontSize: 17,
+    lineHeight: 22,
+    marginTop: 0,
+    textAlign: 'center',
   },
   decorLeft: {
     position: 'absolute',

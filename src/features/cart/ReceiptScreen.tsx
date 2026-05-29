@@ -128,7 +128,7 @@ export default function ReceiptScreen() {
 
         <View style={styles.actions}>
           <Button label="Share Receipt" variant="secondary" onPress={() => {}} />
-          <Button label="New Sale" onPress={() => navigation.popToTop()} />
+          <Button label="Done" onPress={() => navigation.popToTop()} />
         </View>
 
         {role === 'owner' ? <Button label="Open analytics" variant="ghost" onPress={() => navigation.navigate('Analytics')} /> : null}

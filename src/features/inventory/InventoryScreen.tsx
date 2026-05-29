@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
-import { Card, Screen } from '@/components/ui';
+import { Card, Screen, StatCard } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
 import { ProductCard } from '@/components/ProductCard';
 import { SearchBar } from '@/components/SearchBar';
@@ -31,6 +31,7 @@ export default function InventoryScreen() {
   const businessName = useBusinessStore((state) => state.activeBusiness?.name ?? 'Inventory');
   const [cartVisible, setCartVisible] = useState(false);
   const [search, setSearch] = useState('');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const { products, findByBarcode } = useProducts(search);
   const { addItem, items, total } = useCart();
 
@@ -54,8 +55,20 @@ export default function InventoryScreen() {
 
   function handleAdd(product: Product) {
     addItem(product, 1);
-    Alert.alert('Added to cart', `${product.name} was added to the current sale.`);
+    setToastMessage(`${product.name} added to cart`);
   }
+
+  useEffect(() => {
+    if (!toastMessage) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setToastMessage(null);
+    }, 1800);
+
+    return () => clearTimeout(timeout);
+  }, [toastMessage]);
 
   const header = (
     <View style={styles.headerStack}>
@@ -76,30 +89,15 @@ export default function InventoryScreen() {
       </View>
 
       <View style={styles.summaryStrip}>
-        <Card style={[styles.metricCard, styles.totalCard]}>
-          <View style={styles.metricTopRow}>
-            <Text style={styles.metricGlyph}>▦</Text>
-            <Text style={styles.metricLabel}>Products</Text>
-          </View>
-          <Text style={styles.metricValue}>{summary.total}</Text>
-          <Text style={styles.metricFootnote}>Visible in this workspace</Text>
-        </Card>
-        <Card style={[styles.metricCard, styles.warningCard]}>
-          <View style={styles.metricTopRow}>
-            <Text style={styles.metricGlyphWarning}>◔</Text>
-            <Text style={styles.metricLabelWarning}>Low stock</Text>
-          </View>
-          <Text style={styles.metricValueWarning}>{summary.lowStock}</Text>
-          <Text style={styles.metricFootnoteWarning}>Needs replenishment soon</Text>
-        </Card>
-        <Card style={[styles.metricCard, styles.dangerCard]}>
-          <View style={styles.metricTopRow}>
-            <Text style={styles.metricGlyphDanger}>⚠</Text>
-            <Text style={styles.metricLabelDanger}>Out of stock</Text>
-          </View>
-          <Text style={styles.metricValueDanger}>{summary.outOfStock}</Text>
-          <Text style={styles.metricFootnoteDanger}>Unavailable for checkout</Text>
-        </Card>
+        <StatCard label="Products" value={String(summary.total)} tone="primary" compact style={styles.metricCard} />
+        <StatCard label="Low stock" value={String(summary.lowStock)} tone="warning" compact style={styles.metricCard} />
+        <StatCard
+          label="Out of stock"
+          value={String(summary.outOfStock)}
+          tone="accent"
+          compact
+          style={styles.metricCard}
+        />
       </View>
 
       <Card style={styles.searchCard}>
@@ -139,6 +137,7 @@ export default function InventoryScreen() {
           keyExtractor={(item) => item.id}
           ListHeaderComponent={header}
           contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <ProductCard
               product={item}
@@ -154,6 +153,11 @@ export default function InventoryScreen() {
       )}
 
       <CartSheet visible={cartVisible} onClose={() => setCartVisible(false)} />
+      {toastMessage ? (
+        <View pointerEvents="none" style={styles.toast}>
+          <Text style={styles.toastLabel}>{toastMessage}</Text>
+        </View>
+      ) : null}
       <Pressable
         onPress={() => (role === 'owner' ? navigation.navigate('AddProduct') : setCartVisible(true))}
         style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
@@ -226,85 +230,12 @@ const styles = StyleSheet.create({
     gap: dimensions.sm,
     overflow: 'hidden',
     marginTop: dimensions.xs,
-    flexWrap: 'wrap',
+    flexWrap: 'nowrap',
   },
   metricCard: {
     flex: 1,
-    minWidth: 104,
-    minHeight: 124,
-    justifyContent: 'space-between',
-    gap: dimensions.xs,
-    borderRadius: dimensions.radiusMd,
-  },
-  totalCard: {
-    backgroundColor: '#F7F6FF',
-  },
-  metricTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: dimensions.xs,
-  },
-  metricGlyph: {
-    color: colors.accent,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  metricLabel: {
-    ...typography.label,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-  },
-  metricValue: {
-    ...typography.title,
-    color: colors.text,
-  },
-  metricFootnote: {
-    ...typography.caption,
-    color: colors.textMuted,
-  },
-  warningCard: {
-    backgroundColor: colors.warningSoft,
-    borderColor: '#FCD34D',
-  },
-  metricGlyphWarning: {
-    color: '#B45309',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  dangerCard: {
-    backgroundColor: '#FDE8E8',
-    borderColor: '#FCA5A5',
-  },
-  metricGlyphDanger: {
-    color: '#B91C1C',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  metricLabelWarning: {
-    ...typography.label,
-    color: '#9A3412',
-    textTransform: 'uppercase',
-  },
-  metricValueWarning: {
-    ...typography.title,
-    color: '#B45309',
-  },
-  metricFootnoteWarning: {
-    ...typography.caption,
-    color: '#9A3412',
-  },
-  metricLabelDanger: {
-    ...typography.label,
-    color: '#991B1B',
-    textTransform: 'uppercase',
-  },
-  metricValueDanger: {
-    ...typography.title,
-    color: '#B91C1C',
-  },
-  metricFootnoteDanger: {
-    ...typography.caption,
-    color: '#991B1B',
+    minWidth: 0,
+    flexBasis: 0,
   },
   searchCard: {
     padding: dimensions.md,
@@ -314,10 +245,31 @@ const styles = StyleSheet.create({
     gap: dimensions.md,
     paddingBottom: dimensions.xl + 96,
   },
+  toast: {
+    position: 'absolute',
+    left: dimensions.screenPaddingH,
+    right: dimensions.screenPaddingH,
+    top: dimensions.screenPaddingV + 12,
+    paddingHorizontal: dimensions.md,
+    paddingVertical: dimensions.sm,
+    borderRadius: dimensions.radiusFull,
+    backgroundColor: 'rgba(25, 28, 30, 0.92)',
+    shadowColor: colors.primary,
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  toastLabel: {
+    ...typography.body,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontWeight: '600',
+  },
   fab: {
     position: 'absolute',
     right: dimensions.screenPaddingH,
-    bottom: dimensions.screenPaddingV + 56,
+    bottom: dimensions.screenPaddingV,
     minHeight: 60,
     borderRadius: dimensions.radiusXl,
     backgroundColor: colors.accent,

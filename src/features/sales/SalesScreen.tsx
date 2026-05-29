@@ -72,9 +72,27 @@ export default function SalesScreen() {
         </Card>
 
         <View style={styles.metricsGrid}>
-          <StatCard label="Today" value={formatCurrency(metrics.today)} tone="primary" style={styles.metricCard} />
-          <StatCard label="Week" value={formatCurrency(metrics.week)} tone="accent" style={styles.metricCard} />
-          <StatCard label="Month" value={formatCurrency(metrics.month)} tone="success" style={styles.metricCard} />
+          <StatCard
+            label="Today"
+            value={formatCurrency(metrics.today)}
+            tone="primary"
+            style={styles.metricCard}
+            compact
+          />
+          <StatCard
+            label="Week"
+            value={formatCurrency(metrics.week)}
+            tone="accent"
+            style={styles.metricCard}
+            compact
+          />
+          <StatCard
+            label="Month"
+            value={formatCurrency(metrics.month)}
+            tone="success"
+            style={styles.metricCard}
+            compact
+          />
         </View>
 
         <Card style={styles.chartCard}>
@@ -246,6 +264,7 @@ const styles = StyleSheet.create({
   metricCard: {
     flex: 1,
     minWidth: 0,
+    flexBasis: 0,
   },
   chartCard: {
     gap: dimensions.md,
