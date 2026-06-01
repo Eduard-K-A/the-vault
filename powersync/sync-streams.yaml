@@ -1,0 +1,166 @@
+config:
+  edition: 3
+
+streams:
+  business_memberships:
+    auto_subscribe: true
+    query: |
+      SELECT * FROM business_members
+      WHERE user_id = auth.user_id()
+        AND is_active = true
+
+  business_reference_data:
+    auto_subscribe: true
+    queries:
+      - |
+        SELECT * FROM businesses
+        WHERE id IN (
+          SELECT business_id
+          FROM business_members
+          WHERE user_id = auth.user_id()
+            AND is_active = true
+        )
+      - |
+        SELECT * FROM branches
+        WHERE business_id IN (
+          SELECT business_id
+          FROM business_members
+          WHERE user_id = auth.user_id()
+            AND is_active = true
+        )
+      - |
+        SELECT * FROM categories
+        WHERE business_id IN (
+          SELECT business_id
+          FROM business_members
+          WHERE user_id = auth.user_id()
+            AND is_active = true
+        )
+      - |
+        SELECT * FROM products
+        WHERE business_id IN (
+          SELECT business_id
+          FROM business_members
+          WHERE user_id = auth.user_id()
+            AND is_active = true
+        )
+      - |
+        SELECT * FROM inventory_items
+        WHERE business_id IN (
+          SELECT business_id
+          FROM business_members
+          WHERE user_id = auth.user_id()
+            AND is_active = true
+        )
+      - |
+        SELECT * FROM profiles
+        WHERE id IN (
+          SELECT user_id
+          FROM business_members
+          WHERE business_id IN (
+            SELECT business_id
+            FROM business_members
+            WHERE user_id = auth.user_id()
+              AND is_active = true
+          )
+            AND is_active = true
+        )
+      - |
+        SELECT * FROM audit_logs
+        WHERE business_id IN (
+          SELECT business_id
+          FROM business_members
+          WHERE user_id = auth.user_id()
+            AND is_active = true
+        )
+      - |
+        SELECT * FROM inventory_logs
+        WHERE branch_id IN (
+          SELECT id
+          FROM branches
+          WHERE business_id IN (
+            SELECT business_id
+            FROM business_members
+            WHERE user_id = auth.user_id()
+              AND is_active = true
+          )
+        )
+
+  employee_sales:
+    auto_subscribe: true
+    queries:
+      - |
+        SELECT * FROM sales
+        WHERE employee_id = auth.user_id()
+      - |
+        SELECT * FROM sale_items
+        WHERE sale_id IN (
+          SELECT id
+          FROM sales
+          WHERE employee_id = auth.user_id()
+        )
+      - |
+        SELECT * FROM payments
+        WHERE sale_id IN (
+          SELECT id
+          FROM sales
+          WHERE employee_id = auth.user_id()
+        )
+      - |
+        SELECT * FROM refunds
+        WHERE original_sale_id IN (
+          SELECT id
+          FROM sales
+          WHERE employee_id = auth.user_id()
+        )
+      - |
+        SELECT * FROM refund_items
+        WHERE refund_id IN (
+          SELECT id
+          FROM refunds
+          WHERE original_sale_id IN (
+            SELECT id
+            FROM sales
+            WHERE employee_id = auth.user_id()
+          )
+        )
+
+  owner_sales:
+    auto_subscribe: true
+    queries:
+      - |
+        SELECT * FROM sales
+        WHERE business_id IN (
+          SELECT business_id
+          FROM business_members
+          WHERE user_id = auth.user_id()
+            AND role = 'owner'
+            AND is_active = true
+        )
+      - |
+        SELECT * FROM sale_items
+        WHERE sale_id IN (
+          SELECT id
+          FROM sales
+          WHERE business_id IN (
+            SELECT business_id
+            FROM business_members
+            WHERE user_id = auth.user_id()
+              AND role = 'owner'
+              AND is_active = true
+          )
+        )
+      - |
+        SELECT * FROM payments
+        WHERE sale_id IN (
+          SELECT id
+          FROM sales
+          WHERE business_id IN (
+            SELECT business_id
+            FROM business_members
+            WHERE user_id = auth.user_id()
+              AND role = 'owner'
+              AND is_active = true
+          )
+        )
+
