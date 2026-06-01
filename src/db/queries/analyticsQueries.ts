@@ -1,5 +1,4 @@
-import type { LocalDbState } from '@/db/localDb';
-import type { SaleMetrics } from '@/types/models';
+import type { AuditLog, Branch, Business, BusinessMember, InventoryRecord, Payment, Profile, Product, Refund, RefundItem, Sale, SaleItem, SaleMetrics } from '@/types/models';
 
 export interface DailyTotal {
   day: string;
@@ -27,12 +26,6 @@ export interface EmployeeLeaderboardEntry {
   transactions: number;
 }
 
-export interface AnalyticsSummary {
-  revenue: number;
-  transactions: number;
-  netRevenue: number;
-}
-
 export interface EmployeeAnalyticsResult {
   dailyTotals: DailyTotal[];
   monthlyTotal: number;
@@ -55,7 +48,22 @@ export interface OwnerAnalyticsResult {
   paymentBreakdown: PaymentMethodBreakdown[];
 }
 
-export function getEmployeeAnalytics(state: LocalDbState, employeeId: string): EmployeeAnalyticsResult {
+interface AnalyticsState {
+  profiles: Profile[];
+  businesses: Business[];
+  businessMembers: BusinessMember[];
+  branches: Branch[];
+  products: Product[];
+  inventory: InventoryRecord[];
+  sales: Sale[];
+  saleItems: SaleItem[];
+  payments: Payment[];
+  refunds: Refund[];
+  refundItems: RefundItem[];
+  auditLogs: AuditLog[];
+}
+
+export function getEmployeeAnalytics(state: AnalyticsState, employeeId: string): EmployeeAnalyticsResult {
   const completedSales = state.sales.filter(
     (sale) => sale.employee_id === employeeId && sale.status === 'completed',
   );
@@ -78,7 +86,7 @@ export function getEmployeeAnalytics(state: LocalDbState, employeeId: string): E
   };
 }
 
-export function getOwnerAnalytics(state: LocalDbState, businessId: string, branchId: string): OwnerAnalyticsResult {
+export function getOwnerAnalytics(state: AnalyticsState, businessId: string, branchId: string): OwnerAnalyticsResult {
   const completedSales = state.sales.filter(
     (sale) => sale.business_id === businessId && sale.status === 'completed',
   );
@@ -112,7 +120,7 @@ export function getOwnerAnalytics(state: LocalDbState, businessId: string, branc
             : ('ok' as const),
     }))
     .sort((left, right) => left.stock_quantity - right.stock_quantity);
-  const paymentBreakdown = getPaymentBreakdown(completedSales, nowKey());
+  const paymentBreakdown = getPaymentBreakdown(completedSales);
 
   return {
     summary,
@@ -154,8 +162,8 @@ function getDailyTotals(sales: Array<{ created_at: string; total_amount: number 
 }
 
 function getTopProducts(
-  state: LocalDbState,
-  options: { saleFilter: (sale: LocalDbState['sales'][number]) => boolean; limit: number },
+  state: AnalyticsState,
+  options: { saleFilter: (sale: Sale) => boolean; limit: number },
 ): ProductAggregate[] {
   const totals = new Map<string, ProductAggregate>();
 
@@ -187,7 +195,7 @@ function getTopProducts(
     .slice(0, options.limit);
 }
 
-function getLeaderboard(state: LocalDbState, businessId: string): EmployeeLeaderboardEntry[] {
+function getLeaderboard(state: AnalyticsState, businessId: string): EmployeeLeaderboardEntry[] {
   const totals = new Map<string, EmployeeLeaderboardEntry>();
   const completedSales = state.sales.filter(
     (sale) => sale.business_id === businessId && sale.status === 'completed',
@@ -214,10 +222,7 @@ function getLeaderboard(state: LocalDbState, businessId: string): EmployeeLeader
   return [...totals.values()].sort((left, right) => right.revenue - left.revenue);
 }
 
-function getPaymentBreakdown(
-  sales: Array<{ payment_method: string; total_amount: number; created_at: string }>,
-  _bucket: string,
-): PaymentMethodBreakdown[] {
+function getPaymentBreakdown(sales: Array<{ payment_method: string; total_amount: number }>): PaymentMethodBreakdown[] {
   const totals = new Map<string, PaymentMethodBreakdown>();
 
   sales.forEach((sale) => {
@@ -275,8 +280,4 @@ function getWeekKey(date: Date): string {
   const dayOfYear = Math.floor((date.getTime() - firstDay.getTime()) / 86400000);
   const week = Math.ceil((dayOfYear + firstDay.getDay() + 1) / 7);
   return `${date.getFullYear()}-${week}`;
-}
-
-function nowKey(): string {
-  return new Date().toISOString().slice(0, 10);
 }

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
+import { powersync } from '@/powersync';
 import type { Branch, Business, BusinessSummary } from '@/types/models';
-import { getLocalDbState } from '@/db/localDb';
 import { useAuthStore } from './authStore';
 
 interface BusinessState {
@@ -9,7 +9,7 @@ interface BusinessState {
   activeBranch: Branch | null;
   availableBusinesses: BusinessSummary[];
   setAvailableBusinesses: (businesses: BusinessSummary[]) => void;
-  selectBusiness: (businessId: string) => void;
+  selectBusiness: (businessId: string) => Promise<void>;
   clearActiveBusiness: () => void;
 }
 
@@ -20,9 +20,8 @@ export const useBusinessStore = create<BusinessState>((set, get) => ({
   setAvailableBusinesses: (businesses) => {
     set({ availableBusinesses: businesses });
   },
-  selectBusiness: (businessId) => {
-    const state = getLocalDbState();
-    const business = state.businesses.find((entry) => entry.id === businessId) ?? null;
+  selectBusiness: async (businessId) => {
+    const business = await powersync.getOptional<Business>('SELECT * FROM businesses WHERE id = ?', [businessId]);
     if (!business) {
       return;
     }
@@ -31,8 +30,11 @@ export const useBusinessStore = create<BusinessState>((set, get) => ({
     const branchId = available?.branchId;
     const branch =
       branchId !== null
-        ? state.branches.find((entry) => entry.id === branchId) ?? null
-        : state.branches.find((entry) => entry.business_id === businessId && entry.is_active) ?? null;
+        ? await powersync.getOptional<Branch>('SELECT * FROM branches WHERE id = ?', [branchId])
+        : await powersync.getOptional<Branch>(
+            'SELECT * FROM branches WHERE business_id = ? AND is_active = 1 ORDER BY created_at ASC LIMIT 1',
+            [businessId],
+          );
 
     useAuthStore.getState().setError(null);
     set({
@@ -47,4 +49,3 @@ export const useBusinessStore = create<BusinessState>((set, get) => ({
     });
   },
 }));
-

@@ -8,12 +8,13 @@ import { BarChart, DonutChart } from '@/components/charts';
 import { EmptyState } from '@/components/EmptyState';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
-import { getLocalDbState } from '@/db/localDb';
 import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useSales } from '@/hooks/useSales';
 import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
+import { useQuery } from '@powersync/react';
+import type { Business } from '@/types/models';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -21,18 +22,19 @@ export default function SalesScreen() {
   const navigation = useNavigation<Navigation>();
   const { sales } = useSales();
   const activeBusiness = useBusinessStore((state) => state.activeBusiness);
+  const activeBranch = useBusinessStore((state) => state.activeBranch);
   const availableBusinesses = useBusinessStore((state) => state.availableBusinesses);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string>('all');
+  const { data: businessRows } = useQuery<Business>('SELECT * FROM businesses');
 
   useEffect(() => {
     setSelectedBusinessId(activeBusiness?.id ?? 'all');
   }, [activeBusiness?.id]);
 
   const businessOptions = useMemo(() => {
-    const state = getLocalDbState();
     const summaries = availableBusinesses
       .map((item) => {
-        const business = state.businesses.find((entry) => entry.id === item.businessId);
+        const business = (businessRows as Business[]).find((entry) => entry.id === item.businessId);
         return business
           ? {
               businessId: business.id,
@@ -43,7 +45,7 @@ export default function SalesScreen() {
       .filter((item): item is { businessId: string; businessName: string } => item !== null);
 
     return [{ businessId: 'all', businessName: 'All businesses' }, ...summaries];
-  }, [availableBusinesses]);
+  }, [availableBusinesses, businessRows]);
 
   const filteredSales = useMemo(() => {
     if (selectedBusinessId === 'all') {
@@ -93,8 +95,8 @@ export default function SalesScreen() {
 
   const selectedBusinessName = businessOptions.find((item) => item.businessId === selectedBusinessId)?.businessName ?? 'All businesses';
   const selectedBusinessLabel =
-    selectedBusinessId !== 'all' && activeBusiness?.id === selectedBusinessId && useBusinessStore.getState().activeBranch
-      ? `${selectedBusinessName} · ${useBusinessStore.getState().activeBranch?.name ?? 'No branch'}`
+    selectedBusinessId !== 'all' && activeBusiness?.id === selectedBusinessId && activeBranch
+      ? `${selectedBusinessName} · ${activeBranch.name}`
       : selectedBusinessName;
 
   return (
@@ -292,8 +294,10 @@ function formatPaymentLabel(method: string): string {
       return 'Card';
     case 'gcash':
       return 'GCash';
+    case 'maya':
+      return 'Maya';
     default:
-      return 'Other';
+      return 'Cash';
   }
 }
 

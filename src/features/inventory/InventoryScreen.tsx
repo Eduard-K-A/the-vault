@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
+import { useQuery } from '@powersync/react';
 
 import { Button, Card, Input, ModalSheet, Screen, StatCard } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
@@ -19,8 +20,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
-import type { Product } from '@/types/models';
-import { getLocalDbState } from '@/db/localDb';
+import type { InventoryRecord, Product } from '@/types/models';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -38,6 +38,10 @@ export default function InventoryScreen() {
   const [restockLoading, setRestockLoading] = useState(false);
   const { products, findByBarcode } = useProducts(search);
   const { addItem, items, total } = useCart();
+  const { data: inventoryItems } = useQuery<InventoryRecord>(
+    'SELECT * FROM inventory_items WHERE branch_id = ?',
+    [branchId ?? ''],
+  );
 
   const inventoryByProductId = useMemo(() => {
     if (!branchId) {
@@ -45,11 +49,9 @@ export default function InventoryScreen() {
     }
 
     return new Map(
-      getLocalDbState()
-        .inventory.filter((item) => item.branch_id === branchId)
-        .map((item) => [item.product_id, item.stock_quantity]),
+      (inventoryItems as InventoryRecord[]).map((item) => [item.product_id, item.stock_quantity]),
     );
-  }, [branchId]);
+  }, [branchId, inventoryItems]);
 
   const summary = useMemo(() => {
     const lowStock = Array.from(inventoryByProductId.values()).filter((value) => value > 0 && value <= 5).length;
@@ -85,7 +87,7 @@ export default function InventoryScreen() {
     try {
       setRestockLoading(true);
       await db.writeTransaction(async (tx) => {
-        tx.restockInventory({
+        await tx.restockInventory({
           productId: restockProduct.id,
           branchId,
           quantity,

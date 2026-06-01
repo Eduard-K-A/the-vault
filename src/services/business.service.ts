@@ -1,10 +1,4 @@
-import { db } from '@/db/powersync';
-import {
-  createBusiness as createBusinessRecord,
-  findBusinessByJoinCode,
-  getBusinessSummariesForUser,
-  getLocalDbState,
-} from '@/db/localDb';
+import { db, powersync } from '@/db/powersync';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import type { Business, BusinessSummary, UserRole } from '@/types/models';
@@ -39,7 +33,42 @@ export async function validateJoinCode(joinCode: string, userId: string): Promis
   }
 
   recordAttempt(userId);
-  return findBusinessByJoinCode(joinCode);
+  return (await powersync.getOptional<Business>('SELECT * FROM businesses WHERE join_code = ?', [joinCode])) ?? null;
+}
+
+export async function loadBusinessSummariesForUser(userId: string): Promise<BusinessSummary[]> {
+  const memberships = await powersync.getAll<{
+    business_id: string;
+    role: UserRole;
+    branch_id: string | null;
+  }>('SELECT business_id, role, branch_id FROM business_members WHERE user_id = ? AND is_active = 1', [userId]);
+
+  const summaries: BusinessSummary[] = [];
+  for (const membership of memberships) {
+    const business = await powersync.getOptional<Business>('SELECT * FROM businesses WHERE id = ?', [membership.business_id]);
+    if (!business) {
+      continue;
+    }
+
+    let branchName: string | null = null;
+    let branchId: string | null = membership.branch_id;
+    if (branchId) {
+      const branch = await powersync.getOptional<{ id: string; name: string }>('SELECT id, name FROM branches WHERE id = ?', [
+        branchId,
+      ]);
+      branchName = branch?.name ?? null;
+    }
+
+    summaries.push({
+      businessId: business.id,
+      businessName: business.name,
+      role: membership.role,
+      branchId,
+      branchName,
+    });
+  }
+
+  return summaries;
 }
 
 export async function createBusiness(input: {
@@ -56,22 +85,30 @@ export async function createBusiness(input: {
     throw new Error('Business name is required.');
   }
 
-  const business = createBusinessRecord({
-    name: input.name.trim(),
-    ownerId: auth.userId,
-    address: input.address ?? null,
-    branchName: input.branchName?.trim() || 'Main Branch',
-  });
+  const business = await db.writeTransaction((tx) =>
+    tx.createBusiness({
+      name: input.name.trim(),
+      ownerId: auth.userId,
+      address: input.address ?? null,
+      branchName: input.branchName?.trim() || 'Main Branch',
+    } as any),
+  );
 
-  const summary: BusinessSummary = {
+  const summary: any = {
     businessId: business.id,
     businessName: business.name,
     role: 'owner',
-    branchId: getLocalDbState().branches.find((branch) => branch.business_id === business.id)?.id ?? null,
-    branchName: getLocalDbState().branches.find((branch) => branch.business_id === business.id)?.name ?? null,
+    branchId: null,
+    branchName: null,
   };
 
-  useBusinessStore.getState().setAvailableBusinesses(getBusinessSummariesForUser(auth.userId));
+  const summaries = await loadBusinessSummariesForUser(auth.userId);
+  useBusinessStore.getState().setAvailableBusinesses(summaries);
+  const createdSummary = summaries.find((entry) => entry.businessId === business.id);
+  if (createdSummary) {
+    summary.branchId = createdSummary.branchId;
+    summary.branchName = createdSummary.branchName;
+  }
 
   return { business, summary };
 }
@@ -87,31 +124,31 @@ export async function joinBusiness(input: {
   }
 
   await db.writeTransaction(async (tx) => {
-    tx.addBusinessMember({
+    await tx.addBusinessMember({
       businessId: business.id,
       userId: input.userId,
       role: input.role ?? 'employee',
-      branchId: getLocalDbState().branches.find((branch) => branch.business_id === business.id)?.id ?? null,
+      branchId: null,
     });
   });
 
-  const summary = getBusinessSummariesForUser(input.userId).find(
+  const summary = (await loadBusinessSummariesForUser(input.userId)).find(
     (entry) => entry.businessId === business.id,
   );
   if (!summary) {
     throw new Error('Unable to resolve joined business.');
   }
 
-  useBusinessStore.getState().setAvailableBusinesses(getBusinessSummariesForUser(input.userId));
+  useBusinessStore.getState().setAvailableBusinesses(await loadBusinessSummariesForUser(input.userId));
   return summary;
 }
 
-export function getSelectedBusinessSummary(): BusinessSummary | null {
+export async function getSelectedBusinessSummary(): Promise<BusinessSummary | null> {
   const businessId = useBusinessStore.getState().activeBusiness?.id ?? null;
   const userId = useAuthStore.getState().userId ?? null;
   if (!businessId || !userId) {
     return null;
   }
 
-  return getBusinessSummariesForUser(userId).find((entry) => entry.businessId === businessId) ?? null;
+  return (await loadBusinessSummariesForUser(userId)).find((entry) => entry.businessId === businessId) ?? null;
 }

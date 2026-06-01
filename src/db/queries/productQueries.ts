@@ -1,4 +1,3 @@
-import type { LocalDbState } from '@/db/localDb';
 import type { Product, UserRole } from '@/types/models';
 
 export const PRODUCT_SEARCH_SQL = `
@@ -9,13 +8,13 @@ export const PRODUCT_SEARCH_SQL = `
 `;
 
 export function getProductsForBusiness(
-  state: LocalDbState,
+  products: Product[],
   businessId: string,
   role: UserRole,
   searchTerm = '',
 ): Product[] {
   const needle = searchTerm.trim().toLowerCase();
-  return state.products
+  return products
     .filter((product) => product.business_id === businessId)
     .filter((product) => (role === 'employee' ? product.is_active : true))
     .filter((product) => {
@@ -33,12 +32,12 @@ export function getProductsForBusiness(
 }
 
 export function findProductByBarcode(
-  state: LocalDbState,
+  products: Product[],
   businessId: string,
   barcode: string,
   role: UserRole,
 ): Product | null {
-  const product = state.products.find((entry) => {
+  const product = products.find((entry) => {
     if (entry.business_id !== businessId) {
       return false;
     }
@@ -53,7 +52,6 @@ export function findProductByBarcode(
   return product ?? null;
 }
 
-export function findProductById(state: LocalDbState, productId: string): Product | null {
-  return state.products.find((entry) => entry.id === productId) ?? null;
+export function findProductById(products: Product[], productId: string): Product | null {
+  return products.find((entry) => entry.id === productId) ?? null;
 }
-

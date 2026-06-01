@@ -3,15 +3,16 @@ import { FlatList, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useQuery } from '@powersync/react';
 
 import { Badge, Card, Screen, StatCard } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
-import { getLocalDbState } from '@/db/localDb';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
 import type { RootStackParamList } from '@/types/navigation';
+import type { Profile, Sale } from '@/types/models';
 
 type Route = NativeStackScreenProps<RootStackParamList, 'EmployeeDetail'>['route'];
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -19,9 +20,13 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 export default function EmployeeDetailScreen() {
   const navigation = useNavigation<Navigation>();
   const route = useRoute<Route>();
-  const state = getLocalDbState();
-  const employee = state.profiles.find((profile) => profile.id === route.params.employeeId) ?? null;
-  const sales = state.sales.filter((sale) => sale.employee_id === route.params.employeeId && sale.status === 'completed');
+  const { data: profileRows } = useQuery<Profile>('SELECT * FROM profiles WHERE id = ?', [route.params.employeeId]);
+  const { data: saleRows } = useQuery<Sale>(
+    "SELECT * FROM sales WHERE employee_id = ? AND status = 'completed'",
+    [route.params.employeeId],
+  );
+  const employee = (profileRows as Profile[])[0] ?? null;
+  const sales = saleRows as Sale[];
 
   function handleBack() {
     if (navigation.canGoBack()) {

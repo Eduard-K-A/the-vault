@@ -21,8 +21,8 @@ export default function BusinessSelectionScreen() {
   const selectBusiness = useBusinessStore((state) => state.selectBusiness);
   const role = useAuthStore((state) => state.role);
 
-  function handleSelect(businessId: string) {
-    selectBusiness(businessId);
+  async function handleSelect(businessId: string) {
+    await selectBusiness(businessId);
   }
 
   async function handleBack() {
@@ -46,7 +46,7 @@ export default function BusinessSelectionScreen() {
           <Text style={styles.subtitle}>Select a business to continue</Text>
           <Card style={styles.listCard} padded={false}>
             {businesses.map((item, index) => (
-              <Pressable key={item.businessId} onPress={() => handleSelect(item.businessId)} style={[styles.row, index !== businesses.length - 1 && styles.rowDivider]}>
+              <Pressable key={item.businessId} onPress={() => void handleSelect(item.businessId)} style={[styles.row, index !== businesses.length - 1 && styles.rowDivider]}>
                 <View style={[styles.avatar, item.role === 'owner' ? styles.avatarOwner : item.role === 'manager' ? styles.avatarManager : styles.avatarEmployee]}>
                   <Text style={styles.avatarText}>{item.businessName.slice(0, 2).toUpperCase()}</Text>
                 </View>

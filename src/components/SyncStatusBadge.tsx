@@ -4,11 +4,15 @@ import { Badge } from '@/components/ui';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
 
 export function SyncStatusBadge() {
-  const { pendingCount } = useSyncStatus();
+  const { phase, isOnline, lastError } = useSyncStatus();
 
-  if (pendingCount === 0) {
-    return <Badge label="Synced" tone="success" />;
+  if (phase === 'failed') {
+    return <Badge label={lastError ?? 'Sync failed'} tone="danger" />;
   }
 
-  return <Badge label={`${pendingCount} queued`} tone="warning" />;
+  if (phase === 'offline' || !isOnline) {
+    return <Badge label="Offline" tone="warning" />;
+  }
+
+  return <Badge label={phase === 'ready' ? 'Synced' : 'Syncing'} tone={phase === 'ready' ? 'success' : 'warning'} />;
 }

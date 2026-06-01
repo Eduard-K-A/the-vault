@@ -38,7 +38,7 @@ export default function AddProductScreen() {
       const productId = generateUUID();
       const stockCount = Math.max(0, Math.trunc(Number(initialStock) || 0));
       await db.writeTransaction(async (tx) => {
-        tx.upsertProduct({
+        await tx.upsertProduct({
           id: productId,
           business_id: businessId,
           category_id: null,
@@ -53,7 +53,7 @@ export default function AddProductScreen() {
           updated_at: new Date().toISOString(),
         }, authUserId);
 
-        tx.initializeInventory({
+        await tx.initializeInventory({
           productId,
           branchId,
           quantity: stockCount,

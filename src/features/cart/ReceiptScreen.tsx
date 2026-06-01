@@ -3,9 +3,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useQuery } from '@powersync/react';
 
 import { Badge, Button, Card, Screen, SectionHeader } from '@/components/ui';
-import { getLocalDbState } from '@/db/localDb';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
@@ -13,6 +13,7 @@ import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatDate';
 import { useAuthStore } from '@/store/authStore';
 import type { RootStackParamList } from '@/types/navigation';
+import type { Product, Sale, SaleItem } from '@/types/models';
 
 type Route = NativeStackScreenProps<RootStackParamList, 'Receipt'>['route'];
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -21,8 +22,18 @@ export default function ReceiptScreen() {
   const navigation = useNavigation<Navigation>();
   const route = useRoute<Route>();
   const role = useAuthStore((state) => state.role);
-  const sale = useMemo(() => getLocalDbState().sales.find((entry) => entry.id === route.params.saleId) ?? null, [route.params.saleId]);
-  const items = useMemo(() => getLocalDbState().saleItems.filter((entry) => entry.sale_id === route.params.saleId), [route.params.saleId]);
+  const { data: saleRows } = useQuery<Sale>('SELECT * FROM sales WHERE id = ?', [route.params.saleId]);
+  const { data: itemRows } = useQuery<SaleItem>('SELECT * FROM sale_items WHERE sale_id = ?', [route.params.saleId]);
+  const sale = useMemo(() => (saleRows as Sale[])[0] ?? null, [saleRows]);
+  const items = useMemo(() => itemRows as SaleItem[], [itemRows]);
+  const { data: productRows } = useQuery<Product>(
+    'SELECT * FROM products WHERE business_id = ?',
+    [sale?.business_id ?? ''],
+  );
+  const productsById = useMemo(
+    () => new Map((productRows as Product[]).map((product) => [product.id, product])),
+    [productRows],
+  );
 
   function handleBack() {
     if (navigation.canGoBack()) {
@@ -73,7 +84,7 @@ export default function ReceiptScreen() {
 
           <View style={styles.itemList}>
             {items.map((item) => {
-              const product = getLocalDbState().products.find((entry) => entry.id === item.product_id);
+              const product = productsById.get(item.product_id);
               return (
                 <View key={item.id} style={styles.itemRow}>
                   <View style={{ flex: 1, minWidth: 0 }}>
@@ -116,12 +127,19 @@ export default function ReceiptScreen() {
               <Text style={styles.metaValue}>{sale.payment_method}</Text>
             </View>
             <View style={styles.metaRow}>
-              <Text style={styles.metaLabel}>Sale ID</Text>
-              <Text style={styles.metaValue}>Ref: {sale.id.slice(0, 6).toUpperCase()}</Text>
+              <Text style={styles.metaLabel}>Reference</Text>
+              <Text style={styles.metaValue}>{sale.reference_number ?? sale.id.slice(0, 6).toUpperCase()}</Text>
+            </View>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>VAT</Text>
+              <Text style={styles.metaValue}>{formatCurrency(sale.vat_amount ?? 0)}</Text>
             </View>
             <View style={styles.metaRow}>
               <Text style={styles.metaLabel}>Status</Text>
-              <Badge label="Synced ✓" tone="success" />
+              <Badge
+                label={sale.status === 'completed' ? 'Completed' : sale.status}
+                tone={sale.status === 'completed' ? 'success' : sale.status === 'refunded' ? 'warning' : 'neutral'}
+              />
             </View>
           </View>
         </Card>

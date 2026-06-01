@@ -1,18 +1,21 @@
 import { useSyncExternalStore } from 'react';
 
-import { getUnsyncedSalesCount, getVersion, subscribe } from '@/db/localDb';
+import { useSyncStore } from '@/store/syncStore';
 
 export function useSyncStatus(): {
-  pendingCount: number;
-  hasPendingWrites: boolean;
   isOnline: boolean;
+  phase: 'booting' | 'unauthenticated' | 'syncing' | 'ready' | 'offline' | 'degraded' | 'failed';
+  lastError: string | null;
 } {
-  useSyncExternalStore(subscribe, getVersion, getVersion);
-  const pendingCount = getUnsyncedSalesCount();
+  const snapshot = useSyncExternalStore(
+    useSyncStore.subscribe,
+    useSyncStore.getState,
+    useSyncStore.getState,
+  );
+
   return {
-    pendingCount,
-    hasPendingWrites: pendingCount > 0,
-    isOnline: true,
+    isOnline: snapshot.isOnline,
+    phase: snapshot.phase,
+    lastError: snapshot.lastError,
   };
 }
-

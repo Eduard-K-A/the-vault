@@ -1,22 +1,29 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
-import { Badge, Button, Card, Screen, SectionHeader } from '@/components/ui';
+import { Button, Card, Input, Screen, SectionHeader } from '@/components/ui';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
-import { formatCurrency } from '@/utils/formatCurrency';
 import { useCart } from '@/hooks/useCart';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
 import type { PaymentMethod } from '@/types/models';
+import { formatCurrency } from '@/utils/formatCurrency';
+import { generateUUID } from '@/utils/generateUUID';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
-const paymentMethods: PaymentMethod[] = ['cash', 'card', 'gcash', 'others'];
+const paymentMethods: PaymentMethod[] = ['cash', 'gcash', 'maya', 'card'];
+
+interface PaymentLine {
+  id: string;
+  method: PaymentMethod;
+  amount: string;
+}
 
 export default function CheckoutScreen() {
   const navigation = useNavigation<Navigation>();
@@ -25,13 +32,35 @@ export default function CheckoutScreen() {
   const business = useBusinessStore((state) => state.activeBusiness);
   const branch = useBusinessStore((state) => state.activeBranch);
   const [loading, setLoading] = useState(false);
-  const [amountReceived, setAmountReceived] = useState('1500');
-  const changeDue = Math.max(0, Number(amountReceived || 0) - total);
+  const [paymentLines, setPaymentLines] = useState<PaymentLine[]>([
+    { id: generateUUID(), method: paymentMethod, amount: total.toFixed(2) },
+  ]);
+
+  useEffect(() => {
+    setPaymentLines([{ id: generateUUID(), method: paymentMethod, amount: total.toFixed(2) }]);
+  }, [paymentMethod, total, items.length]);
+
+  const receivedTotal = useMemo(
+    () => paymentLines.reduce((sum, line) => sum + Math.max(0, Number(line.amount || 0)), 0),
+    [paymentLines],
+  );
+  const changeDue = Math.max(0, receivedTotal - total);
 
   async function handleCheckout() {
+    if (receivedTotal < total) {
+      Alert.alert('Payment incomplete', 'The split payment rows must cover the full total.');
+      return;
+    }
+
     try {
       setLoading(true);
-      const saleId = await checkout();
+      const saleId = await checkout(
+        paymentLines[0]?.method,
+        paymentLines.map((line) => ({
+          method: line.method,
+          amount_peso: Number(line.amount || 0),
+        })),
+      );
       navigation.navigate('Receipt', { saleId });
     } catch (error) {
       Alert.alert('Checkout failed', error instanceof Error ? error.message : 'Unknown error');
@@ -56,6 +85,7 @@ export default function CheckoutScreen() {
           <Text style={styles.pageTitle}>Checkout</Text>
           <Text style={styles.pageSubtitle}>All writes happen locally before sync.</Text>
         </View>
+
         <Card style={styles.summaryHero}>
           <Text style={styles.heroKicker}>{items.length} items</Text>
           <Text style={styles.heroTotal}>{formatCurrency(total)}</Text>
@@ -65,7 +95,10 @@ export default function CheckoutScreen() {
         </Card>
 
         <Card style={styles.card}>
-          <SectionHeader title={business?.name ?? 'No business selected'} subtitle={branch?.name ?? 'No branch selected'} />
+          <SectionHeader
+            title={business?.name ?? 'No business selected'}
+            subtitle={branch?.name ?? 'No branch selected'}
+          />
           {items.map((item) => (
             <View key={item.product_id} style={styles.itemRow}>
               <View style={{ flex: 1, minWidth: 0 }}>
@@ -82,32 +115,90 @@ export default function CheckoutScreen() {
         </Card>
 
         <Text style={styles.sectionTitle}>How are they paying?</Text>
-        <View style={styles.paymentGrid}>
-          {paymentMethods.map((method) => (
-            <Pressable
-              key={method}
-              onPress={() => setPaymentMethod(method)}
-              style={[styles.paymentTile, paymentMethod === method && styles.paymentTileActive]}
-            >
-              <Text style={styles.paymentIcon}>{method === 'cash' ? '▭' : method === 'card' ? '▤' : method === 'gcash' ? '◫' : '•••'}</Text>
-              <Text style={styles.paymentLabel}>{method === 'gcash' ? 'GCash' : method === 'others' ? 'Others' : method[0].toUpperCase() + method.slice(1)}</Text>
-            </Pressable>
-          ))}
-        </View>
+        <Card style={styles.paymentCard}>
+          {paymentLines.map((line, index) => (
+            <View key={line.id} style={styles.paymentLine}>
+              <View style={styles.paymentLineHeader}>
+                <Text style={styles.paymentLineLabel}>Payment {index + 1}</Text>
+                {paymentLines.length > 1 ? (
+                  <Pressable
+                    onPress={() => setPaymentLines((current) => current.filter((entry) => entry.id !== line.id))}
+                  >
+                    <Text style={styles.removePayment}>Remove</Text>
+                  </Pressable>
+                ) : null}
+              </View>
 
-        <Card style={styles.amountCard}>
-          <Text style={styles.amountLabel}>Amount Received</Text>
-          <View style={styles.amountField}>
-            <Text style={styles.peso}>₱</Text>
-            <Text style={styles.amountValue}>{amountReceived}</Text>
+              <View style={styles.paymentMethods}>
+                {paymentMethods.map((method) => {
+                  const active = line.method === method;
+                  return (
+                    <Pressable
+                      key={method}
+                      onPress={() =>
+                        setPaymentLines((current) =>
+                          current.map((entry) => (entry.id === line.id ? { ...entry, method } : entry)),
+                        )
+                      }
+                      style={[styles.paymentTile, active && styles.paymentTileActive]}
+                    >
+                      <Text style={styles.paymentIcon}>
+                        {method === 'cash' ? '▭' : method === 'card' ? '▤' : method === 'gcash' ? '◫' : '◪'}
+                      </Text>
+                      <Text style={styles.paymentLabel}>
+                        {method === 'gcash' ? 'GCash' : method === 'maya' ? 'Maya' : method[0].toUpperCase() + method.slice(1)}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <Input
+                label="Amount"
+                value={line.amount}
+                onChangeText={(value) =>
+                  setPaymentLines((current) =>
+                    current.map((entry) => (entry.id === line.id ? { ...entry, amount: value } : entry)),
+                  )
+                }
+                keyboardType="numeric"
+              />
+            </View>
+          ))}
+
+          <View style={styles.paymentActions}>
+            <Button
+              label="Add payment line"
+              variant="secondary"
+              fullWidth={false}
+              onPress={() =>
+                setPaymentLines((current) => [
+                  ...current,
+                  { id: generateUUID(), method: 'cash', amount: '0.00' },
+                ])
+              }
+            />
+            <Button
+              label="Reset total"
+              variant="ghost"
+              fullWidth={false}
+              onPress={() =>
+                setPaymentLines([{ id: generateUUID(), method: paymentMethod, amount: total.toFixed(2) }])
+              }
+            />
           </View>
-          <View style={styles.changeRow}>
-            <Text style={styles.changeLabel}>Change Due</Text>
-            <Text style={styles.changeValue}>{formatCurrency(changeDue)}</Text>
+
+          <View style={styles.amountSummary}>
+            <View style={styles.changeRow}>
+              <Text style={styles.changeLabel}>Received</Text>
+              <Text style={styles.changeValue}>{formatCurrency(receivedTotal)}</Text>
+            </View>
+            <View style={styles.changeRow}>
+              <Text style={styles.changeLabel}>Change Due</Text>
+              <Text style={styles.changeValue}>{formatCurrency(changeDue)}</Text>
+            </View>
           </View>
         </Card>
-
-    
 
         <Card style={styles.summaryCard}>
           <View style={styles.totalsRow}>
@@ -170,6 +261,66 @@ const styles = StyleSheet.create({
   card: {
     gap: dimensions.md,
   },
+  paymentCard: {
+    gap: dimensions.md,
+  },
+  paymentLine: {
+    gap: dimensions.sm,
+    paddingBottom: dimensions.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  paymentLineHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: dimensions.sm,
+  },
+  paymentLineLabel: {
+    ...typography.body,
+    color: colors.text,
+    fontWeight: '600',
+  },
+  removePayment: {
+    ...typography.caption,
+    color: colors.danger,
+  },
+  paymentMethods: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: dimensions.sm,
+  },
+  paymentTile: {
+    width: '23%',
+    minHeight: 92,
+    borderRadius: dimensions.radiusMd,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: dimensions.xs,
+  },
+  paymentTileActive: {
+    borderColor: colors.accent,
+    borderWidth: 2,
+  },
+  paymentIcon: {
+    ...typography.title,
+    color: colors.accent,
+  },
+  paymentLabel: {
+    ...typography.body,
+    color: colors.text,
+  },
+  paymentActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: dimensions.sm,
+  },
+  amountSummary: {
+    gap: dimensions.xs,
+  },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -188,60 +339,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.subtitle,
-    color: colors.text,
-  },
-  paymentGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: dimensions.sm,
-  },
-  paymentTile: {
-    width: '48%',
-    minHeight: 112,
-    borderRadius: dimensions.radiusMd,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: dimensions.sm,
-  },
-  paymentTileActive: {
-    borderColor: colors.accent,
-    borderWidth: 2,
-  },
-  paymentIcon: {
-    ...typography.title,
-    color: colors.accent,
-  },
-  paymentLabel: {
-    ...typography.body,
-    color: colors.text,
-  },
-  amountCard: {
-    gap: dimensions.md,
-  },
-  amountLabel: {
-    ...typography.label,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-  },
-  amountField: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: colors.accent,
-    borderRadius: dimensions.radiusMd,
-    minHeight: 64,
-    paddingHorizontal: dimensions.md,
-    gap: dimensions.xs,
-  },
-  peso: {
-    ...typography.title,
-    color: colors.text,
-  },
-  amountValue: {
-    ...typography.title,
     color: colors.text,
   },
   changeRow: {
@@ -264,19 +361,6 @@ const styles = StyleSheet.create({
     paddingVertical: dimensions.xs,
     borderRadius: dimensions.radiusFull,
     overflow: 'hidden',
-  },
-  noteLabel: {
-    ...typography.label,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-  },
-  noteCard: {
-    minHeight: 56,
-    justifyContent: 'center',
-  },
-  notePlaceholder: {
-    ...typography.body,
-    color: colors.textMuted,
   },
   summaryCard: {
     gap: dimensions.sm,

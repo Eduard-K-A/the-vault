@@ -1,12 +1,11 @@
 import { useCallback, useMemo } from 'react';
 
 import { db } from '@/db/powersync';
-import { getLocalDbState } from '@/db/localDb';
-import { createSaleFromCart } from '@/db/queries/salesQueries';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import { useCartStore } from '@/store/cartStore';
-import type { PaymentMethod } from '@/types/models';
+import type { PaymentMethod, Sale, SaleItem } from '@/types/models';
+import { generateUUID } from '@/utils/generateUUID';
 
 export function useCart() {
   const items = useCartStore((state) => state.items);
@@ -29,7 +28,7 @@ export function useCart() {
   const total = useMemo(() => Math.max(0, subtotal - discountAmount), [subtotal, discountAmount]);
 
   const checkout = useCallback(
-    async (overridePaymentMethod?: PaymentMethod) => {
+    async (overridePaymentMethod?: PaymentMethod, splitPayments?: Array<{ method: PaymentMethod; amount_peso: number }>) => {
       if (!businessId || !branchId || !userId) {
         throw new Error('Missing active business context.');
       }
@@ -38,27 +37,47 @@ export function useCart() {
         throw new Error('Cart is empty.');
       }
 
-      const sale = await db.writeTransaction(async () => {
-        return createSaleFromCart({
-          state: getLocalDbState(),
-          businessId,
-          branchId,
-          employeeId: userId,
-          paymentMethod: overridePaymentMethod ?? paymentMethod,
-          discountAmount,
-          note,
-          items: items.map((item) => ({
-            productId: item.product_id,
-            quantity: item.quantity,
-            unitPrice: item.selling_price,
-          })),
-        });
-      });
+      const saleId = generateUUID();
+      const saleItems: SaleItem[] = items.map((item) => ({
+        id: generateUUID(),
+        sale_id: saleId,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        unit_price: item.selling_price,
+        subtotal: item.subtotal,
+      }));
+
+      const sale: Sale = {
+        id: saleId,
+        business_id: businessId,
+        branch_id: branchId,
+        employee_id: userId,
+        total_amount: total,
+        discount_amount: discountAmount,
+        payment_method: overridePaymentMethod ?? paymentMethod,
+        status: 'completed',
+        notes: note.trim() ? note : null,
+        created_at: new Date().toISOString(),
+        synced_at: null,
+        reference_number: null,
+        vat_amount: undefined,
+        idempotency_key: generateUUID(),
+        payments: undefined,
+      };
+
+      const committedSale = await db.writeTransaction(async (tx) =>
+        tx.createSale({
+          sale,
+          items: saleItems,
+          actorId: userId,
+          payments: splitPayments,
+        }),
+      );
 
       clearCart();
-      return sale.id;
+      return committedSale.id;
     },
-    [businessId, branchId, userId, items, paymentMethod, discountAmount, note, clearCart],
+    [branchId, businessId, clearCart, discountAmount, items, note, paymentMethod, total, userId],
   );
 
   return {
@@ -77,4 +96,3 @@ export function useCart() {
     checkout,
   };
 }
-

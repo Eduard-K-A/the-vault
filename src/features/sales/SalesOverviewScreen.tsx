@@ -2,10 +2,10 @@ import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
+import { useQuery } from '@powersync/react';
 
 import { Badge, Card, Screen, StatCard } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
-import { getLocalDbState } from '@/db/localDb';
 import { getOwnerAnalytics } from '@/db/queries/analyticsQueries';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
@@ -13,6 +13,7 @@ import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
+import type { AuditLog, Branch, Business, BusinessMember, Category, InventoryRecord, Payment, Profile, Product, Refund, RefundItem, Sale, SaleItem } from '@/types/models';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type PeriodKey = 'Today' | '7 Days' | '30 Days' | 'Custom';
@@ -23,9 +24,37 @@ const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 export default function SalesOverviewScreen() {
   const navigation = useNavigation<Navigation>();
   const [period, setPeriod] = useState<PeriodKey>('Today');
-  const state = getLocalDbState();
   const businessId = useBusinessStore((store) => store.activeBusiness?.id ?? null);
   const branchId = useBusinessStore((store) => store.activeBranch?.id ?? null);
+  const { data: profileRows } = useQuery<Profile>('SELECT * FROM profiles');
+  const { data: businessRows } = useQuery<Business>('SELECT * FROM businesses');
+  const { data: memberRows } = useQuery<BusinessMember>('SELECT * FROM business_members');
+  const { data: branchRows } = useQuery<Branch>('SELECT * FROM branches');
+  const { data: categoryRows } = useQuery<Category>('SELECT * FROM categories');
+  const { data: productRows } = useQuery<Product>('SELECT * FROM products');
+  const { data: inventoryRows } = useQuery<InventoryRecord>('SELECT * FROM inventory_items');
+  const { data: saleRows } = useQuery<Sale>('SELECT * FROM sales');
+  const { data: itemRows } = useQuery<SaleItem>('SELECT * FROM sale_items');
+  const { data: paymentRows } = useQuery<Payment>('SELECT * FROM payments');
+  const { data: refundRows } = useQuery<Refund>('SELECT * FROM refunds');
+  const { data: refundItemRows } = useQuery<RefundItem>('SELECT * FROM refund_items');
+  const { data: auditLogRows } = useQuery<AuditLog>('SELECT * FROM audit_logs');
+  const state = {
+    profiles: profileRows as Profile[],
+    businesses: businessRows as Business[],
+    businessMembers: memberRows as BusinessMember[],
+    branches: branchRows as Branch[],
+    categories: categoryRows as Category[],
+    products: productRows as Product[],
+    inventory: inventoryRows as InventoryRecord[],
+    sales: saleRows as Sale[],
+    saleItems: itemRows as SaleItem[],
+    payments: paymentRows as Payment[],
+    refunds: refundRows as Refund[],
+    refundItems: refundItemRows as RefundItem[],
+    inventoryLogs: [],
+    auditLogs: auditLogRows as AuditLog[],
+  };
   const analytics = businessId && branchId ? getOwnerAnalytics(state, businessId, branchId) : null;
 
   const filteredSales = useMemo(() => {

@@ -5,15 +5,25 @@ import { BrandMark } from '@/components/BrandMark';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
+import { useSyncStatus } from '@/hooks/useSyncStatus';
 
 export default function SplashScreen() {
+  const { phase, lastError } = useSyncStatus();
+
+  const subtitle =
+    phase === 'offline'
+      ? 'Offline mode is active. The local cache is available.'
+      : phase === 'syncing'
+        ? 'Loading workspace and syncing with the backend.'
+        : lastError ?? 'Loading workspace and syncing with the backend.';
+
   return (
     <View style={styles.container}>
       <View style={styles.orbOne} />
       <View style={styles.orbTwo} />
       <BrandMark compact />
       <Text style={styles.title}>Preparing workspace</Text>
-      <Text style={styles.subtitle}>Loading offline state and sync queues.</Text>
+      <Text style={styles.subtitle}>{subtitle}</Text>
     </View>
   );
 }

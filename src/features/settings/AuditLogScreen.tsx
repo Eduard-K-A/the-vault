@@ -2,23 +2,27 @@ import React from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
+import { useQuery } from '@powersync/react';
 
 import { Badge, Card, Screen } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
-import { getLocalDbState } from '@/db/localDb';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { formatDate } from '@/utils/formatDate';
+import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
+import type { AuditLog } from '@/types/models';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function AuditLogScreen() {
   const navigation = useNavigation<Navigation>();
   const businessId = useBusinessStore((state) => state.activeBusiness?.id ?? null);
-  const logs = getLocalDbState().auditLogs.filter((log) => log.business_id === businessId);
+  const role = useAuthStore((state) => state.role);
+  const { data: logRows } = useQuery<AuditLog>('SELECT * FROM audit_logs WHERE business_id = ?', [businessId ?? '']);
+  const logs = (logRows as AuditLog[]).filter((log) => log.business_id === businessId);
 
   function handleBack() {
     if (navigation.canGoBack()) {
@@ -35,7 +39,9 @@ export default function AuditLogScreen() {
         <Text style={styles.title}>Audit log</Text>
         <Text style={styles.subtitle}>Trace of business actions.</Text>
       </View>
-      {logs.length === 0 ? (
+      {role !== 'owner' ? (
+        <EmptyState title="Owner only" description="Audit logs are visible to business owners only." />
+      ) : logs.length === 0 ? (
         <EmptyState title="No audit events" description="Actions will appear here when changes are recorded." />
       ) : (
         <FlatList
@@ -48,6 +54,10 @@ export default function AuditLogScreen() {
                 <Text style={styles.type}>{item.event_type}</Text>
                 <Badge label={formatDate(item.created_at)} tone="neutral" />
               </View>
+              <Text style={styles.meta}>
+                {item.branch_id ? `Branch: ${item.branch_id} · ` : ''}
+                {item.source_device_id ? `Device: ${item.source_device_id}` : 'Device: unknown'}
+              </Text>
               <Text style={styles.meta} numberOfLines={3}>
                 {JSON.stringify(item.payload)}
               </Text>

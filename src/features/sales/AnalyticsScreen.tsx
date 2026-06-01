@@ -2,11 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
+import { useQuery } from '@powersync/react';
 
 import { Badge, Card, Screen, StatCard } from '@/components/ui';
 import { BarChart, DonutChart, LineChart } from '@/components/charts';
 import { EmptyState } from '@/components/EmptyState';
-import { getLocalDbState } from '@/db/localDb';
 import { getEmployeeAnalytics, getOwnerAnalytics } from '@/db/queries/analyticsQueries';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
@@ -15,6 +15,7 @@ import { formatCurrency } from '@/utils/formatCurrency';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
+import type { AuditLog, Branch, Business, BusinessMember, Category, InventoryRecord, Payment, Profile, Product, Refund, RefundItem, Sale, SaleItem } from '@/types/models';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -28,16 +29,28 @@ export default function AnalyticsScreen() {
   const activeBranch = useBusinessStore((state) => state.activeBranch);
   const availableBusinesses = useBusinessStore((state) => state.availableBusinesses);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string>('all');
+  const { data: profileRows } = useQuery<Profile>('SELECT * FROM profiles');
+  const { data: businessRows } = useQuery<Business>('SELECT * FROM businesses');
+  const { data: memberRows } = useQuery<BusinessMember>('SELECT * FROM business_members');
+  const { data: branchRows } = useQuery<Branch>('SELECT * FROM branches');
+  const { data: categoryRows } = useQuery<Category>('SELECT * FROM categories');
+  const { data: productRows } = useQuery<Product>('SELECT * FROM products');
+  const { data: inventoryRows } = useQuery<InventoryRecord>('SELECT * FROM inventory_items');
+  const { data: saleRows } = useQuery<Sale>('SELECT * FROM sales');
+  const { data: itemRows } = useQuery<SaleItem>('SELECT * FROM sale_items');
+  const { data: paymentRows } = useQuery<Payment>('SELECT * FROM payments');
+  const { data: refundRows } = useQuery<Refund>('SELECT * FROM refunds');
+  const { data: refundItemRows } = useQuery<RefundItem>('SELECT * FROM refund_items');
+  const { data: auditLogRows } = useQuery<AuditLog>('SELECT * FROM audit_logs');
 
   useEffect(() => {
     setSelectedBusinessId(activeBusiness?.id ?? 'all');
   }, [activeBusiness?.id]);
 
-  const state = getLocalDbState();
   const businessOptions = useMemo(() => {
     const summaries = availableBusinesses
       .map((item) => {
-        const business = state.businesses.find((entry) => entry.id === item.businessId);
+        const business = (businessRows as Business[]).find((entry) => entry.id === item.businessId);
         return business
           ? {
               businessId: business.id,
@@ -48,9 +61,25 @@ export default function AnalyticsScreen() {
       .filter((item): item is { businessId: string; businessName: string } => item !== null);
 
     return [{ businessId: 'all', businessName: 'All businesses' }, ...summaries];
-  }, [availableBusinesses, state.businesses]);
+  }, [availableBusinesses, businessRows]);
 
   const filteredState = useMemo(() => {
+    const state = {
+      profiles: profileRows as Profile[],
+      businesses: businessRows as Business[],
+      businessMembers: memberRows as BusinessMember[],
+      branches: branchRows as Branch[],
+      categories: categoryRows as Category[],
+      products: productRows as Product[],
+      inventory: inventoryRows as InventoryRecord[],
+      sales: saleRows as Sale[],
+      saleItems: itemRows as SaleItem[],
+      payments: paymentRows as Payment[],
+      refunds: refundRows as Refund[],
+      refundItems: refundItemRows as RefundItem[],
+      inventoryLogs: [],
+      auditLogs: auditLogRows as AuditLog[],
+    };
     if (selectedBusinessId === 'all') {
       return state;
     }
@@ -61,7 +90,22 @@ export default function AnalyticsScreen() {
       sales: state.sales.filter((sale) => sale.business_id === selectedBusinessId),
       saleItems: state.saleItems.filter((item) => saleIds.has(item.sale_id)),
     };
-  }, [selectedBusinessId, state]);
+  }, [
+    auditLogRows,
+    branchRows,
+    businessRows,
+    categoryRows,
+    inventoryRows,
+    itemRows,
+    memberRows,
+    paymentRows,
+    profileRows,
+    productRows,
+    refundItemRows,
+    refundRows,
+    saleRows,
+    selectedBusinessId,
+  ]);
   const selectedBusinessLabel =
     selectedBusinessId !== 'all' && activeBusiness?.id === selectedBusinessId && activeBranch
       ? `${businessOptions.find((item) => item.businessId === selectedBusinessId)?.businessName ?? 'Selected business'} · ${activeBranch.name}`

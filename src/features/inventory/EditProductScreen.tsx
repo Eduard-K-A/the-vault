@@ -2,15 +2,16 @@ import React, { useMemo, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useQuery } from '@powersync/react';
 
 import { Badge, Button, Card, Input, Screen } from '@/components/ui';
 import { db } from '@/db/powersync';
-import { getLocalDbState } from '@/db/localDb';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { useAuthStore } from '@/store/authStore';
 import type { RootStackParamList } from '@/types/navigation';
+import type { Product } from '@/types/models';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type Route = NativeStackScreenProps<RootStackParamList, 'EditProduct'>['route'];
@@ -19,10 +20,8 @@ export default function EditProductScreen() {
   const navigation = useNavigation<Navigation>();
   const route = useRoute<Route>();
   const authUserId = useAuthStore((state) => state.userId);
-  const product = useMemo(
-    () => getLocalDbState().products.find((entry) => entry.id === route.params.productId) ?? null,
-    [route.params.productId],
-  );
+  const { data: productRows } = useQuery<Product>('SELECT * FROM products WHERE id = ?', [route.params.productId]);
+  const product = useMemo(() => (productRows as Product[])[0] ?? null, [productRows]);
 
   const [name, setName] = useState(product?.name ?? '');
   const [barcode, setBarcode] = useState(product?.barcode ?? '');
@@ -39,7 +38,7 @@ export default function EditProductScreen() {
     try {
       setLoading(true);
       await db.writeTransaction(async (tx) => {
-        tx.upsertProduct(
+        await tx.upsertProduct(
           {
             ...product,
             name: name.trim(),
@@ -70,7 +69,7 @@ export default function EditProductScreen() {
     }
 
     await db.writeTransaction(async (tx) => {
-      tx.archiveProduct(product.id, authUserId);
+      await tx.archiveProduct(product.id, authUserId);
     });
     if (navigation.canGoBack()) {
       navigation.goBack();

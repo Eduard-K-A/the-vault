@@ -28,7 +28,7 @@ export default function RestockModal() {
     try {
       setLoading(true);
       await db.writeTransaction(async (tx) => {
-        tx.restockInventory({
+        await tx.restockInventory({
           productId: route.params.productId,
           branchId,
           quantity: Number(quantity),
