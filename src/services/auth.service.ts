@@ -121,6 +121,7 @@ export async function signUp(input: SignUpInput): Promise<AuthSession> {
     id: profileId,
     fullname: input.fullname,
     email: input.email,
+    phone_number: null,
     avatar_url: existing?.avatar_url ?? null,
     created_at: existing?.created_at ?? new Date().toISOString(),
   };
