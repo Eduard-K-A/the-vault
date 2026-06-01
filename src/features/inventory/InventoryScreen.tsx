@@ -232,15 +232,19 @@ export default function InventoryScreen() {
       ) : null}
       <Pressable
         onPress={() => (role === 'owner' ? navigation.navigate('AddProduct') : setCartVisible(true))}
-        style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
+        style={({ pressed }) => [
+          styles.fab,
+          role === 'owner' ? styles.fabCompact : styles.fabWide,
+          pressed && styles.fabPressed,
+        ]}
       >
-        <View style={styles.fabCopy}>
+        <View style={role === 'owner' ? styles.fabCopyCompact : styles.fabCopy}>
           <Text style={styles.fabLabel}>{role === 'owner' ? 'Add product' : 'Open cart'}</Text>
-          <Text style={styles.fabMeta}>
-            {role === 'owner'
-              ? 'Create or edit inventory'
-              : `${items.length} item${items.length === 1 ? '' : 's'} • ${formatCurrency(total)}`}
-          </Text>
+          {role === 'owner' ? null : (
+            <Text style={styles.fabMeta}>
+              {`${items.length} item${items.length === 1 ? '' : 's'} • ${formatCurrency(total)}`}
+            </Text>
+          )}
         </View>
         <Text style={styles.fabGlyph}>{role === 'owner' ? '＋' : '🛒'}</Text>
       </Pressable>
@@ -369,14 +373,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     flexDirection: 'row',
-    paddingHorizontal: dimensions.md,
-    paddingVertical: dimensions.sm,
-    minWidth: 182,
     shadowColor: colors.primary,
     shadowOpacity: 0.18,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
     elevation: 5,
+  },
+  fabWide: {
+    minWidth: 182,
+    paddingHorizontal: dimensions.md,
+    paddingVertical: dimensions.sm,
+  },
+  fabCompact: {
+    minWidth: 0,
+    paddingHorizontal: dimensions.md,
+    paddingVertical: dimensions.sm,
+    alignSelf: 'flex-start',
   },
   fabPressed: {
     opacity: 0.9,
@@ -386,6 +398,11 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     marginRight: dimensions.sm,
+  },
+  fabCopyCompact: {
+    flex: 0,
+    marginRight: dimensions.xs,
+    width: 'auto',
   },
   fabLabel: {
     color: '#FFFFFF',

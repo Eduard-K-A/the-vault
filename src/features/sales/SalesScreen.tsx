@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
@@ -8,9 +8,11 @@ import { BarChart, DonutChart } from '@/components/charts';
 import { EmptyState } from '@/components/EmptyState';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
+import { getLocalDbState } from '@/db/localDb';
 import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useSales } from '@/hooks/useSales';
+import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -18,20 +20,52 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 export default function SalesScreen() {
   const navigation = useNavigation<Navigation>();
   const { sales } = useSales();
+  const activeBusiness = useBusinessStore((state) => state.activeBusiness);
+  const availableBusinesses = useBusinessStore((state) => state.availableBusinesses);
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string>('all');
+
+  useEffect(() => {
+    setSelectedBusinessId(activeBusiness?.id ?? 'all');
+  }, [activeBusiness?.id]);
+
+  const businessOptions = useMemo(() => {
+    const state = getLocalDbState();
+    const summaries = availableBusinesses
+      .map((item) => {
+        const business = state.businesses.find((entry) => entry.id === item.businessId);
+        return business
+          ? {
+              businessId: business.id,
+              businessName: business.name,
+            }
+          : null;
+      })
+      .filter((item): item is { businessId: string; businessName: string } => item !== null);
+
+    return [{ businessId: 'all', businessName: 'All businesses' }, ...summaries];
+  }, [availableBusinesses]);
+
+  const filteredSales = useMemo(() => {
+    if (selectedBusinessId === 'all') {
+      return sales;
+    }
+
+    return sales.filter((sale) => sale.business_id === selectedBusinessId);
+  }, [sales, selectedBusinessId]);
 
   const metrics = useMemo(() => {
     const now = new Date();
-    const todayTotal = sales
+    const todayTotal = filteredSales
       .filter((sale) => isSameDay(new Date(sale.created_at), now))
       .reduce((sum, sale) => sum + sale.total_amount, 0);
-    const weekTotal = sales
+    const weekTotal = filteredSales
       .filter((sale) => isSameWeek(new Date(sale.created_at), now))
       .reduce((sum, sale) => sum + sale.total_amount, 0);
-    const monthTotal = sales
+    const monthTotal = filteredSales
       .filter((sale) => isSameMonth(new Date(sale.created_at), now))
       .reduce((sum, sale) => sum + sale.total_amount, 0);
 
-    const paymentBreakdown = sales.reduce<Record<string, number>>((accumulator, sale) => {
+    const paymentBreakdown = filteredSales.reduce<Record<string, number>>((accumulator, sale) => {
       accumulator[sale.payment_method] = (accumulator[sale.payment_method] ?? 0) + sale.total_amount;
       return accumulator;
     }, {});
@@ -42,34 +76,73 @@ export default function SalesScreen() {
       month: monthTotal,
       paymentBreakdown,
     };
-  }, [sales]);
+  }, [filteredSales]);
 
   const recentSales = useMemo(() => {
-    return [...sales].sort((left, right) => +new Date(right.created_at) - +new Date(left.created_at));
-  }, [sales]);
+    return [...filteredSales].sort((left, right) => +new Date(right.created_at) - +new Date(left.created_at));
+  }, [filteredSales]);
 
   const trendData = useMemo(
     () =>
-      buildTrendData(sales).map((item) => ({
+      buildTrendData(filteredSales).map((item) => ({
         label: item.label,
         value: item.value,
       })),
-    [sales],
+    [filteredSales],
   );
 
+  const selectedBusinessName = businessOptions.find((item) => item.businessId === selectedBusinessId)?.businessName ?? 'All businesses';
+  const selectedBusinessLabel =
+    selectedBusinessId !== 'all' && activeBusiness?.id === selectedBusinessId && useBusinessStore.getState().activeBranch
+      ? `${selectedBusinessName} · ${useBusinessStore.getState().activeBranch?.name ?? 'No branch'}`
+      : selectedBusinessName;
+
   return (
-    <Screen title="My Sales" action={<Badge label="Employee view" tone="primary" />} scrollable contentStyle={styles.content}>
+    <Screen
+      title="My Sales"
+      action={<Badge label="Employee view" tone="primary" />}
+      scrollable
+      contentStyle={styles.content}
+    >
       <View style={styles.stack}>
         <Card style={styles.heroCard}>
           <View style={styles.heroRow}>
             <View style={styles.heroCopy}>
               <Text style={styles.heroKicker}>Sales overview</Text>
               <Text style={styles.heroTitle}>A quick read on today, week, and month performance.</Text>
-              <Text style={styles.heroBody}>The chart below and the metric cards are designed to be scanned side by side on a phone.</Text>
+              <Text style={styles.heroBody}>
+                Filter by business to separate sales from different workspaces.
+              </Text>
             </View>
             <Badge label={`${recentSales.length} records`} tone="accent" />
           </View>
         </Card>
+
+        <View style={styles.filterWrap}>
+          <Text style={styles.filterLabel}>Business filter</Text>
+          <View style={styles.filterRow}>
+            {businessOptions.map((item) => {
+              const active = item.businessId === selectedBusinessId;
+              return (
+                <Pressable
+                  key={item.businessId}
+                  accessibilityRole="button"
+                  onPress={() => setSelectedBusinessId(item.businessId)}
+                  style={({ pressed }) => [
+                    styles.filterChip,
+                    active && styles.filterChipActive,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={[styles.filterChipLabel, active && styles.filterChipLabelActive]}>
+                    {item.businessName}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Text style={styles.filterMeta}>Showing sales for {selectedBusinessLabel}.</Text>
+        </View>
 
         <View style={styles.metricsGrid}>
           <StatCard
@@ -135,6 +208,9 @@ export default function SalesScreen() {
                   <View style={styles.rowCopy}>
                     <Text style={styles.saleId}>{item.id.slice(0, 8).toUpperCase()}</Text>
                     <Text style={styles.saleMeta}>{formatDateLabel(item.created_at)}</Text>
+                    <Text style={styles.saleBusiness}>
+                      {getBusinessName(item.business_id, businessOptions)}
+                    </Text>
                   </View>
                   <Text style={styles.amount}>{formatCurrency(item.total_amount)}</Text>
                 </View>
@@ -221,6 +297,13 @@ function formatPaymentLabel(method: string): string {
   }
 }
 
+function getBusinessName(
+  businessId: string,
+  businesses: Array<{ businessId: string; businessName: string }>,
+): string {
+  return businesses.find((item) => item.businessId === businessId)?.businessName ?? 'Unknown business';
+}
+
 const styles = StyleSheet.create({
   content: {
     paddingBottom: dimensions.xl + 24,
@@ -254,6 +337,46 @@ const styles = StyleSheet.create({
   },
   heroBody: {
     ...typography.body,
+    color: colors.textMuted,
+  },
+  filterWrap: {
+    gap: dimensions.xs,
+  },
+  filterLabel: {
+    ...typography.label,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: dimensions.sm,
+  },
+  filterChip: {
+    minHeight: 38,
+    paddingHorizontal: dimensions.md,
+    borderRadius: dimensions.radiusFull,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterChipActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  filterChipLabel: {
+    ...typography.caption,
+    color: colors.textMuted,
+  },
+  filterChipLabelActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  filterMeta: {
+    ...typography.caption,
     color: colors.textMuted,
   },
   metricsGrid: {
@@ -318,6 +441,11 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: 2,
   },
+  saleBusiness: {
+    ...typography.caption,
+    color: colors.accent,
+    marginTop: 2,
+  },
   amount: {
     color: colors.text,
     fontWeight: '700',
@@ -326,5 +454,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: dimensions.xs,
     flexWrap: 'wrap',
+  },
+  pressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
   },
 });

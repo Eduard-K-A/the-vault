@@ -107,10 +107,7 @@ export default function CheckoutScreen() {
           </View>
         </Card>
 
-        <Text style={styles.noteLabel}>Add a note (optional)</Text>
-        <Card style={styles.noteCard}>
-          <Text style={styles.notePlaceholder}>e.g. VIP Customer</Text>
-        </Card>
+    
 
         <Card style={styles.summaryCard}>
           <View style={styles.totalsRow}>

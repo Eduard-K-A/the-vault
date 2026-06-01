@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
@@ -22,14 +22,56 @@ export default function AnalyticsScreen() {
   const navigation = useNavigation<Navigation>();
   const role = useAuthStore((state) => state.role);
   const userId = useAuthStore((state) => state.userId);
-  const businessId = useBusinessStore((state) => state.activeBusiness?.id ?? null);
+  const activeBusiness = useBusinessStore((state) => state.activeBusiness);
+  const businessId = activeBusiness?.id ?? null;
   const branchId = useBusinessStore((state) => state.activeBranch?.id ?? null);
+  const activeBranch = useBusinessStore((state) => state.activeBranch);
+  const availableBusinesses = useBusinessStore((state) => state.availableBusinesses);
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string>('all');
+
+  useEffect(() => {
+    setSelectedBusinessId(activeBusiness?.id ?? 'all');
+  }, [activeBusiness?.id]);
+
+  const state = getLocalDbState();
+  const businessOptions = useMemo(() => {
+    const summaries = availableBusinesses
+      .map((item) => {
+        const business = state.businesses.find((entry) => entry.id === item.businessId);
+        return business
+          ? {
+              businessId: business.id,
+              businessName: business.name,
+            }
+          : null;
+      })
+      .filter((item): item is { businessId: string; businessName: string } => item !== null);
+
+    return [{ businessId: 'all', businessName: 'All businesses' }, ...summaries];
+  }, [availableBusinesses, state.businesses]);
+
+  const filteredState = useMemo(() => {
+    if (selectedBusinessId === 'all') {
+      return state;
+    }
+
+    const saleIds = new Set(state.sales.filter((sale) => sale.business_id === selectedBusinessId).map((sale) => sale.id));
+    return {
+      ...state,
+      sales: state.sales.filter((sale) => sale.business_id === selectedBusinessId),
+      saleItems: state.saleItems.filter((item) => saleIds.has(item.sale_id)),
+    };
+  }, [selectedBusinessId, state]);
+  const selectedBusinessLabel =
+    selectedBusinessId !== 'all' && activeBusiness?.id === selectedBusinessId && activeBranch
+      ? `${businessOptions.find((item) => item.businessId === selectedBusinessId)?.businessName ?? 'Selected business'} · ${activeBranch.name}`
+      : businessOptions.find((item) => item.businessId === selectedBusinessId)?.businessName ?? 'Selected business';
 
   const analytics =
     role === 'owner' && businessId && branchId
-      ? getOwnerAnalytics(getLocalDbState(), businessId, branchId)
+      ? getOwnerAnalytics(filteredState, businessId, branchId)
       : role === 'employee' && userId
-        ? getEmployeeAnalytics(getLocalDbState(), userId)
+        ? getEmployeeAnalytics(filteredState, userId)
         : null;
 
   function handleBack() {
@@ -79,6 +121,30 @@ export default function AnalyticsScreen() {
             <Badge label={paymentData.length > 0 ? 'Fresh data' : 'No data'} tone="accent" />
           </View>
         </Card>
+
+        <View style={styles.filterWrap}>
+          <Text style={styles.filterLabel}>Business filter</Text>
+          <View style={styles.filterRow}>
+            {businessOptions.map((item) => {
+              const active = item.businessId === selectedBusinessId;
+              return (
+                <Pressable
+                  key={item.businessId}
+                  accessibilityRole="button"
+                  onPress={() => setSelectedBusinessId(item.businessId)}
+                  style={({ pressed }) => [styles.filterChip, active && styles.filterChipActive, pressed && styles.pressed]}
+                >
+                  <Text style={[styles.filterChipLabel, active && styles.filterChipLabelActive]}>{item.businessName}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Text style={styles.filterMeta}>
+            {selectedBusinessId === 'all'
+              ? 'Showing combined analytics across all linked businesses.'
+              : `Showing analytics for ${selectedBusinessLabel}.`}
+          </Text>
+        </View>
 
         <View style={styles.revenueHeader}>
           <View>
@@ -231,6 +297,46 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textMuted,
   },
+  filterWrap: {
+    gap: dimensions.xs,
+  },
+  filterLabel: {
+    ...typography.label,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: dimensions.sm,
+  },
+  filterChip: {
+    minHeight: 38,
+    paddingHorizontal: dimensions.md,
+    borderRadius: dimensions.radiusFull,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterChipActive: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
+  },
+  filterChipLabel: {
+    ...typography.caption,
+    color: colors.textMuted,
+  },
+  filterChipLabelActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  filterMeta: {
+    ...typography.caption,
+    color: colors.textMuted,
+  },
   selectorActive: {
     ...typography.label,
     color: colors.text,
@@ -335,6 +441,10 @@ const styles = StyleSheet.create({
   amount: {
     color: colors.text,
     fontWeight: '700',
+  },
+  pressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
   },
 });
 

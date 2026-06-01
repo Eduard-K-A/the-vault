@@ -3,7 +3,7 @@ import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
-import { Button, Card, ModalSheet } from '@/components/ui';
+import { Button, Card, Input, ModalSheet } from '@/components/ui';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
@@ -20,7 +20,43 @@ interface CartSheetProps {
 
 export default function CartSheet({ visible, onClose }: CartSheetProps) {
   const navigation = useNavigation<Navigation>();
-  const { items, subtotal, discountAmount, total, setQuantity, removeItem } = useCart();
+  const { items, subtotal, discountAmount, total, setQuantity, removeItem, setDiscountAmount } = useCart();
+  const [discountVisible, setDiscountVisible] = React.useState(false);
+  const [discountMode, setDiscountMode] = React.useState<'amount' | 'percent'>('amount');
+  const [discountDraft, setDiscountDraft] = React.useState(String(discountAmount || 0));
+  const discountPercent = subtotal > 0 ? Math.min(100, Math.round((discountAmount / subtotal) * 100)) : 0;
+
+  React.useEffect(() => {
+    setDiscountDraft(String(discountAmount || 0));
+  }, [discountAmount, visible]);
+
+  function handleOpenDiscount() {
+    setDiscountMode('amount');
+    setDiscountDraft(String(discountAmount || 0));
+    setDiscountVisible(true);
+  }
+
+  function handleChangeDiscountMode(nextMode: 'amount' | 'percent') {
+    const currentValue = Math.max(0, Number(discountDraft || 0));
+    if (nextMode === discountMode) {
+      return;
+    }
+
+    if (nextMode === 'percent') {
+      setDiscountDraft(subtotal > 0 ? String(Math.round((currentValue / subtotal) * 100)) : '0');
+    } else {
+      setDiscountDraft(subtotal > 0 ? String(Math.max(0, (subtotal * currentValue) / 100)) : '0');
+    }
+
+    setDiscountMode(nextMode);
+  }
+
+  function handleSaveDiscount() {
+    const entered = Math.max(0, Number(discountDraft || 0));
+    const value = discountMode === 'percent' ? Math.max(0, (subtotal * entered) / 100) : entered;
+    setDiscountAmount(value);
+    setDiscountVisible(false);
+  }
 
   return (
     <ModalSheet visible={visible} onClose={onClose} title="Cart">
@@ -82,6 +118,11 @@ export default function CartSheet({ visible, onClose }: CartSheetProps) {
               <Text style={styles.summaryLabel}>Discount</Text>
               <Text style={styles.summaryValue}>{formatCurrency(discountAmount)}</Text>
             </View>
+            <Button
+              label={discountAmount > 0 ? 'Edit discount' : 'Add discount'}
+              variant="secondary"
+              onPress={handleOpenDiscount}
+            />
             <View style={styles.summaryRowTotal}>
               <Text style={styles.summaryTotalLabel}>Total</Text>
               <Text style={styles.summaryTotalValue}>{formatCurrency(total)}</Text>
@@ -96,6 +137,41 @@ export default function CartSheet({ visible, onClose }: CartSheetProps) {
           />
         </>
       )}
+      <ModalSheet visible={discountVisible} title="Add discount" onClose={() => setDiscountVisible(false)}>
+        <View style={styles.discountSheet}>
+          <Text style={styles.discountCopy}>Choose a fixed amount or a percentage of the current subtotal.</Text>
+          <View style={styles.modeRow}>
+            <Button
+              label="Amount"
+              variant={discountMode === 'amount' ? 'primary' : 'secondary'}
+              onPress={() => handleChangeDiscountMode('amount')}
+              fullWidth={false}
+            />
+            <Button
+              label="Percentage"
+              variant={discountMode === 'percent' ? 'primary' : 'secondary'}
+              onPress={() => handleChangeDiscountMode('percent')}
+              fullWidth={false}
+            />
+          </View>
+          <Input
+            label={discountMode === 'percent' ? 'Discount percentage' : 'Discount amount'}
+            value={discountDraft}
+            onChangeText={setDiscountDraft}
+            keyboardType="numeric"
+            placeholder={discountMode === 'percent' ? '10' : '0'}
+          />
+          <Text style={styles.discountPreview}>
+            {discountMode === 'percent'
+              ? `This will apply ${discountDraft || '0'}% of ${formatCurrency(subtotal)}.`
+              : `This will apply ${formatCurrency(Number(discountDraft || 0))} (${discountPercent}% of subtotal).`}
+          </Text>
+          <View style={styles.discountActions}>
+            <Button label="Cancel" variant="ghost" onPress={() => setDiscountVisible(false)} fullWidth={false} />
+            <Button label="Apply" onPress={handleSaveDiscount} />
+          </View>
+        </View>
+      </ModalSheet>
     </ModalSheet>
   );
 }
@@ -235,5 +311,24 @@ const styles = StyleSheet.create({
   summaryTotalValue: {
     ...typography.subtitle,
     color: colors.accent,
+  },
+  discountSheet: {
+    gap: dimensions.md,
+  },
+  discountCopy: {
+    ...typography.body,
+    color: colors.textMuted,
+  },
+  modeRow: {
+    flexDirection: 'row',
+    gap: dimensions.sm,
+  },
+  discountPreview: {
+    ...typography.caption,
+    color: colors.textMuted,
+  },
+  discountActions: {
+    flexDirection: 'row',
+    gap: dimensions.sm,
   },
 });
