@@ -1,27 +1,69 @@
 import React from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNavigation } from '@react-navigation/native';
-
+import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 import { Badge, Button, Card, Screen } from '@/components/ui';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
+import { findProfileById, upsertProfile } from '@/db/localDb';
 import { signOut } from '@/services/auth.service';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
-import type { RootStackParamList } from '@/types/navigation';
-
-type Navigation = NativeStackNavigationProp<RootStackParamList>;
+import { Input } from '@/components/ui';
+import { generateUUID } from '@/utils/generateUUID';
 
 export default function SettingsScreen() {
-  const navigation = useNavigation<Navigation>();
-  const fullname = useAuthStore((state) => state.fullname);
+  const userId = useAuthStore((state) => state.userId);
   const email = useAuthStore((state) => state.email);
+  const fullname = useAuthStore((state) => state.fullname);
   const role = useAuthStore((state) => state.role);
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const setSession = useAuthStore((state) => state.setSession);
   const business = useBusinessStore((state) => state.activeBusiness);
   const branch = useBusinessStore((state) => state.activeBranch);
   const clearActiveBusiness = useBusinessStore((state) => state.clearActiveBusiness);
+  const profile = userId ? findProfileById(userId) : null;
+  const [nameDraft, setNameDraft] = React.useState(fullname ?? '');
+  const [phoneDraft, setPhoneDraft] = React.useState(profile?.phone_number ?? '');
+  const [avatarDraft, setAvatarDraft] = React.useState(profile?.avatar_url ?? '');
+  const [saving, setSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    setNameDraft(fullname ?? '');
+    setPhoneDraft(profile?.phone_number ?? '');
+    setAvatarDraft(profile?.avatar_url ?? '');
+  }, [fullname, profile?.avatar_url, profile?.phone_number]);
+
+  async function handleSaveProfile() {
+    if (!userId || !email || !role) {
+      return;
+    }
+
+    const nextProfile = {
+      id: userId,
+      fullname: nameDraft.trim() || 'Unknown user',
+      email,
+      phone_number: phoneDraft.trim() ? phoneDraft.trim() : null,
+      avatar_url: avatarDraft.trim() ? avatarDraft.trim() : null,
+      created_at: profile?.created_at ?? new Date().toISOString(),
+    };
+
+    try {
+      setSaving(true);
+      upsertProfile(nextProfile);
+      setSession({
+        userId,
+        email,
+        fullname: nextProfile.fullname,
+        role,
+        accessToken: accessToken ?? generateUUID(),
+      });
+      Alert.alert('Profile updated', 'Your name, phone number, and image were saved.');
+    } catch (error) {
+      Alert.alert('Save failed', error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function handleLogout() {
     try {
@@ -32,79 +74,74 @@ export default function SettingsScreen() {
   }
 
   return (
-    <Screen title="POSly" action={<Badge label={role ?? 'member'} tone="primary" />} scrollable contentStyle={styles.content}>
+    <Screen
+      title="Employee Settings"
+      action={<Badge label={role ?? 'member'} tone="primary" />}
+      scrollable
+      contentStyle={styles.content}
+    >
       <View style={styles.stack}>
         <View style={styles.header}>
-          <Text style={styles.title}>Store Settings</Text>
-          <Text style={styles.subtitle}>Manage your business preferences and configurations.</Text>
+          <Text style={styles.title}>Employee settings</Text>
+          <Text style={styles.subtitle}>Manage your profile, switch workspaces, and sign out.</Text>
         </View>
-        {role === 'owner' && business?.join_code ? (
-          <Card style={styles.joinCodeCard}>
-            <View style={styles.joinCodeRow}>
-              <View style={styles.joinCodeCopy}>
-                <Text style={styles.joinCodeLabel}>Join code</Text>
-                <Text style={styles.joinCodeValue}>{business.join_code}</Text>
-              </View>
-              <Badge label="Share with team" tone="accent" />
-            </View>
-            <Text style={styles.joinCodeMeta}>
-              Employees can use this code when joining your workspace.
-            </Text>
-          </Card>
-        ) : null}
+
         <Card style={styles.profileCard}>
           <View style={styles.profileTop}>
-            <View style={styles.profileAvatar}>
-              <Text style={styles.profileAvatarText}>{(fullname ?? 'U').slice(0, 2).toUpperCase()}</Text>
+            <View style={styles.avatarFrame}>
+              {avatarDraft.trim() ? (
+                <Image source={{ uri: avatarDraft.trim() }} style={styles.avatarImage} />
+              ) : (
+                <Text style={styles.profileAvatarText}>{(fullname ?? 'U').slice(0, 2).toUpperCase()}</Text>
+              )}
             </View>
             <View style={styles.profileCopy}>
               <Text style={styles.profileName}>{fullname ?? 'Unknown user'}</Text>
               <Text style={styles.profileMeta}>{email ?? 'No email'}</Text>
+              <Text style={styles.profileMeta}>
+                {business?.name ?? 'No business selected'}
+                {branch?.name ? ` · ${branch.name}` : ''}
+              </Text>
             </View>
           </View>
-          <View style={styles.profileFacts}>
-            <Text style={styles.fact}>Business: {business?.name ?? 'None selected'}</Text>
-            <Text style={styles.fact}>Branch: {branch?.name ?? 'None selected'}</Text>
+
+          <View style={styles.form}>
+            <Input label="Name" value={nameDraft} onChangeText={setNameDraft} placeholder="Your full name" />
+            <Input
+              label="Phone number"
+              value={phoneDraft}
+              onChangeText={setPhoneDraft}
+              placeholder="+63 912 345 6789"
+              keyboardType="phone-pad"
+            />
+            <Input
+              label="Image URL"
+              value={avatarDraft}
+              onChangeText={setAvatarDraft}
+              placeholder="https://example.com/avatar.jpg"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
           </View>
+          <Button label="Save profile" onPress={handleSaveProfile} loading={saving} />
         </Card>
 
-        <View style={styles.grid}>
-          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('BranchManagement')}>
-            <View style={styles.iconBubble}><Text style={styles.iconGlyph}>⌂</Text></View>
-            <Text style={styles.gridTitle}>Business Information</Text>
-            <Text style={styles.gridBody}>Name, address, contact details</Text>
-          </Pressable>
-          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('BranchManagement')}>
-            <View style={styles.iconBubble}><Text style={styles.iconGlyph}>▣</Text></View>
-            <Text style={styles.gridTitle}>Branch Management</Text>
-            <Text style={styles.gridBody}>Add or configure locations</Text>
-          </Pressable>
-          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Reports')}>
-            <View style={styles.iconBubble}><Text style={styles.iconGlyph}>⌘</Text></View>
-            <Text style={styles.gridTitle}>Reports</Text>
-            <Text style={styles.gridBody}>Receipts, exports, and summaries</Text>
-          </Pressable>
-          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('AuditLog')}>
-            <View style={styles.iconBubble}><Text style={styles.iconGlyph}>⌕</Text></View>
-            <Text style={styles.gridTitle}>Audit Logs</Text>
-            <Text style={styles.gridBody}>View operator activity history</Text>
-          </Pressable>
-          <Pressable style={styles.gridCard} onPress={clearActiveBusiness}>
-            <View style={styles.iconBubble}><Text style={styles.iconGlyph}>⋯</Text></View>
-            <Text style={styles.gridTitle}>Switch Business</Text>
-            <Text style={styles.gridBody}>Choose a different workspace</Text>
-          </Pressable>
-          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('PerformanceDashboard')}>
-            <View style={styles.iconBubble}><Text style={styles.iconGlyph}>⚑</Text></View>
-            <Text style={styles.gridTitle}>Performance</Text>
-            <Text style={styles.gridBody}>Leaderboard &amp; sales trends</Text>
-          </Pressable>
-        </View>
-
-        <Card style={styles.signOutCard}>
-          <Button label="Sign Out" variant="danger" onPress={handleLogout} />
-          <Text style={styles.version}>POSly Terminal v2.4.0</Text>
+        <Card style={styles.sectionCard}>
+          <View style={styles.sectionCopy}>
+            <Text style={styles.sectionTitle}>Switch business</Text>
+            <Text style={styles.sectionBody}>Choose another workspace from your linked businesses.</Text>
+          </View>
+          <Button label="Switch business" variant="secondary" onPress={clearActiveBusiness} />
         </Card>
+
+        <Card style={styles.sectionCard}>
+          <View style={styles.sectionCopy}>
+            <Text style={styles.sectionTitle}>Sign out</Text>
+            <Text style={styles.sectionBody}>End the current session on this device.</Text>
+          </View>
+          <Button label="Sign out" variant="danger" onPress={handleLogout} />
+        </Card>
+        <Text style={styles.version}>POSly Terminal v2.4.0</Text>
       </View>
     </Screen>
   );
@@ -131,51 +168,28 @@ const styles = StyleSheet.create({
   profileCard: {
     gap: dimensions.md,
   },
-  joinCodeCard: {
-    gap: dimensions.sm,
-    backgroundColor: '#F6F5FF',
-  },
-  joinCodeRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: dimensions.sm,
-  },
-  joinCodeCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
-  },
-  joinCodeLabel: {
-    ...typography.label,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-  },
-  joinCodeValue: {
-    ...typography.title,
-    color: colors.accent,
-    letterSpacing: 4,
-  },
-  joinCodeMeta: {
-    ...typography.caption,
-    color: colors.textMuted,
-  },
   profileTop: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: dimensions.md,
   },
-  profileAvatar: {
+  avatarFrame: {
     width: 56,
     height: 56,
     borderRadius: 56,
-    backgroundColor: colors.surfaceAlt,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.surfaceAlt,
+    overflow: 'hidden',
   },
   profileAvatarText: {
     ...typography.subtitle,
     color: colors.text,
+    textAlign: 'center',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   profileCopy: {
     flex: 1,
@@ -189,54 +203,22 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textMuted,
   },
-  profileFacts: {
+  form: {
+    gap: dimensions.md,
+  },
+  sectionCard: {
+    gap: dimensions.md,
+  },
+  sectionCopy: {
     gap: dimensions.xs,
   },
-  fact: {
-    color: colors.textMuted,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: dimensions.sm,
-  },
-  gridCard: {
-    width: '48%',
-    minHeight: 136,
-    padding: dimensions.md,
-    borderRadius: dimensions.radiusLg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-    justifyContent: 'space-between',
-  },
-  iconBubble: {
-    width: 40,
-    height: 40,
-    borderRadius: 40,
-    backgroundColor: colors.surfaceMuted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconGlyph: {
-    ...typography.subtitle,
-    color: colors.textMuted,
-  },
-  gridTitle: {
+  sectionTitle: {
     ...typography.subtitle,
     color: colors.text,
   },
-  gridBody: {
+  sectionBody: {
     ...typography.caption,
     color: colors.textMuted,
-  },
-  signOutCard: {
-    gap: dimensions.sm,
   },
   version: {
     ...typography.label,

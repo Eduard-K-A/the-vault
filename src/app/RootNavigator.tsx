@@ -33,6 +33,7 @@ import InventoryScreen from '@/features/inventory/InventoryScreen';
 import LandingSplashScreen from '@/features/auth/SplashScreen';
 import ReceiptScreen from '@/features/cart/ReceiptScreen';
 import ReportsScreen from '@/features/settings/ReportsScreen';
+import OwnerSettingsScreen from '@/features/settings/OwnerSettingsScreen';
 import SalesOverviewScreen from '@/features/sales/SalesOverviewScreen';
 import SalesScreen from '@/features/sales/SalesScreen';
 import SettingsScreen from '@/features/settings/SettingsScreen';
@@ -125,7 +126,7 @@ function OwnerTabNavigator() {
       <OwnerTabs.Screen name="Inventory" component={InventoryScreen} options={{ title: 'Inventory' }} />
       <OwnerTabs.Screen name="Sales" component={SalesOverviewScreen} options={{ title: 'Sales' }} />
       <OwnerTabs.Screen name="Employees" component={EmployeeListScreen} options={{ title: 'Employees' }} />
-      <OwnerTabs.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+      <OwnerTabs.Screen name="Settings" component={OwnerSettingsScreen} options={{ title: 'Settings' }} />
     </OwnerTabs.Navigator>
   );
 }
