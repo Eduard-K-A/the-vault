@@ -14,6 +14,7 @@ interface AuthState {
   error: string | null;
   setLoading: () => void;
   setSession: (session: AuthSession) => void;
+  updateIdentity: (input: { email?: string; fullname?: string; role?: UserRole | null }) => void;
   clearSession: () => void;
   setError: (message: string | null) => void;
 }
@@ -40,6 +41,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       error: null,
     });
   },
+  updateIdentity: (input) => {
+    set((state) => ({
+      email: input.email ?? state.email,
+      fullname: input.fullname ?? state.fullname,
+      role: input.role ?? state.role,
+    }));
+  },
   clearSession: () => {
     set({
       status: 'signed_out',
@@ -55,4 +63,3 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ error: message });
   },
 }));
-

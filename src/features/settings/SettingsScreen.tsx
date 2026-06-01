@@ -4,34 +4,55 @@ import { Badge, Button, Card, Screen } from '@/components/ui';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
-import { findProfileById, upsertProfile } from '@/db/localDb';
+import { db, powersync } from '@/db/powersync';
 import { signOut } from '@/services/auth.service';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
+import { useSyncStatus } from '@/hooks/useSyncStatus';
 import { Input } from '@/components/ui';
-import { generateUUID } from '@/utils/generateUUID';
 
 export default function SettingsScreen() {
   const userId = useAuthStore((state) => state.userId);
   const email = useAuthStore((state) => state.email);
   const fullname = useAuthStore((state) => state.fullname);
   const role = useAuthStore((state) => state.role);
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const setSession = useAuthStore((state) => state.setSession);
+  const updateIdentity = useAuthStore((state) => state.updateIdentity);
   const business = useBusinessStore((state) => state.activeBusiness);
   const branch = useBusinessStore((state) => state.activeBranch);
   const clearActiveBusiness = useBusinessStore((state) => state.clearActiveBusiness);
-  const profile = userId ? findProfileById(userId) : null;
+  const { phase, lastError } = useSyncStatus();
+  const [profile, setProfile] = React.useState<{ phone_number: string | null; avatar_url: string | null; created_at: string } | null>(null);
   const [nameDraft, setNameDraft] = React.useState(fullname ?? '');
-  const [phoneDraft, setPhoneDraft] = React.useState(profile?.phone_number ?? '');
-  const [avatarDraft, setAvatarDraft] = React.useState(profile?.avatar_url ?? '');
+  const [phoneDraft, setPhoneDraft] = React.useState('');
+  const [avatarDraft, setAvatarDraft] = React.useState('');
   const [saving, setSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    async function loadProfile() {
+      if (!userId) {
+        setProfile(null);
+        return;
+      }
+      const row = (await powersync.getOptional(
+        'SELECT phone_number, avatar_url, created_at FROM profiles WHERE id = ?',
+        [userId],
+      )) as { phone_number: string | null; avatar_url: string | null; created_at: string } | null;
+      if (!cancelled) {
+        setProfile(row);
+      }
+    }
+    void loadProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   React.useEffect(() => {
     setNameDraft(fullname ?? '');
     setPhoneDraft(profile?.phone_number ?? '');
     setAvatarDraft(profile?.avatar_url ?? '');
-  }, [fullname, profile?.avatar_url, profile?.phone_number]);
+  }, [fullname, profile?.avatar_url, profile?.phone_number, profile]);
 
   async function handleSaveProfile() {
     if (!userId || !email || !role) {
@@ -49,13 +70,13 @@ export default function SettingsScreen() {
 
     try {
       setSaving(true);
-      upsertProfile(nextProfile);
-      setSession({
-        userId,
+      await db.writeTransaction(async (tx) => {
+        await tx.upsertProfile(nextProfile);
+      });
+      updateIdentity({
         email,
         fullname: nextProfile.fullname,
         role,
-        accessToken: accessToken ?? generateUUID(),
       });
       Alert.alert('Profile updated', 'Your name, phone number, and image were saved.');
     } catch (error) {
@@ -132,6 +153,19 @@ export default function SettingsScreen() {
             <Text style={styles.sectionBody}>Choose another workspace from your linked businesses.</Text>
           </View>
           <Button label="Switch business" variant="secondary" onPress={clearActiveBusiness} />
+        </Card>
+
+        <Card style={styles.sectionCard}>
+          <View style={styles.sectionCopy}>
+            <Text style={styles.sectionTitle}>Sync status</Text>
+            <Text style={styles.sectionBody}>
+              PowerSync keeps the local database in sync with the backend when the connection is available.
+            </Text>
+          </View>
+          <View style={styles.queueRow}>
+            <Badge label={phase} tone={phase === 'ready' ? 'success' : phase === 'offline' ? 'warning' : 'primary'} />
+            {lastError ? <Badge label={lastError} tone="danger" /> : null}
+          </View>
         </Card>
 
         <Card style={styles.sectionCard}>
@@ -219,6 +253,11 @@ const styles = StyleSheet.create({
   sectionBody: {
     ...typography.caption,
     color: colors.textMuted,
+  },
+  queueRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: dimensions.xs,
   },
   version: {
     ...typography.label,
