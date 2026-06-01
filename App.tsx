@@ -10,6 +10,8 @@ import { RootNavigator } from './src/app/RootNavigator';
 import { hydrateSession } from './src/services/auth.service';
 import { useAuthStore } from './src/store/authStore';
 import { colors } from './src/constants/colors';
+import { powersync } from './src/powersync';
+import { PowerSyncContext } from '@powersync/react';
 
 const navigationTheme = {
   ...DefaultTheme,
@@ -34,9 +36,11 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
-        <NavigationContainer theme={navigationTheme}>
-          <RootNavigator />
-        </NavigationContainer>
+        <PowerSyncContext.Provider value={powersync}>
+          <NavigationContainer theme={navigationTheme}>
+            <RootNavigator />
+          </NavigationContainer>
+        </PowerSyncContext.Provider>
         <StatusBar style="auto" />
       </GestureHandlerRootView>
     </SafeAreaProvider>

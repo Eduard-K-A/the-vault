@@ -7,7 +7,9 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "jsEngine": "hermes",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false
     },
@@ -15,6 +17,12 @@
       "eas": {
         "projectId": "00000000-0000-0000-0000-000000000000"
       }
+    },
+    "plugins": [
+      "@journeyapps/react-native-quick-sqlite"
+    ],
+    "android": {
+      "package": "com.anonymous.thevault"
     }
   }
 }
