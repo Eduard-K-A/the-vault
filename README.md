@@ -219,4 +219,4 @@ This structure supports both operational workflows and historical reporting whil
 
 ## License
 
-No license file is currently included in this repository. Add one if you intend to distribute the project publicly.
+This repository is licensed under the MIT License. See [LICENSE](./LICENSE) for the full text.
