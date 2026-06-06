@@ -9,7 +9,7 @@ The app supports two primary roles:
 - `owner` - manages businesses, branches, employees, reports, and higher-level analytics.
 - `employee` - handles inventory, sales, checkout, and operational tasks within an assigned business.
 
-The application bootstraps session state on launch, restores local auth from secure storage, and uses PowerSync to keep a local database available even when connectivity is limited. When remote sync configuration is present, the app connects to Supabase and PowerSync for authenticated sync across devices.
+The application bootstraps session state on launch, restores local auth from secure storage, and uses PowerSync to keep a local database available even when connectivity is limited. Owner businesses are hydrated directly from Supabase during session restore so the business picker is immediately populated after sign-in. When remote sync configuration is present, the app connects to Supabase and PowerSync for authenticated sync across devices.
 
 ## Key Features
 
@@ -19,7 +19,7 @@ The application bootstraps session state on launch, restores local auth from sec
 - Inventory browsing, adding, editing, and restocking
 - Sales workflow with cart, checkout, and receipt screens
 - Analytics and transaction detail views
-- Settings screens for business administration, reports, audit logs, and branch management
+- Settings screens for business administration, reports, audit logs, and business deletion
 - Local persistence and offline-first data access
 - Secure session storage
 
@@ -56,6 +56,7 @@ The application bootstraps session state on launch, restores local auth from sec
 
 - `src/config/offline.ts` reads runtime configuration from environment variables.
 - `src/services/offline.service.ts` and `src/services/powersync.service.ts` coordinate the local runtime and sync connection.
+- Manual sync reports the current phase in logs so timeout failures identify where the sync stalled.
 - When the remote sync configuration is missing, the app can still boot locally, but remote sync features will not be fully available.
 
 ## Project Structure
@@ -183,6 +184,7 @@ npm run lint
 - Authentication sessions are persisted using Expo Secure Store.
 - PowerSync is initialized on app launch and after session hydration.
 - Role-based routing determines whether the user sees the owner or employee workspace.
+- Owner-facing destructive actions use typed confirmation and operate on the current business, not just the active branch.
 
 ## Database and Sync Model
 
@@ -201,6 +203,8 @@ The PowerSync schema includes tables for:
 - Audit logs
 - Device sessions
 
+Business and product deletes are cascaded through Supabase, while the local PowerSync client also clears dependent rows to keep the offline store aligned after destructive actions.
+
 This structure supports both operational workflows and historical reporting while keeping the local client database aligned with the remote backend when sync is available.
 
 ## Troubleshooting
@@ -208,6 +212,8 @@ This structure supports both operational workflows and historical reporting whil
 - If the app opens to the splash screen and never advances, verify that the auth session can be restored from secure storage.
 - If login fails with a Supabase error, confirm `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` are set correctly.
 - If sync is unavailable, verify `EXPO_PUBLIC_POWERSYNC_URL` and the remote schema setup.
+- If manual sync fails, check the phase-specific log line to see whether it stopped while connecting, draining uploads, or waiting for first sync.
+- If a product edit appears stuck after login, re-run manual sync after the `save_product` function is deployed to the project.
 - If native modules fail to build, ensure you are using a development build or a native runtime that includes the required Expo and PowerSync dependencies.
 
 ## Contributing
