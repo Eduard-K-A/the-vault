@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { buildFallbackBusinessFromSummary } from '../src/store/businessSelectionHelpers.ts';
+import { buildFallbackBranchFromSummary, buildFallbackBusinessFromSummary } from '../src/store/businessSelectionHelpers.ts';
 
 test('buildFallbackBusinessFromSummary creates a selectable business from a joined summary', () => {
   assert.deepEqual(
@@ -25,5 +25,36 @@ test('buildFallbackBusinessFromSummary creates a selectable business from a join
       is_active: true,
       created_at: '2026-06-06T00:00:00.000Z',
     },
+  );
+});
+
+test('buildFallbackBranchFromSummary creates a selectable branch from a summary', () => {
+  assert.deepEqual(
+    buildFallbackBranchFromSummary({
+      businessId: 'business-1',
+      businessName: 'Northwind Market',
+      role: 'owner',
+      branchId: 'branch-1',
+      branchName: 'Main Branch',
+    }),
+    {
+      id: 'branch-1',
+      business_id: 'business-1',
+      name: 'Main Branch',
+      is_active: true,
+    },
+  );
+});
+
+test('buildFallbackBranchFromSummary returns null when the summary has no branch id', () => {
+  assert.equal(
+    buildFallbackBranchFromSummary({
+      businessId: 'business-1',
+      businessName: 'Northwind Market',
+      role: 'owner',
+      branchId: null,
+      branchName: null,
+    }),
+    null,
   );
 });

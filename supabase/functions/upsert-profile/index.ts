@@ -23,7 +23,7 @@ Deno.serve(async (request) => {
   const id = typeof raw.id === 'string' ? raw.id : null;
   const fullname = typeof raw.fullname === 'string' ? raw.fullname : null;
   const email = typeof raw.email === 'string' ? raw.email : null;
-  const role = raw.role === 'owner' || raw.role === 'employee' || raw.role === 'manager' ? raw.role : 'employee';
+  const role = raw.role === 'owner' || raw.role === 'employee' ? raw.role : 'employee';
   const createdAt = typeof raw.created_at === 'string' ? raw.created_at : new Date().toISOString();
   const phoneNumber = typeof raw.phone_number === 'string' || raw.phone_number === null ? raw.phone_number : null;
   const avatarUrl = typeof raw.avatar_url === 'string' || raw.avatar_url === null ? raw.avatar_url : null;

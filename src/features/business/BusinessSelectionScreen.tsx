@@ -47,7 +47,7 @@ export default function BusinessSelectionScreen() {
           <Card style={styles.listCard} padded={false}>
             {businesses.map((item, index) => (
               <Pressable key={item.businessId} onPress={() => void handleSelect(item.businessId)} style={[styles.row, index !== businesses.length - 1 && styles.rowDivider]}>
-                <View style={[styles.avatar, item.role === 'owner' ? styles.avatarOwner : item.role === 'manager' ? styles.avatarManager : styles.avatarEmployee]}>
+                <View style={[styles.avatar, item.role === 'owner' ? styles.avatarOwner : styles.avatarEmployee]}>
                   <Text style={styles.avatarText}>{item.businessName.slice(0, 2).toUpperCase()}</Text>
                 </View>
                 <View style={styles.rowCopy}>
@@ -107,9 +107,6 @@ const styles = StyleSheet.create({
   },
   avatarOwner: {
     backgroundColor: colors.accent,
-  },
-  avatarManager: {
-    backgroundColor: '#E2E0FC',
   },
   avatarEmployee: {
     backgroundColor: colors.surfaceAlt,

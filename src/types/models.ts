@@ -1,4 +1,4 @@
-export type UserRole = 'employee' | 'owner' | 'manager';
+export type UserRole = 'employee' | 'owner';
 export type PaymentMethod = 'cash' | 'gcash' | 'maya' | 'card';
 export type SaleStatus = 'pending' | 'completed' | 'cancelled' | 'voided' | 'refunded';
 export type InventoryActionType = 'sale' | 'restock' | 'adjustment' | 'refund' | 'initial';

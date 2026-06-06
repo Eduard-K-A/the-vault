@@ -31,7 +31,7 @@ create table if not exists business_members (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references businesses(id) on delete cascade,
   user_id uuid not null references profiles(id) on delete cascade,
-  role text not null check (role in ('owner', 'employee', 'manager')),
+  role text not null check (role in ('owner', 'employee')),
   branch_id uuid references branches(id) on delete set null,
   joined_at timestamptz default now()
 );
@@ -133,14 +133,14 @@ create policy "members can read products"
     )
   );
 
-drop policy if exists "owner or manager can manage products" on products;
-create policy "owner or manager can manage products"
+drop policy if exists "owner can manage products" on products;
+create policy "owner can manage products"
   on products for all
   using (
     business_id in (
       select business_id
       from business_members
-      where user_id = auth.uid() and role in ('owner', 'manager')
+      where user_id = auth.uid() and role = 'owner'
     )
   );
 
@@ -175,15 +175,15 @@ create policy "members can read inventory"
     )
   );
 
-drop policy if exists "owner or manager can update inventory" on inventory;
-create policy "owner or manager can update inventory"
+drop policy if exists "owner can update inventory" on inventory;
+create policy "owner can update inventory"
   on inventory for update
   using (
     branch_id in (
       select b.id
       from branches b
       join business_members bm on b.business_id = bm.business_id
-      where bm.user_id = auth.uid() and bm.role in ('owner', 'manager')
+      where bm.user_id = auth.uid() and bm.role = 'owner'
     )
   );
 

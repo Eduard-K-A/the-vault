@@ -2,6 +2,7 @@ import * as SecureStore from 'expo-secure-store';
 import type { Session as SupabaseSession } from '@supabase/supabase-js';
 
 import { db, powersync } from '@/db/powersync';
+import { hydrateAvailableBusinessesForUser } from '@/services/authBusinessHydration';
 import { bindOfflineSession, clearOfflineRuntime, initializeOfflineRuntime } from '@/services/offline.service';
 import { connectPowerSync, disconnectPowerSync, initializePowerSync } from '@/services/powersync.service';
 import { loadBusinessSummariesForUser } from '@/services/business.service';
@@ -59,7 +60,7 @@ async function loadProfileByEmail(email: string) {
 
 function getAccountRole(user: { user_metadata?: Record<string, unknown> | null; app_metadata?: Record<string, unknown> | null }): UserRole | null {
   const rawRole = user.user_metadata?.role ?? user.app_metadata?.role;
-  if (rawRole === 'owner' || rawRole === 'employee' || rawRole === 'manager') {
+  if (rawRole === 'owner' || rawRole === 'employee') {
     return rawRole;
   }
 
@@ -68,12 +69,12 @@ function getAccountRole(user: { user_metadata?: Record<string, unknown> | null; 
 
 async function resolvePrimaryRole(userId: string): Promise<UserRole | null> {
   const summaries = await loadBusinessSummariesForUser(userId);
+  return resolvePrimaryRoleFromSummaries(summaries);
+}
+
+function resolvePrimaryRoleFromSummaries(summaries: { role: UserRole }[]): UserRole | null {
   if (summaries.some((summary) => summary.role === 'owner')) {
     return 'owner';
-  }
-
-  if (summaries.some((summary) => summary.role === 'manager')) {
-    return 'manager';
   }
 
   return summaries[0]?.role ?? null;
@@ -140,7 +141,8 @@ async function upsertLocalProfile(profile: {
 
 async function setStoreSession(session: AuthSession): Promise<void> {
   await setSupabaseAuthSession(session);
-  const membershipRole = await resolvePrimaryRole(session.userId);
+  const businessSummaries = await hydrateAvailableBusinessesForUser({ userId: session.userId });
+  const membershipRole = resolvePrimaryRoleFromSummaries(businessSummaries) ?? (await resolvePrimaryRole(session.userId));
   const nextSession = {
     ...session,
     role: membershipRole ?? session.role,
@@ -150,7 +152,6 @@ async function setStoreSession(session: AuthSession): Promise<void> {
   await initializeOfflineRuntime(nextSession);
   await initializePowerSync();
   await connectPowerSync();
-  useBusinessStore.getState().setAvailableBusinesses(await loadBusinessSummariesForUser(session.userId));
   await persistSession(nextSession);
 }
 

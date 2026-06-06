@@ -23,7 +23,7 @@ Deno.serve(async (request) => {
   const id = typeof raw.id === 'string' ? raw.id : null;
   const businessId = typeof raw.business_id === 'string' ? raw.business_id : null;
   const userId = typeof raw.user_id === 'string' ? raw.user_id : null;
-  const role = raw.role === 'owner' || raw.role === 'employee' || raw.role === 'manager' ? raw.role : null;
+  const role = raw.role === 'owner' || raw.role === 'employee' ? raw.role : null;
   const branchId = typeof raw.branch_id === 'string' ? raw.branch_id : null;
   const joinedAt = typeof raw.joined_at === 'string' ? raw.joined_at : new Date().toISOString();
   const isActive = raw.is_active === false ? false : true;

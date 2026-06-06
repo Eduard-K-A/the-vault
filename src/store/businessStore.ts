@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { powersync } from '@/powersync';
 import type { Branch, Business, BusinessSummary } from '@/types/models';
 import { useAuthStore } from './authStore';
-import { buildFallbackBusinessFromSummary } from './businessSelectionHelpers';
+import { buildFallbackBranchFromSummary, buildFallbackBusinessFromSummary } from './businessSelectionHelpers';
 
 interface BusinessState {
   activeBusiness: Business | null;
@@ -32,12 +32,12 @@ export const useBusinessStore = create<BusinessState>((set, get) => ({
 
     const branchId = available?.branchId;
     const branch =
-      branchId !== null
+      (branchId !== null
         ? await powersync.getOptional<Branch>('SELECT * FROM branches WHERE id = ?', [branchId])
         : await powersync.getOptional<Branch>(
             'SELECT * FROM branches WHERE business_id = ? AND is_active = 1 ORDER BY created_at ASC LIMIT 1',
             [businessId],
-          );
+          )) ?? buildFallbackBranchFromSummary(available);
 
     useAuthStore.getState().setError(null);
     set({

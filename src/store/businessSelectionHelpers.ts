@@ -1,4 +1,4 @@
-import type { Business, BusinessSummary } from '@/types/models';
+import type { Branch, Business, BusinessSummary } from '@/types/models';
 
 export function buildFallbackBusinessFromSummary(
   summary: BusinessSummary,
@@ -13,5 +13,18 @@ export function buildFallbackBusinessFromSummary(
     address: null,
     is_active: true,
     created_at: createdAt,
+  };
+}
+
+export function buildFallbackBranchFromSummary(summary: BusinessSummary): Branch | null {
+  if (!summary.branchId) {
+    return null;
+  }
+
+  return {
+    id: summary.branchId,
+    business_id: summary.businessId,
+    name: summary.branchName ?? 'Main Branch',
+    is_active: true,
   };
 }

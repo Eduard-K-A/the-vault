@@ -15,8 +15,7 @@ export interface MembershipBusinessSummaryRow {
 
 const ROLE_PRIORITY: Record<UserRole, number> = {
   employee: 0,
-  manager: 1,
-  owner: 2,
+  owner: 1,
 };
 
 function buildSummaryFromRow(

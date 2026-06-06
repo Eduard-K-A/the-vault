@@ -137,7 +137,7 @@ function getRoleLabel(index: number): string {
     return 'Cashier';
   }
   if (index === 1) {
-    return 'Manager';
+    return 'Inventory';
   }
 
   return index % 2 === 0 ? 'Cashier' : 'Inventory';
