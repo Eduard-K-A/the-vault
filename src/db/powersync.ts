@@ -1,4 +1,5 @@
 import { powersync as powersyncDatabase } from '@/powersync';
+import { getBusinessDeletionStatements } from '@/db/businessDeletionHelpers';
 import type {
   AuditLog,
   Branch,
@@ -50,6 +51,12 @@ export interface LocalTransaction {
     name: string;
     actorId: string;
   }) => Promise<Branch>;
+  deleteBusiness: (input: {
+    businessId: string;
+  }) => Promise<void>;
+  deleteBranch: (input: {
+    branchId: string;
+  }) => Promise<void>;
   createSale: (input: {
     sale: Sale;
     items: SaleItem[];
@@ -341,6 +348,14 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
         ],
       );
       return branch;
+    },
+    deleteBranch: async (input) => {
+      await tx.execute('DELETE FROM branches WHERE id = ?', [input.branchId]);
+    },
+    deleteBusiness: async (input) => {
+      for (const statement of getBusinessDeletionStatements()) {
+        await tx.execute(statement.sql, statement.params(input.businessId));
+      }
     },
     createSale: async (input) => {
       const sale = {
