@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { powersync } from '@/powersync';
 import type { Branch, Business, BusinessSummary } from '@/types/models';
 import { useAuthStore } from './authStore';
+import { buildFallbackBusinessFromSummary } from './businessSelectionHelpers';
 
 interface BusinessState {
   activeBusiness: Business | null;
@@ -21,12 +22,14 @@ export const useBusinessStore = create<BusinessState>((set, get) => ({
     set({ availableBusinesses: businesses });
   },
   selectBusiness: async (businessId) => {
-    const business = await powersync.getOptional<Business>('SELECT * FROM businesses WHERE id = ?', [businessId]);
-    if (!business) {
+    const available = get().availableBusinesses.find((entry) => entry.businessId === businessId) ?? null;
+    const business =
+      (await powersync.getOptional<Business>('SELECT * FROM businesses WHERE id = ?', [businessId])) ??
+      (available ? buildFallbackBusinessFromSummary(available) : null);
+    if (!business || !available) {
       return;
     }
 
-    const available = get().availableBusinesses.find((entry) => entry.businessId === businessId) ?? null;
     const branchId = available?.branchId;
     const branch =
       branchId !== null

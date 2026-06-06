@@ -1,4 +1,15 @@
 import { db, powersync } from '@/db/powersync';
+import {
+  buildJoinedBusinessSummary,
+  isSupabaseFunctionNotFoundError,
+  isValidateJoinCodeResponse,
+  mergeBusinessSummary,
+  normalizeJoinCode,
+  type ValidateJoinCodeResponse,
+} from '@/services/joinBusinessHelpers';
+import { composeBusinessSummaries } from '@/services/businessSummaryHelpers';
+import { syncPowerSyncNow } from '@/services/powersync.service';
+import { getSupabaseClient } from '@/services/supabaseClient';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import type { Business, BusinessSummary, UserRole } from '@/types/models';
@@ -22,8 +33,41 @@ function recordAttempt(userId: string): void {
   attemptsByUser.set(userId, attempts);
 }
 
-export async function validateJoinCode(joinCode: string, userId: string): Promise<Business | null> {
-  if (!isValidJoinCode(joinCode)) {
+async function validateJoinCodeRemotely(joinCode: string, userId: string): Promise<ValidateJoinCodeResponse | null> {
+  const client = getSupabaseClient();
+  if (!client) {
+    return null;
+  }
+
+  const body = {
+    join_code: normalizeJoinCode(joinCode),
+    user_id: userId,
+  };
+  const { data, error } = await client.functions.invoke('validate-join-code', {
+    body,
+  });
+
+  if (error && await isSupabaseFunctionNotFoundError(error)) {
+    const fallback = await client.functions.invoke('rapid-service', {
+      body,
+    });
+    if (fallback.error) {
+      throw fallback.error;
+    }
+
+    return isValidateJoinCodeResponse(fallback.data) ? fallback.data : null;
+  }
+
+  if (error) {
+    throw error;
+  }
+
+  return isValidateJoinCodeResponse(data) ? data : null;
+}
+
+async function validateJoinCodeLocally(joinCode: string, userId: string): Promise<Business | null> {
+  const normalizedJoinCode = normalizeJoinCode(joinCode);
+  if (!isValidJoinCode(normalizedJoinCode)) {
     return null;
   }
 
@@ -33,42 +77,47 @@ export async function validateJoinCode(joinCode: string, userId: string): Promis
   }
 
   recordAttempt(userId);
-  return (await powersync.getOptional<Business>('SELECT * FROM businesses WHERE join_code = ?', [joinCode])) ?? null;
+  return (await powersync.getOptional<Business>('SELECT * FROM businesses WHERE join_code = ?', [normalizedJoinCode])) ?? null;
+}
+
+export async function validateJoinCode(joinCode: string, userId: string): Promise<Business | null> {
+  return validateJoinCodeLocally(joinCode, userId);
 }
 
 export async function loadBusinessSummariesForUser(userId: string): Promise<BusinessSummary[]> {
   const memberships = await powersync.getAll<{
     business_id: string;
+    business_name: string;
     role: UserRole;
     branch_id: string | null;
-  }>('SELECT business_id, role, branch_id FROM business_members WHERE user_id = ? AND is_active = 1', [userId]);
+    branch_name: string | null;
+  }>(
+    `
+      SELECT bm.business_id, b.name AS business_name, bm.role, bm.branch_id, br.name AS branch_name
+      FROM business_members bm
+      JOIN businesses b ON b.id = bm.business_id
+      LEFT JOIN branches br ON br.id = bm.branch_id
+      WHERE bm.user_id = ? AND bm.is_active = 1
+    `,
+    [userId],
+  );
 
-  const summaries: BusinessSummary[] = [];
-  for (const membership of memberships) {
-    const business = await powersync.getOptional<Business>('SELECT * FROM businesses WHERE id = ?', [membership.business_id]);
-    if (!business) {
-      continue;
-    }
+  const ownedBusinesses = await powersync.getAll<{
+    business_id: string;
+    business_name: string;
+  }>(
+    `
+      SELECT id AS business_id, name AS business_name
+      FROM businesses
+      WHERE owner_id = ? AND is_active = 1
+    `,
+    [userId],
+  );
 
-    let branchName: string | null = null;
-    let branchId: string | null = membership.branch_id;
-    if (branchId) {
-      const branch = await powersync.getOptional<{ id: string; name: string }>('SELECT id, name FROM branches WHERE id = ?', [
-        branchId,
-      ]);
-      branchName = branch?.name ?? null;
-    }
-
-    summaries.push({
-      businessId: business.id,
-      businessName: business.name,
-      role: membership.role,
-      branchId,
-      branchName,
-    });
-  }
-
-  return summaries;
+  return composeBusinessSummaries({
+    memberships,
+    ownedBusinesses,
+  });
 }
 
 export async function createBusiness(input: {
@@ -118,28 +167,35 @@ export async function joinBusiness(input: {
   userId: string;
   role?: UserRole;
 }): Promise<BusinessSummary> {
-  const business = await validateJoinCode(input.joinCode, input.userId);
-  if (!business) {
+  const role = input.role ?? 'employee';
+  const remoteBusiness = await validateJoinCodeRemotely(input.joinCode, input.userId);
+  const localBusiness = remoteBusiness ? null : await validateJoinCode(input.joinCode, input.userId);
+  const businessId = remoteBusiness?.business_id ?? localBusiness?.id ?? null;
+  if (!businessId) {
     throw new Error('Invalid join code.');
   }
 
   await db.writeTransaction(async (tx) => {
     await tx.addBusinessMember({
-      businessId: business.id,
+      businessId,
       userId: input.userId,
-      role: input.role ?? 'employee',
+      role,
       branchId: null,
     });
   });
 
-  const summary = (await loadBusinessSummariesForUser(input.userId)).find(
-    (entry) => entry.businessId === business.id,
-  );
+  await syncPowerSyncNow();
+
+  const localSummaries = await loadBusinessSummariesForUser(input.userId);
+  const summary =
+    localSummaries.find((entry) => entry.businessId === businessId) ??
+    (remoteBusiness ? buildJoinedBusinessSummary(remoteBusiness, role) : null);
   if (!summary) {
     throw new Error('Unable to resolve joined business.');
   }
 
-  useBusinessStore.getState().setAvailableBusinesses(await loadBusinessSummariesForUser(input.userId));
+  const nextSummaries = mergeBusinessSummary(localSummaries, summary);
+  useBusinessStore.getState().setAvailableBusinesses(nextSummaries);
   return summary;
 }
 

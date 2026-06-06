@@ -16,7 +16,7 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 export default function JoinBusinessScreen() {
   const navigation = useNavigation<Navigation>();
   const userId = useAuthStore((state) => state.userId);
-  const [joinCode, setJoinCode] = useState('A3X9KL');
+  const [joinCode, setJoinCode] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleJoin() {

@@ -25,13 +25,14 @@ interface SignUpInput extends AuthInput {
 
 async function loadProfileById(userId: string) {
   return (await powersync.getOptional(
-    'SELECT id, fullname, email, phone_number, avatar_url, created_at FROM profiles WHERE id = ?',
+    'SELECT id, fullname, email, role, phone_number, avatar_url, created_at FROM profiles WHERE id = ?',
     [userId],
   )) as
     | {
         id: string;
         fullname: string;
         email: string;
+        role: UserRole | null;
         phone_number: string | null;
         avatar_url: string | null;
         created_at: string;
@@ -41,13 +42,14 @@ async function loadProfileById(userId: string) {
 
 async function loadProfileByEmail(email: string) {
   return (await powersync.getOptional(
-    'SELECT id, fullname, email, phone_number, avatar_url, created_at FROM profiles WHERE lower(email) = lower(?)',
+    'SELECT id, fullname, email, role, phone_number, avatar_url, created_at FROM profiles WHERE lower(email) = lower(?)',
     [email],
   )) as
     | {
         id: string;
         fullname: string;
         email: string;
+        role: UserRole | null;
         phone_number: string | null;
         avatar_url: string | null;
         created_at: string;
@@ -55,13 +57,26 @@ async function loadProfileByEmail(email: string) {
     | null;
 }
 
-async function resolvePrimaryRole(userId: string): Promise<UserRole> {
+function getAccountRole(user: { user_metadata?: Record<string, unknown> | null; app_metadata?: Record<string, unknown> | null }): UserRole | null {
+  const rawRole = user.user_metadata?.role ?? user.app_metadata?.role;
+  if (rawRole === 'owner' || rawRole === 'employee' || rawRole === 'manager') {
+    return rawRole;
+  }
+
+  return null;
+}
+
+async function resolvePrimaryRole(userId: string): Promise<UserRole | null> {
   const summaries = await loadBusinessSummariesForUser(userId);
   if (summaries.some((summary) => summary.role === 'owner')) {
     return 'owner';
   }
 
-  return summaries[0]?.role ?? 'employee';
+  if (summaries.some((summary) => summary.role === 'manager')) {
+    return 'manager';
+  }
+
+  return summaries[0]?.role ?? null;
 }
 
 function createSession(
@@ -113,6 +128,7 @@ async function upsertLocalProfile(profile: {
   id: string;
   fullname: string;
   email: string;
+  role: UserRole;
   phone_number: string | null;
   avatar_url: string | null;
   created_at: string;
@@ -124,20 +140,26 @@ async function upsertLocalProfile(profile: {
 
 async function setStoreSession(session: AuthSession): Promise<void> {
   await setSupabaseAuthSession(session);
-  useAuthStore.getState().setSession(session);
-  useBusinessStore.getState().setAvailableBusinesses(await loadBusinessSummariesForUser(session.userId));
+  const membershipRole = await resolvePrimaryRole(session.userId);
+  const nextSession = {
+    ...session,
+    role: membershipRole ?? session.role,
+  };
+  useAuthStore.getState().setSession(nextSession);
   bindOfflineSession(session);
+  await initializeOfflineRuntime(nextSession);
   await initializePowerSync();
   await connectPowerSync();
-  await persistSession(session);
+  useBusinessStore.getState().setAvailableBusinesses(await loadBusinessSummariesForUser(session.userId));
+  await persistSession(nextSession);
 }
 
 export async function hydrateSession(): Promise<void> {
-  await initializeOfflineRuntime();
-  await initializePowerSync();
   useAuthStore.getState().setLoading();
   const rawSession = await SecureStore.getItemAsync(SESSION_KEY);
   if (!rawSession) {
+    await initializeOfflineRuntime(null);
+    await initializePowerSync();
     clearOfflineRuntime();
     useAuthStore.getState().clearSession();
     useBusinessStore.getState().setAvailableBusinesses([]);
@@ -148,27 +170,40 @@ export async function hydrateSession(): Promise<void> {
   try {
     const parsed = JSON.parse(rawSession) as AuthSession;
     await setSupabaseAuthSession(parsed);
+    await initializeOfflineRuntime(parsed);
+    await initializePowerSync();
 
+    const existingProfile = await loadProfileById(parsed.userId);
+    const resolvedRole = existingProfile?.role ?? parsed.role;
     const profile =
-      (await loadProfileById(parsed.userId)) ??
+      existingProfile ??
       ({
         id: parsed.userId,
         fullname: parsed.fullname,
         email: parsed.email,
+        role: resolvedRole,
         phone_number: null,
         avatar_url: null,
         created_at: new Date().toISOString(),
       } as const);
 
-    if (!await loadProfileById(parsed.userId)) {
-      await upsertLocalProfile(profile);
+    if (!existingProfile || !existingProfile.role) {
+      await upsertLocalProfile({
+        id: profile.id,
+        fullname: profile.fullname,
+        email: profile.email,
+        role: resolvedRole,
+        phone_number: profile.phone_number,
+        avatar_url: profile.avatar_url,
+        created_at: profile.created_at,
+      });
     }
 
     await setStoreSession({
       ...parsed,
       fullname: profile.fullname,
       email: profile.email,
-      role: await resolvePrimaryRole(profile.id),
+      role: resolvedRole,
     });
   } catch {
     await clearPersistedSession();
@@ -204,23 +239,32 @@ export async function signIn(input: AuthInput): Promise<AuthSession> {
     throw new Error('Supabase did not return a signed-in session.');
   }
 
+  const existingProfile = await loadProfileById(data.user.id);
+  const resolvedRole = existingProfile?.role ?? getAccountRole(data.user) ?? 'employee';
   const profile =
-    (await loadProfileById(data.user.id)) ??
+    existingProfile ??
     ({
       id: data.user.id,
       fullname: (data.user.user_metadata?.fullname as string | undefined) ?? email,
       email: data.user.email ?? email,
+      role: resolvedRole,
       phone_number: null,
       avatar_url: null,
       created_at: new Date().toISOString(),
     } as const);
-  await upsertLocalProfile(profile);
+
+  if (!existingProfile || !existingProfile.role) {
+    await upsertLocalProfile({
+      ...profile,
+      role: resolvedRole,
+    });
+  }
 
   const session = createSession(
     profile.id,
     profile.email,
     profile.fullname,
-    await resolvePrimaryRole(profile.id),
+    resolvedRole,
     {
       accessToken: data.session.access_token,
       refreshToken: data.session.refresh_token,
@@ -269,6 +313,7 @@ export async function signUp(input: SignUpInput): Promise<AuthSession> {
     id: data.user.id,
     fullname: fullname || 'New user',
     email: data.user.email ?? email,
+    role: input.role,
     phone_number: null,
     avatar_url: null,
     created_at: new Date().toISOString(),

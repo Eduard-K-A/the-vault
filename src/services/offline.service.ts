@@ -1,17 +1,22 @@
 import { offlineConfig, hasRemoteSyncConfig } from '@/config/offline';
 import { applyBootstrapSnapshot } from '@/db/powersync';
 import { hydrateDeviceIdentity } from '@/services/device.service';
+import { shouldLoadBootstrapSnapshot } from '@/services/offlineHelpers';
 import { fetchInitialBootstrapSnapshot } from '@/services/remoteApi';
 import { useSyncStore } from '@/store/syncStore';
 import type { AuthSession } from '@/types/models';
 
-export async function initializeOfflineRuntime(): Promise<void> {
+export async function initializeOfflineRuntime(session: AuthSession | null = null): Promise<void> {
   await hydrateDeviceIdentity();
   useSyncStore.getState().initialize();
   if (!hasRemoteSyncConfig()) {
     useSyncStore.getState().setLastError(
       'Remote sync is not configured yet. Local offline state remains available.',
     );
+    return;
+  }
+
+  if (!shouldLoadBootstrapSnapshot(session)) {
     return;
   }
 
