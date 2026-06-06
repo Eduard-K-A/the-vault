@@ -10,6 +10,10 @@ export function SyncStatusBadge() {
     return <Badge label={lastError ?? 'Sync failed'} tone="danger" />;
   }
 
+  if (phase === 'degraded') {
+    return <Badge label={lastError ?? 'Sync degraded'} tone="warning" />;
+  }
+
   if (phase === 'offline' || !isOnline) {
     return <Badge label="Offline" tone="warning" />;
   }

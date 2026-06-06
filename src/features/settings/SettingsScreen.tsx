@@ -63,6 +63,7 @@ export default function SettingsScreen() {
       id: userId,
       fullname: nameDraft.trim() || 'Unknown user',
       email,
+      role: role,
       phone_number: phoneDraft.trim() ? phoneDraft.trim() : null,
       avatar_url: avatarDraft.trim() ? avatarDraft.trim() : null,
       created_at: profile?.created_at ?? new Date().toISOString(),

@@ -4,6 +4,7 @@ create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   fullname text not null,
   email text not null,
+  role text not null default 'employee',
   avatar_url text,
   created_at timestamptz default now()
 );
@@ -123,6 +124,7 @@ alter table sale_items enable row level security;
 alter table inventory_logs enable row level security;
 alter table audit_logs enable row level security;
 
+drop policy if exists "members can read products" on products;
 create policy "members can read products"
   on products for select
   using (
@@ -131,6 +133,7 @@ create policy "members can read products"
     )
   );
 
+drop policy if exists "owner or manager can manage products" on products;
 create policy "owner or manager can manage products"
   on products for all
   using (
@@ -141,6 +144,7 @@ create policy "owner or manager can manage products"
     )
   );
 
+drop policy if exists "employee sees own sales" on sales;
 create policy "employee sees own sales"
   on sales for select
   using (
@@ -150,6 +154,7 @@ create policy "employee sees own sales"
     )
   );
 
+drop policy if exists "active members can create sales" on sales;
 create policy "active members can create sales"
   on sales for insert
   with check (
@@ -158,6 +163,7 @@ create policy "active members can create sales"
     )
   );
 
+drop policy if exists "members can read inventory" on inventory;
 create policy "members can read inventory"
   on inventory for select
   using (
@@ -169,6 +175,7 @@ create policy "members can read inventory"
     )
   );
 
+drop policy if exists "owner or manager can update inventory" on inventory;
 create policy "owner or manager can update inventory"
   on inventory for update
   using (
@@ -180,10 +187,12 @@ create policy "owner or manager can update inventory"
     )
   );
 
+drop policy if exists "owner can update business" on businesses;
 create policy "owner can update business"
   on businesses for update
   using (owner_id = auth.uid());
 
+drop policy if exists "owner reads audit logs" on audit_logs;
 create policy "owner reads audit logs"
   on audit_logs for select
   using (
@@ -191,4 +200,3 @@ create policy "owner reads audit logs"
       select id from businesses where owner_id = auth.uid()
     )
   );
-

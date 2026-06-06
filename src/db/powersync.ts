@@ -87,6 +87,7 @@ export interface LocalTransaction {
     id: string;
     fullname: string;
     email: string;
+    role: UserRole;
     phone_number: string | null;
     avatar_url: string | null;
     created_at: string;
@@ -660,8 +661,8 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
     },
     upsertProfile: async (profile) => {
       await tx.execute(
-        'INSERT OR REPLACE INTO profiles (id, fullname, email, phone_number, avatar_url, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-        [profile.id, profile.fullname, profile.email, profile.phone_number, profile.avatar_url, profile.created_at],
+        'INSERT OR REPLACE INTO profiles (id, fullname, email, role, phone_number, avatar_url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [profile.id, profile.fullname, profile.email, profile.role, profile.phone_number, profile.avatar_url, profile.created_at],
       );
     },
     upsertProduct: async (product, actorId) => {
@@ -741,6 +742,7 @@ export async function applyBootstrapSnapshot(snapshot: {
     id: string;
     fullname: string;
     email: string;
+    role?: UserRole | null;
     phone_number: string | null;
     avatar_url: string | null;
     created_at: string;
@@ -760,6 +762,7 @@ export async function applyBootstrapSnapshot(snapshot: {
       row.id,
       row.fullname,
       row.email,
+      row.role ?? 'employee',
       row.phone_number,
       row.avatar_url,
       row.created_at,

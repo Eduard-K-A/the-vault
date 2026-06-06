@@ -18,18 +18,18 @@ Deno.serve(async (request) => {
   }
 
   const body = payload as Record<string, unknown>;
-  const raw = body.payload && typeof body.payload === 'object' ? (body.payload as Record<string, unknown>) : body;
+  const raw = (body.payload && typeof body.payload === 'object' ? (body.payload as Record<string, unknown>) : body);
 
   const id = typeof raw.id === 'string' ? raw.id : null;
-  const fullname = typeof raw.fullname === 'string' ? raw.fullname : null;
-  const email = typeof raw.email === 'string' ? raw.email : null;
-  const role = raw.role === 'owner' || raw.role === 'employee' || raw.role === 'manager' ? raw.role : 'employee';
-  const createdAt = typeof raw.created_at === 'string' ? raw.created_at : new Date().toISOString();
-  const phoneNumber = typeof raw.phone_number === 'string' || raw.phone_number === null ? raw.phone_number : null;
-  const avatarUrl = typeof raw.avatar_url === 'string' || raw.avatar_url === null ? raw.avatar_url : null;
+  const businessId = typeof raw.business_id === 'string' ? raw.business_id : null;
+  const userId = typeof raw.user_id === 'string' ? raw.user_id : null;
+  const role = raw.role === 'owner' || raw.role === 'employee' || raw.role === 'manager' ? raw.role : null;
+  const branchId = typeof raw.branch_id === 'string' ? raw.branch_id : null;
+  const joinedAt = typeof raw.joined_at === 'string' ? raw.joined_at : new Date().toISOString();
+  const isActive = raw.is_active === false ? false : true;
 
-  if (!id || !fullname || !email) {
-    return json({ error: 'id, fullname, and email are required' }, 400);
+  if (!id || !businessId || !userId || !role) {
+    return json({ error: 'id, business_id, user_id, and role are required' }, 400);
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
@@ -42,15 +42,15 @@ Deno.serve(async (request) => {
     auth: { persistSession: false },
   });
 
-  const { error } = await supabase.from('profiles').upsert(
+  const { error } = await supabase.from('business_members').upsert(
     {
       id,
-      fullname,
-      email,
+      business_id: businessId,
+      user_id: userId,
       role,
-      phone_number: phoneNumber,
-      avatar_url: avatarUrl,
-      created_at: createdAt,
+      branch_id: branchId,
+      is_active: isActive,
+      joined_at: joinedAt,
     },
     { onConflict: 'id' },
   );

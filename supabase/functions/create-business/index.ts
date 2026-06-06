@@ -18,18 +18,19 @@ Deno.serve(async (request) => {
   }
 
   const body = payload as Record<string, unknown>;
-  const raw = body.payload && typeof body.payload === 'object' ? (body.payload as Record<string, unknown>) : body;
+  const raw = (body.payload && typeof body.payload === 'object' ? (body.payload as Record<string, unknown>) : body);
 
   const id = typeof raw.id === 'string' ? raw.id : null;
-  const fullname = typeof raw.fullname === 'string' ? raw.fullname : null;
-  const email = typeof raw.email === 'string' ? raw.email : null;
-  const role = raw.role === 'owner' || raw.role === 'employee' || raw.role === 'manager' ? raw.role : 'employee';
+  const name = typeof raw.name === 'string' ? raw.name : null;
+  const ownerId = typeof raw.owner_id === 'string' ? raw.owner_id : null;
+  const joinCode = typeof raw.join_code === 'string' ? raw.join_code : null;
+  const logoUrl = typeof raw.logo_url === 'string' || raw.logo_url === null ? raw.logo_url : null;
+  const address = typeof raw.address === 'string' || raw.address === null ? raw.address : null;
   const createdAt = typeof raw.created_at === 'string' ? raw.created_at : new Date().toISOString();
-  const phoneNumber = typeof raw.phone_number === 'string' || raw.phone_number === null ? raw.phone_number : null;
-  const avatarUrl = typeof raw.avatar_url === 'string' || raw.avatar_url === null ? raw.avatar_url : null;
+  const isActive = raw.is_active === false ? false : true;
 
-  if (!id || !fullname || !email) {
-    return json({ error: 'id, fullname, and email are required' }, 400);
+  if (!id || !name || !ownerId || !joinCode) {
+    return json({ error: 'id, name, owner_id, and join_code are required' }, 400);
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
@@ -42,14 +43,15 @@ Deno.serve(async (request) => {
     auth: { persistSession: false },
   });
 
-  const { error } = await supabase.from('profiles').upsert(
+  const { error } = await supabase.from('businesses').upsert(
     {
       id,
-      fullname,
-      email,
-      role,
-      phone_number: phoneNumber,
-      avatar_url: avatarUrl,
+      name,
+      owner_id: ownerId,
+      join_code: joinCode,
+      logo_url: logoUrl,
+      address,
+      is_active: isActive,
       created_at: createdAt,
     },
     { onConflict: 'id' },

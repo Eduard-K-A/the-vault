@@ -4,6 +4,7 @@ export const schemaStatements = {
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       fullname TEXT NOT NULL,
       email TEXT NOT NULL UNIQUE,
+      role TEXT NOT NULL DEFAULT 'employee',
       phone_number TEXT,
       avatar_url TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()

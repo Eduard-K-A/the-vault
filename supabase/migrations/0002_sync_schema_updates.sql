@@ -1,6 +1,9 @@
 alter table if exists business_members
 add column if not exists is_active boolean not null default true;
 
+alter table if exists profiles
+add column if not exists role text not null default 'employee';
+
 create table if not exists inventory_items (
   id uuid primary key default gen_random_uuid(),
   product_id uuid not null references products(id) on delete cascade,

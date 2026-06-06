@@ -17,6 +17,7 @@ import { formatCurrency } from '@/utils/formatCurrency';
 import { db } from '@/db/powersync';
 import { useCart } from '@/hooks/useCart';
 import { useProducts } from '@/hooks/useProducts';
+import { syncPowerSyncNow } from '@/services/powersync.service';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
@@ -36,6 +37,7 @@ export default function InventoryScreen() {
   const [restockProduct, setRestockProduct] = useState<Product | null>(null);
   const [restockQuantity, setRestockQuantity] = useState('1');
   const [restockLoading, setRestockLoading] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
   const { products, findByBarcode } = useProducts(search);
   const { addItem, items, total } = useCart();
   const { data: inventoryItems } = useQuery<InventoryRecord>(
@@ -104,6 +106,18 @@ export default function InventoryScreen() {
     }
   }
 
+  async function handleManualSync() {
+    try {
+      setSyncLoading(true);
+      await syncPowerSyncNow();
+      setToastMessage('Sync completed');
+    } catch (error) {
+      Alert.alert('Sync failed', error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setSyncLoading(false);
+    }
+  }
+
   useEffect(() => {
     if (!toastMessage) {
       return;
@@ -131,6 +145,15 @@ export default function InventoryScreen() {
         <View style={styles.statusRow}>
           <Text style={styles.businessName}>{businessName}</Text>
           <SyncStatusBadge />
+        </View>
+        <View style={styles.syncActionsRow}>
+          <Button
+            label="Sync now"
+            variant="secondary"
+            onPress={() => void handleManualSync()}
+            loading={syncLoading}
+            fullWidth={false}
+          />
         </View>
       </View>
 
@@ -302,6 +325,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: dimensions.sm,
+  },
+  syncActionsRow: {
+    alignItems: 'flex-start',
   },
   summaryStrip: {
     flexDirection: 'row',

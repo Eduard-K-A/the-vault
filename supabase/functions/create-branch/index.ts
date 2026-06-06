@@ -18,18 +18,17 @@ Deno.serve(async (request) => {
   }
 
   const body = payload as Record<string, unknown>;
-  const raw = body.payload && typeof body.payload === 'object' ? (body.payload as Record<string, unknown>) : body;
+  const raw = (body.payload && typeof body.payload === 'object' ? (body.payload as Record<string, unknown>) : body);
 
   const id = typeof raw.id === 'string' ? raw.id : null;
-  const fullname = typeof raw.fullname === 'string' ? raw.fullname : null;
-  const email = typeof raw.email === 'string' ? raw.email : null;
-  const role = raw.role === 'owner' || raw.role === 'employee' || raw.role === 'manager' ? raw.role : 'employee';
+  const businessId = typeof raw.business_id === 'string' ? raw.business_id : null;
+  const name = typeof raw.name === 'string' ? raw.name : null;
   const createdAt = typeof raw.created_at === 'string' ? raw.created_at : new Date().toISOString();
-  const phoneNumber = typeof raw.phone_number === 'string' || raw.phone_number === null ? raw.phone_number : null;
-  const avatarUrl = typeof raw.avatar_url === 'string' || raw.avatar_url === null ? raw.avatar_url : null;
+  const updatedAt = typeof raw.updated_at === 'string' ? raw.updated_at : createdAt;
+  const isActive = raw.is_active === false ? false : true;
 
-  if (!id || !fullname || !email) {
-    return json({ error: 'id, fullname, and email are required' }, 400);
+  if (!id || !businessId || !name) {
+    return json({ error: 'id, business_id, and name are required' }, 400);
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
@@ -42,15 +41,14 @@ Deno.serve(async (request) => {
     auth: { persistSession: false },
   });
 
-  const { error } = await supabase.from('profiles').upsert(
+  const { error } = await supabase.from('branches').upsert(
     {
       id,
-      fullname,
-      email,
-      role,
-      phone_number: phoneNumber,
-      avatar_url: avatarUrl,
+      business_id: businessId,
+      name,
+      is_active: isActive,
       created_at: createdAt,
+      updated_at: updatedAt,
     },
     { onConflict: 'id' },
   );

@@ -2,7 +2,7 @@ import { powersync } from '@/powersync';
 import { hasRemoteSyncConfig } from '@/config/offline';
 
 const REQUIRED_TABLES: Record<string, string[]> = {
-  profiles: ['fullname', 'email', 'phone_number', 'avatar_url', 'created_at'],
+  profiles: ['fullname', 'email', 'role', 'phone_number', 'avatar_url', 'created_at'],
   businesses: ['name', 'owner_id', 'join_code', 'logo_url', 'address', 'is_active', 'created_at'],
   branches: ['business_id', 'name', 'is_active', 'created_at', 'updated_at'],
   business_members: ['business_id', 'user_id', 'role', 'branch_id', 'is_active', 'joined_at'],
@@ -78,7 +78,7 @@ export async function validateSyncBackend(): Promise<void> {
   }
 
   const tables = await powersync.getAll<{ name: string }>(
-    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+    "SELECT name FROM sqlite_master WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%'",
   );
   const tableNames = new Set(tables.map((row) => row.name));
   const missingTables = Object.keys(REQUIRED_TABLES).filter((table) => !tableNames.has(table));
