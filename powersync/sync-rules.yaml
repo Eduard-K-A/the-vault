@@ -4,11 +4,17 @@ bucket_definitions:
       SELECT business_id
       FROM business_members
       WHERE user_id = token_parameters.user_id
+      UNION
+      SELECT id AS business_id
+      FROM businesses
+      WHERE owner_id = token_parameters.user_id
     data:
       - SELECT * FROM products
         WHERE business_id = bucket.business_id
         AND is_active = true
-      - SELECT * FROM inventory
+      - SELECT * FROM inventory_items
+        WHERE business_id = bucket.business_id
+      - SELECT * FROM inventory_logs
         WHERE branch_id IN (
           SELECT id FROM branches WHERE business_id = bucket.business_id
         )
@@ -50,4 +56,3 @@ bucket_definitions:
         WHERE branch_id IN (
           SELECT id FROM branches WHERE business_id = bucket.business_id
         )
-

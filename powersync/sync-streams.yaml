@@ -13,154 +13,179 @@ streams:
     auto_subscribe: true
     queries:
       - |
-        SELECT * FROM businesses
-        WHERE id IN (
-          SELECT business_id
-          FROM business_members
-          WHERE user_id = auth.user_id()
-            AND is_active = true
-        )
+        SELECT b.*
+        FROM businesses b
+        WHERE b.owner_id = auth.user_id()
+          AND b.is_active = true
       - |
-        SELECT * FROM branches
-        WHERE business_id IN (
-          SELECT business_id
-          FROM business_members
-          WHERE user_id = auth.user_id()
-            AND is_active = true
-        )
+        SELECT b.*
+        FROM businesses b
+        INNER JOIN business_members bm ON bm.business_id = b.id
+        WHERE bm.user_id = auth.user_id()
+          AND bm.is_active = true
+          AND b.is_active = true
       - |
-        SELECT * FROM categories
-        WHERE business_id IN (
-          SELECT business_id
-          FROM business_members
-          WHERE user_id = auth.user_id()
-            AND is_active = true
-        )
+        SELECT br.*
+        FROM branches br
+        INNER JOIN businesses b ON b.id = br.business_id
+        WHERE b.owner_id = auth.user_id()
+          AND b.is_active = true
       - |
-        SELECT * FROM products
-        WHERE business_id IN (
-          SELECT business_id
-          FROM business_members
-          WHERE user_id = auth.user_id()
-            AND is_active = true
-        )
+        SELECT br.*
+        FROM branches br
+        INNER JOIN business_members bm ON bm.business_id = br.business_id
+        INNER JOIN businesses b ON b.id = br.business_id
+        WHERE bm.user_id = auth.user_id()
+          AND bm.is_active = true
+          AND b.is_active = true
       - |
-        SELECT * FROM inventory_items
-        WHERE business_id IN (
-          SELECT business_id
-          FROM business_members
-          WHERE user_id = auth.user_id()
-            AND is_active = true
-        )
+        SELECT c.*
+        FROM categories c
+        INNER JOIN businesses b ON b.id = c.business_id
+        WHERE b.owner_id = auth.user_id()
+          AND b.is_active = true
       - |
-        SELECT * FROM profiles
-        WHERE id IN (
-          SELECT user_id
-          FROM business_members
-          WHERE business_id IN (
-            SELECT business_id
-            FROM business_members
-            WHERE user_id = auth.user_id()
-              AND is_active = true
-          )
-            AND is_active = true
-        )
+        SELECT c.*
+        FROM categories c
+        INNER JOIN business_members bm ON bm.business_id = c.business_id
+        INNER JOIN businesses b ON b.id = c.business_id
+        WHERE bm.user_id = auth.user_id()
+          AND bm.is_active = true
+          AND b.is_active = true
       - |
-        SELECT * FROM audit_logs
-        WHERE business_id IN (
-          SELECT business_id
-          FROM business_members
-          WHERE user_id = auth.user_id()
-            AND is_active = true
-        )
+        SELECT p.*
+        FROM products p
+        INNER JOIN businesses b ON b.id = p.business_id
+        WHERE b.owner_id = auth.user_id()
+          AND b.is_active = true
       - |
-        SELECT * FROM inventory_logs
-        WHERE branch_id IN (
-          SELECT id
-          FROM branches
-          WHERE business_id IN (
-            SELECT business_id
-            FROM business_members
-            WHERE user_id = auth.user_id()
-              AND is_active = true
-          )
-        )
+        SELECT p.*
+        FROM products p
+        INNER JOIN business_members bm ON bm.business_id = p.business_id
+        INNER JOIN businesses b ON b.id = p.business_id
+        WHERE bm.user_id = auth.user_id()
+          AND bm.is_active = true
+          AND b.is_active = true
+      - |
+        SELECT i.*
+        FROM inventory_items i
+        INNER JOIN businesses b ON b.id = i.business_id
+        WHERE b.owner_id = auth.user_id()
+          AND b.is_active = true
+      - |
+        SELECT i.*
+        FROM inventory_items i
+        INNER JOIN business_members bm ON bm.business_id = i.business_id
+        INNER JOIN businesses b ON b.id = i.business_id
+        WHERE bm.user_id = auth.user_id()
+          AND bm.is_active = true
+          AND b.is_active = true
+      - |
+        SELECT p.*
+        FROM profiles p
+        INNER JOIN business_members bm1 ON bm1.user_id = p.id
+        INNER JOIN business_members bm2 ON bm2.business_id = bm1.business_id
+        WHERE bm2.user_id = auth.user_id()
+          AND bm2.is_active = true
+          AND bm1.is_active = true
+      - |
+        SELECT a.*
+        FROM audit_logs a
+        INNER JOIN businesses b ON b.id = a.business_id
+        WHERE b.owner_id = auth.user_id()
+          AND b.is_active = true
+      - |
+        SELECT a.*
+        FROM audit_logs a
+        INNER JOIN business_members bm ON bm.business_id = a.business_id
+        INNER JOIN businesses b ON b.id = a.business_id
+        WHERE bm.user_id = auth.user_id()
+          AND bm.is_active = true
+          AND b.is_active = true
+      - |
+        SELECT il.*
+        FROM inventory_logs il
+        INNER JOIN branches br ON br.id = il.branch_id
+        INNER JOIN businesses b ON b.id = br.business_id
+        WHERE b.owner_id = auth.user_id()
+          AND b.is_active = true
+      - |
+        SELECT il.*
+        FROM inventory_logs il
+        INNER JOIN branches br ON br.id = il.branch_id
+        INNER JOIN business_members bm ON bm.business_id = br.business_id
+        INNER JOIN businesses b ON b.id = br.business_id
+        WHERE bm.user_id = auth.user_id()
+          AND bm.is_active = true
+          AND b.is_active = true
 
   employee_sales:
     auto_subscribe: true
     queries:
       - |
-        SELECT * FROM sales
-        WHERE employee_id = auth.user_id()
+        SELECT s.*
+        FROM sales s
+        WHERE s.employee_id = auth.user_id()
       - |
-        SELECT * FROM sale_items
-        WHERE sale_id IN (
-          SELECT id
-          FROM sales
-          WHERE employee_id = auth.user_id()
-        )
+        SELECT si.*
+        FROM sale_items si
+        INNER JOIN sales s ON s.id = si.sale_id
+        WHERE s.employee_id = auth.user_id()
       - |
-        SELECT * FROM payments
-        WHERE sale_id IN (
-          SELECT id
-          FROM sales
-          WHERE employee_id = auth.user_id()
-        )
+        SELECT pay.*
+        FROM payments pay
+        INNER JOIN sales s ON s.id = pay.sale_id
+        WHERE s.employee_id = auth.user_id()
       - |
-        SELECT * FROM refunds
-        WHERE original_sale_id IN (
-          SELECT id
-          FROM sales
-          WHERE employee_id = auth.user_id()
-        )
+        SELECT r.*
+        FROM refunds r
+        INNER JOIN sales s ON s.id = r.original_sale_id
+        WHERE s.employee_id = auth.user_id()
       - |
-        SELECT * FROM refund_items
-        WHERE refund_id IN (
-          SELECT id
-          FROM refunds
-          WHERE original_sale_id IN (
-            SELECT id
-            FROM sales
-            WHERE employee_id = auth.user_id()
-          )
-        )
+        SELECT ri.*
+        FROM refund_items ri
+        INNER JOIN refunds r ON r.id = ri.refund_id
+        INNER JOIN sales s ON s.id = r.original_sale_id
+        WHERE s.employee_id = auth.user_id()
 
   owner_sales:
     auto_subscribe: true
     queries:
       - |
-        SELECT * FROM sales
-        WHERE business_id IN (
-          SELECT business_id
-          FROM business_members
-          WHERE user_id = auth.user_id()
-            AND role = 'owner'
-            AND is_active = true
-        )
+        SELECT s.*
+        FROM sales s
+        INNER JOIN business_members bm ON bm.business_id = s.business_id
+        WHERE bm.user_id = auth.user_id()
+          AND bm.role = 'owner'
+          AND bm.is_active = true
       - |
-        SELECT * FROM sale_items
-        WHERE sale_id IN (
-          SELECT id
-          FROM sales
-          WHERE business_id IN (
-            SELECT business_id
-            FROM business_members
-            WHERE user_id = auth.user_id()
-              AND role = 'owner'
-              AND is_active = true
-          )
-        )
+        SELECT si.*
+        FROM sale_items si
+        INNER JOIN sales s ON s.id = si.sale_id
+        INNER JOIN business_members bm ON bm.business_id = s.business_id
+        WHERE bm.user_id = auth.user_id()
+          AND bm.role = 'owner'
+          AND bm.is_active = true
       - |
-        SELECT * FROM payments
-        WHERE sale_id IN (
-          SELECT id
-          FROM sales
-          WHERE business_id IN (
-            SELECT business_id
-            FROM business_members
-            WHERE user_id = auth.user_id()
-              AND role = 'owner'
-              AND is_active = true
-          )
-        )
-
+        SELECT pay.*
+        FROM payments pay
+        INNER JOIN sales s ON s.id = pay.sale_id
+        INNER JOIN business_members bm ON bm.business_id = s.business_id
+        WHERE bm.user_id = auth.user_id()
+          AND bm.role = 'owner'
+          AND bm.is_active = true
+      - |
+        SELECT r.*
+        FROM refunds r
+        INNER JOIN business_members bm ON bm.business_id = r.business_id
+        WHERE bm.user_id = auth.user_id()
+          AND bm.role = 'owner'
+          AND bm.is_active = true
+      - |
+        SELECT ri.*
+        FROM refund_items ri
+        INNER JOIN refunds r ON r.id = ri.refund_id
+        INNER JOIN business_members bm ON bm.business_id = r.business_id
+        WHERE bm.user_id = auth.user_id()
+          AND bm.role = 'owner'
+          AND bm.is_active = true
