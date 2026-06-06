@@ -30,6 +30,12 @@ interface UploadFailureInput {
   details: string;
 }
 
+interface CrudPayloadInput {
+  table: string;
+  id: string;
+  opData?: Record<string, unknown> | null;
+}
+
 function getResponseLike(error: unknown): ResponseLike | null {
   if (!error || typeof error !== 'object' || !('context' in error)) {
     return null;
@@ -84,6 +90,42 @@ export function buildFunctionInvokeOptions(envelope: FunctionEnvelope, accessTok
 
 export function buildUploadFailureMessage(input: UploadFailureInput): string {
   return `[powersync] upload failed table=${input.table} op=${String(input.op)} id=${input.id} function=${input.functionName}: ${input.details}`;
+}
+
+export function buildCrudUploadPayload(
+  input: CrudPayloadInput,
+  localRow?: Record<string, unknown> | null,
+): Record<string, unknown> {
+  return {
+    ...(input.opData ?? {}),
+    ...(localRow ?? {}),
+    id: input.id,
+    table: input.table,
+  };
+}
+
+export function getUploadFunctionName(table: string, op: unknown, deleteOp: unknown): string | null {
+  if (op === deleteOp) {
+    return table === 'businesses' ? 'delete-business' : null;
+  }
+
+  return table === 'profiles'
+    ? 'upsert-profile'
+    : table === 'sales'
+      ? 'commit_sale'
+    : table === 'refunds'
+      ? 'create_refund'
+    : table === 'inventory_adjustments'
+      ? 'apply_inventory_adjustment'
+    : table === 'products'
+      ? 'save_product'
+    : table === 'branches'
+      ? 'create-branch'
+    : table === 'business_members'
+      ? 'add-member'
+    : table === 'businesses'
+      ? 'create-business'
+    : null;
 }
 
 export async function getFunctionAccessToken(

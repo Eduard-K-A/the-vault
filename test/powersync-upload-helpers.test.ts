@@ -2,9 +2,11 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import {
+  buildCrudUploadPayload,
   buildFunctionInvokeOptions,
   buildUploadFailureMessage,
   describeFunctionError,
+  getUploadFunctionName,
   getFunctionAccessToken,
 } from '../src/powersync/uploadHelpers.ts';
 
@@ -91,6 +93,35 @@ test('buildUploadFailureMessage includes operation context and classified detail
   );
 });
 
+test('buildCrudUploadPayload merges the latest local row for product updates', () => {
+  assert.deepEqual(
+    buildCrudUploadPayload(
+      {
+        table: 'products',
+        id: 'product-1',
+        opData: {
+          name: 'Updated name',
+        },
+      },
+      {
+        id: 'product-1',
+        business_id: 'business-1',
+        name: 'Updated name',
+        selling_price: 25,
+        cost_price: 10,
+      },
+    ),
+    {
+      id: 'product-1',
+      table: 'products',
+      business_id: 'business-1',
+      name: 'Updated name',
+      selling_price: 25,
+      cost_price: 10,
+    },
+  );
+});
+
 test('getFunctionAccessToken prefers the Supabase client current session token', async () => {
   const token = await getFunctionAccessToken(
     {
@@ -129,4 +160,13 @@ test('getFunctionAccessToken falls back to the stored token when the client has 
   );
 
   assert.equal(token, 'stored-token');
+});
+
+test('getUploadFunctionName routes business deletes to delete-business', () => {
+  assert.equal(getUploadFunctionName('businesses', 'DELETE', 'DELETE'), 'delete-business');
+});
+
+test('getUploadFunctionName does not route unsupported deletes', () => {
+  assert.equal(getUploadFunctionName('branches', 'DELETE', 'DELETE'), null);
+  assert.equal(getUploadFunctionName('products', 'DELETE', 'DELETE'), null);
 });

@@ -9,9 +9,11 @@ import { offlineConfig } from '@/config/offline';
 import { getSupabaseClient } from '@/services/supabaseClient';
 import { useAuthStore } from '@/store/authStore';
 import {
+  buildCrudUploadPayload,
   buildFunctionInvokeOptions,
   buildUploadFailureMessage,
   describeFunctionError,
+  getUploadFunctionName,
   getFunctionAccessToken,
 } from '@/powersync/uploadHelpers';
 
@@ -48,35 +50,29 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
         try {
           console.log(`[powersync] uploading transaction with ${transaction.crud.length} ops`);
           for (const op of transaction.crud) {
-            if (op.op === UpdateType.DELETE) {
+            const functionName = getUploadFunctionName(op.table, op.op, UpdateType.DELETE);
+            if (op.op === UpdateType.DELETE && !functionName) {
               console.log(`[powersync] skipping DELETE on ${op.table} (${op.id})`);
               continue;
             }
-
-            const payload = { ...op.opData, id: op.id, table: op.table };
-            const functionName =
-              op.table === 'profiles'
-                ? 'upsert-profile'
-                : op.table === 'sales'
-                  ? 'commit_sale'
-                : op.table === 'refunds'
-                  ? 'create_refund'
-                  : op.table === 'inventory_adjustments'
-                    ? 'apply_inventory_adjustment'
-                    : op.table === 'products'
-                      ? 'save_product'
-                      : op.table === 'branches'
-                        ? 'create-branch'
-                        : op.table === 'business_members'
-                          ? 'add-member'
-              : op.table === 'businesses'
-                ? 'create-business'
-                : null;
 
             if (!functionName) {
               console.log(`[powersync] skipping unsupported table ${op.table} op ${op.op} id ${op.id}`);
               continue;
             }
+
+            const localRow =
+              op.table === 'products' && op.op !== UpdateType.DELETE
+                ? await database.getOptional<Record<string, unknown>>('SELECT * FROM products WHERE id = ?', [op.id])
+                : null;
+            const payload = buildCrudUploadPayload(
+              {
+                table: op.table,
+                id: op.id,
+                opData: op.opData as Record<string, unknown> | null,
+              },
+              localRow,
+            );
 
             console.log(`[powersync] uploading ${op.op} on ${op.table} via ${functionName} (${op.id})`);
             const { error } = await client.functions.invoke(
