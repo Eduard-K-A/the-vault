@@ -1,11 +1,18 @@
 import type { Product, UserRole } from '@/types/models';
 
-export const PRODUCT_SEARCH_SQL = `
-  SELECT *
-  FROM products
-  WHERE business_id = ? AND is_active = 1
-  ORDER BY updated_at DESC;
-`;
+export const PRODUCT_SEARCH_SQL = 'SELECT * FROM products WHERE business_id = ? AND is_active = 1 ORDER BY updated_at DESC';
+
+const NO_ACTIVE_BUSINESS_ID = '__no_active_business__';
+
+export function buildProductsForBusinessQuery(businessId: string | null): {
+  sql: string;
+  parameters: [string];
+} {
+  return {
+    sql: PRODUCT_SEARCH_SQL,
+    parameters: [businessId ?? NO_ACTIVE_BUSINESS_ID],
+  };
+}
 
 export function getProductsForBusiness(
   products: Product[],
@@ -14,8 +21,20 @@ export function getProductsForBusiness(
   searchTerm = '',
 ): Product[] {
   const needle = searchTerm.trim().toLowerCase();
-  return products
-    .filter((product) => product.business_id === businessId)
+  const businessProducts = products.filter((product) => product.business_id === businessId);
+
+  // Log diagnostic information if no products found
+  if (businessProducts.length === 0 && products.length > 0) {
+    const otherBusinessIds = Array.from(new Set(products.map(p => p.business_id)));
+    console.warn(
+      `[inventory] No products found for business ${businessId}. ` +
+      `Total products in DB: ${products.length}, other business IDs present: ${otherBusinessIds.join(', ')}`
+    );
+  } else if (businessProducts.length > 0) {
+    console.log(`[inventory] Found ${businessProducts.length} products for business ${businessId}`);
+  }
+
+  return businessProducts
     .filter((product) => (role === 'employee' ? product.is_active : true))
     .filter((product) => {
       if (!needle) {

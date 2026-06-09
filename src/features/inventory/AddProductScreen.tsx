@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
 import { generateUUID } from '@/utils/generateUUID';
+import { validatePrice } from '@/utils/validatePrice';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -30,6 +31,24 @@ export default function AddProductScreen() {
   async function handleSave() {
     if (!authUserId || !businessId || !branchId) {
       Alert.alert('Save failed', 'Select a branch before creating a product.');
+      return;
+    }
+
+    // Validate prices
+    const sellingPriceValidation = validatePrice(sellingPrice);
+    if (!sellingPriceValidation.isValid) {
+      Alert.alert('Invalid selling price', sellingPriceValidation.error);
+      return;
+    }
+
+    const costPriceValidation = validatePrice(costPrice);
+    if (!costPriceValidation.isValid) {
+      Alert.alert('Invalid cost price', costPriceValidation.error);
+      return;
+    }
+
+    if (!name.trim()) {
+      Alert.alert('Save failed', 'Product name is required.');
       return;
     }
 

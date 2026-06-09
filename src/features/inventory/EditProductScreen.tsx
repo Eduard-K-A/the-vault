@@ -12,6 +12,7 @@ import { typography } from '@/constants/typography';
 import { useAuthStore } from '@/store/authStore';
 import type { RootStackParamList } from '@/types/navigation';
 import type { Product } from '@/types/models';
+import { validatePrice } from '@/utils/validatePrice';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type Route = NativeStackScreenProps<RootStackParamList, 'EditProduct'>['route'];
@@ -32,6 +33,24 @@ export default function EditProductScreen() {
 
   async function handleSave() {
     if (!product || !authUserId) {
+      return;
+    }
+
+    // Validate prices
+    const sellingPriceValidation = validatePrice(sellingPrice);
+    if (!sellingPriceValidation.isValid) {
+      Alert.alert('Invalid selling price', sellingPriceValidation.error);
+      return;
+    }
+
+    const costPriceValidation = validatePrice(costPrice);
+    if (!costPriceValidation.isValid) {
+      Alert.alert('Invalid cost price', costPriceValidation.error);
+      return;
+    }
+
+    if (!name.trim()) {
+      Alert.alert('Save failed', 'Product name is required.');
       return;
     }
 

@@ -40,6 +40,31 @@ function requiredNumber(incoming: unknown, existing: unknown): number {
   return Number.isFinite(existingValue) ? existingValue : Number.NaN;
 }
 
+function validatePrice(price: number): { isValid: boolean; error?: string } {
+  const MAX_PRICE = 9999999999.99;
+  const MIN_PRICE = 0;
+
+  if (!Number.isFinite(price)) {
+    return { isValid: false, error: 'Price must be a valid number' };
+  }
+
+  if (price < MIN_PRICE) {
+    return { isValid: false, error: 'Price cannot be negative' };
+  }
+
+  if (price > MAX_PRICE) {
+    return { isValid: false, error: `Price cannot exceed ${MAX_PRICE.toLocaleString()}` };
+  }
+
+  // Check decimal places (max 2)
+  const decimalPlaces = (price.toString().split('.')[1] || '').length;
+  if (decimalPlaces > 2) {
+    return { isValid: false, error: 'Price can have a maximum of 2 decimal places' };
+  }
+
+  return { isValid: true };
+}
+
 Deno.serve(async (request) => {
   if (request.method !== 'POST') {
     return json({ error: 'Method not allowed' }, 405);
@@ -107,8 +132,39 @@ Deno.serve(async (request) => {
   const sellingPrice = requiredNumber(raw.selling_price, existingProduct?.selling_price);
   const costPrice = requiredNumber(raw.cost_price, existingProduct?.cost_price);
 
-  if (!businessId || !name || !Number.isFinite(sellingPrice) || !Number.isFinite(costPrice)) {
-    return json({ ok: true, skipped: 'incomplete_product_payload' });
+  // Check for missing required fields
+  if (!businessId) {
+    return json({ error: 'business_id is required' }, 400);
+  }
+  if (!name) {
+    return json({ error: 'product name is required' }, 400);
+  }
+  if (!Number.isFinite(sellingPrice)) {
+    return json({ error: 'selling_price must be a valid number' }, 400);
+  }
+  if (!Number.isFinite(costPrice)) {
+    return json({ error: 'cost_price must be a valid number' }, 400);
+  }
+
+  // Validate prices are within NUMERIC(12,2) constraint
+  const sellingPriceValidation = validatePrice(sellingPrice);
+  if (!sellingPriceValidation.isValid) {
+    return json(
+      {
+        error: `Invalid selling price: ${sellingPriceValidation.error} (received: ${sellingPrice})`,
+      },
+      400,
+    );
+  }
+
+  const costPriceValidation = validatePrice(costPrice);
+  if (!costPriceValidation.isValid) {
+    return json(
+      {
+        error: `Invalid cost price: ${costPriceValidation.error} (received: ${costPrice})`,
+      },
+      400,
+    );
   }
 
   const { data: business, error: businessError } = await admin
