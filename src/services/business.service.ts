@@ -1,4 +1,4 @@
-import { db, powersync } from '@/db/powersync';
+import { applyBusinessBootstrapSnapshot, db, powersync } from '@/db/powersync';
 import {
   buildJoinedBusinessSummary,
   isSupabaseFunctionNotFoundError,
@@ -9,10 +9,12 @@ import {
 } from '@/services/joinBusinessHelpers';
 import { composeBusinessSummaries } from '@/services/businessSummaryHelpers';
 import { syncPowerSyncNow } from '@/services/powersync.service';
+import { fetchBusinessBootstrapSnapshot } from '@/services/remoteApi';
 import { getSupabaseClient } from '@/services/supabaseClient';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import type { Business, BusinessSummary, UserRole } from '@/types/models';
+import { generateUUID } from '@/utils/generateUUID';
 import { isValidJoinCode, isNonEmpty } from '@/utils/validators';
 
 const attemptsByUser = new Map<string, number[]>();
@@ -175,8 +177,10 @@ export async function joinBusiness(input: {
     throw new Error('Invalid join code.');
   }
 
+  const membershipId = generateUUID();
   await db.writeTransaction(async (tx) => {
     await tx.addBusinessMember({
+      id: membershipId,
       businessId,
       userId: input.userId,
       role,
@@ -184,7 +188,18 @@ export async function joinBusiness(input: {
     });
   });
 
+  await addBusinessMemberRemotely({
+    id: membershipId,
+    businessId,
+    userId: input.userId,
+    role,
+    branchId: null,
+  });
   await syncPowerSyncNow();
+  const remoteSnapshot = await fetchBusinessBootstrapSnapshot(businessId);
+  if (remoteSnapshot) {
+    await applyBusinessBootstrapSnapshot(remoteSnapshot);
+  }
 
   const localSummaries = await loadBusinessSummariesForUser(input.userId);
   const summary =
@@ -197,6 +212,35 @@ export async function joinBusiness(input: {
   const nextSummaries = mergeBusinessSummary(localSummaries, summary);
   useBusinessStore.getState().setAvailableBusinesses(nextSummaries);
   return summary;
+}
+
+async function addBusinessMemberRemotely(input: {
+  id: string;
+  businessId: string;
+  userId: string;
+  role: UserRole;
+  branchId: string | null;
+}): Promise<void> {
+  const client = getSupabaseClient();
+  if (!client) {
+    return;
+  }
+
+  const { error } = await client.functions.invoke('add-member', {
+    body: {
+      id: input.id,
+      business_id: input.businessId,
+      user_id: input.userId,
+      role: input.role,
+      branch_id: input.branchId,
+      is_active: true,
+      joined_at: new Date().toISOString(),
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
 }
 
 export async function getSelectedBusinessSummary(): Promise<BusinessSummary | null> {

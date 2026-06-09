@@ -1,8 +1,11 @@
 import { create } from 'zustand';
 
 import { powersync } from '@/powersync';
+import { syncPowerSyncNow } from '@/services/powersync.service';
+import { useSyncStore } from '@/store/syncStore';
 import type { Branch, Business, BusinessSummary } from '@/types/models';
 import { useAuthStore } from './authStore';
+import { enterSelectedBusiness } from './businessEntrySync';
 import { buildFallbackBranchFromSummary, buildFallbackBusinessFromSummary } from './businessSelectionHelpers';
 
 interface BusinessState {
@@ -30,6 +33,8 @@ export const useBusinessStore = create<BusinessState>((set, get) => ({
       return;
     }
 
+    console.log(`[business] selecting business: ${business.name} (ID: ${business.id})`);
+
     const branchId = available?.branchId;
     const branch =
       (branchId !== null
@@ -39,11 +44,29 @@ export const useBusinessStore = create<BusinessState>((set, get) => ({
             [businessId],
           )) ?? buildFallbackBranchFromSummary(available);
 
+    if (branch) {
+      console.log(`[business] selected branch: ${branch.name} (ID: ${branch.id})`);
+    }
+
     useAuthStore.getState().setError(null);
     set({
       activeBusiness: business,
       activeBranch: branch,
     });
+
+    console.log(`[business] initiating sync for business ${business.id}`);
+    await enterSelectedBusiness(
+      {
+        userId: useAuthStore.getState().userId,
+        businessId: business.id,
+        branchId: branch?.id ?? null,
+      },
+      {
+        setSyncSession: useSyncStore.getState().setSession,
+        syncNow: syncPowerSyncNow,
+        setLastError: useSyncStore.getState().setLastError,
+      },
+    );
   },
   clearActiveBusiness: () => {
     set({

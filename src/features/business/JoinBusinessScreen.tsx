@@ -9,6 +9,7 @@ import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { joinBusiness } from '@/services/business.service';
 import { useAuthStore } from '@/store/authStore';
+import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -16,6 +17,7 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 export default function JoinBusinessScreen() {
   const navigation = useNavigation<Navigation>();
   const userId = useAuthStore((state) => state.userId);
+  const selectBusiness = useBusinessStore((state) => state.selectBusiness);
   const [joinCode, setJoinCode] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -26,12 +28,8 @@ export default function JoinBusinessScreen() {
 
     try {
       setLoading(true);
-      await joinBusiness({ joinCode, userId });
-      if (navigation.canGoBack()) {
-        navigation.goBack();
-      } else {
-        navigation.popToTop();
-      }
+      const summary = await joinBusiness({ joinCode, userId });
+      await selectBusiness(summary.businessId);
     } catch (error) {
       Alert.alert('Join failed', error instanceof Error ? error.message : 'Unknown error');
     } finally {

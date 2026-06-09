@@ -25,6 +25,7 @@ export { powersync } from '@/powersync';
 export interface LocalTransaction {
   addAuditLog: (log: AuditLog) => Promise<void>;
   addBusinessMember: (input: {
+    id?: string;
     businessId: string;
     userId: string;
     role: UserRole;
@@ -176,7 +177,7 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
     },
     addBusinessMember: async (input) => {
       const member: BusinessMember = {
-        id: generateUUID(),
+        id: input.id ?? generateUUID(),
         business_id: input.businessId,
         user_id: input.userId,
         role: input.role,
@@ -927,11 +928,189 @@ export async function applyBootstrapSnapshot(snapshot: {
   });
 }
 
+export async function applyBusinessBootstrapSnapshot(snapshot: {
+  businesses?: Business[];
+  branches?: Branch[];
+  businessMembers?: BusinessMember[];
+  categories?: Category[];
+  products?: Product[];
+  inventory?: InventoryRecord[];
+  sales?: Sale[];
+  saleItems?: SaleItem[];
+  payments?: Payment[];
+  refunds?: Refund[];
+  refundItems?: RefundItem[];
+  inventoryLogs?: InventoryLog[];
+  auditLogs?: AuditLog[];
+  deviceSessions?: Array<{
+    id: string;
+    user_id: string;
+    business_id: string | null;
+    device_id: string;
+    device_name: string | null;
+    last_seen_at: string;
+    created_at: string;
+  }>;
+}): Promise<void> {
+  await powersyncDatabase.writeTransaction(async (tx) => {
+    await upsertRows(tx, 'businesses', snapshot.businesses ?? [], (row) => [
+      row.id,
+      row.name,
+      row.owner_id,
+      row.join_code,
+      row.logo_url,
+      row.address,
+      row.is_active ? 1 : 0,
+      row.created_at,
+    ]);
+    await upsertRows(tx, 'branches', snapshot.branches ?? [], (row) => [
+      row.id,
+      row.business_id,
+      row.name,
+      row.is_active ? 1 : 0,
+      row.created_at ?? new Date().toISOString(),
+      row.updated_at ?? new Date().toISOString(),
+    ]);
+    await upsertRows(tx, 'business_members', snapshot.businessMembers ?? [], (row) => [
+      row.id,
+      row.business_id,
+      row.user_id,
+      row.role,
+      row.branch_id ?? null,
+      row.is_active === false ? 0 : 1,
+      row.joined_at,
+    ]);
+    await upsertRows(tx, 'categories', snapshot.categories ?? [], (row) => [row.id, row.business_id, row.name]);
+    await upsertRows(tx, 'products', snapshot.products ?? [], (row) => [
+      row.id,
+      row.business_id,
+      row.category_id ?? null,
+      row.name,
+      row.barcode,
+      row.sku,
+      row.selling_price,
+      row.cost_price,
+      row.image_url,
+      row.is_active ? 1 : 0,
+      row.is_archived ? 1 : 0,
+      row.version ?? 1,
+      row.description ?? null,
+      row.created_at,
+      row.updated_at,
+      row.created_by ?? null,
+      row.last_modified_by ?? null,
+    ]);
+    await upsertRows(tx, 'inventory_items', snapshot.inventory ?? [], (row) => [
+      row.id,
+      row.product_id,
+      row.branch_id,
+      row.business_id ?? null,
+      row.stock_quantity,
+      row.low_stock_threshold,
+      row.updated_at,
+    ]);
+    await upsertRows(tx, 'sales', snapshot.sales ?? [], (row) => [
+      row.id,
+      row.business_id,
+      row.branch_id,
+      row.employee_id,
+      row.total_amount,
+      row.discount_amount,
+      row.payment_method,
+      row.status,
+      row.notes,
+      row.created_at,
+      row.synced_at,
+      row.reference_number ?? null,
+      row.vat_amount ?? null,
+      row.idempotency_key ?? null,
+    ]);
+    await upsertRows(tx, 'sale_items', snapshot.saleItems ?? [], (row) => [
+      row.id,
+      row.sale_id,
+      row.product_id,
+      row.business_id,
+      row.quantity,
+      row.unit_price,
+      row.subtotal,
+    ]);
+    await upsertRows(tx, 'payments', snapshot.payments ?? [], (row) => [
+      row.id,
+      row.sale_id,
+      row.business_id,
+      row.method,
+      row.amount_peso,
+    ]);
+    await upsertRows(tx, 'refunds', snapshot.refunds ?? [], (row) => [
+      row.id,
+      row.idempotency_key,
+      row.original_sale_id,
+      row.branch_id,
+      row.business_id,
+      row.reason,
+      row.total_peso,
+      row.created_at,
+      row.created_by,
+      row.source_device_id,
+      row.reference_number ?? null,
+    ]);
+    await upsertRows(tx, 'refund_items', snapshot.refundItems ?? [], (row) => [
+      row.id,
+      row.refund_id,
+      row.sale_item_id,
+      row.product_id,
+      row.quantity,
+      row.unit_price,
+      row.subtotal,
+    ]);
+    await upsertRows(tx, 'inventory_logs', snapshot.inventoryLogs ?? [], (row) => [
+      row.id,
+      row.product_id,
+      row.branch_id,
+      row.action_type,
+      row.quantity_before,
+      row.quantity_changed,
+      row.quantity_after,
+      row.reference_type,
+      row.reference_id,
+      row.performed_by,
+      row.created_at,
+    ]);
+    await upsertRows(tx, 'audit_logs', snapshot.auditLogs ?? [], (row) => [
+      row.id,
+      row.business_id,
+      row.branch_id ?? null,
+      row.actor_id,
+      row.event_type,
+      JSON.stringify(row.payload),
+      row.created_at,
+      row.source_device_id ?? null,
+    ]);
+    await upsertRows(tx, 'device_sessions', snapshot.deviceSessions ?? [], (row) => [
+      row.id,
+      row.user_id,
+      row.business_id,
+      row.device_id,
+      row.device_name,
+      row.last_seen_at,
+      row.created_at,
+    ]);
+  });
+}
+
 async function clearAndReplace(tx: any, table: string, rows: unknown[], toValues: (row: any) => unknown[]): Promise<void> {
   await tx.execute(`DELETE FROM ${table}`, []);
   for (const row of rows) {
     const values = toValues(row);
     const placeholders = values.map(() => '?').join(', ');
     await tx.execute(`INSERT INTO ${table} VALUES (${placeholders})`, values);
+  }
+}
+
+async function upsertRows(tx: any, table: string, rows: unknown[], toValues: (row: any) => unknown[]): Promise<void> {
+  for (const row of rows) {
+    const values = toValues(row);
+    const placeholders = values.map(() => '?').join(', ');
+    await tx.execute(`INSERT OR REPLACE INTO ${table} VALUES (${placeholders})`, values);
   }
 }
