@@ -30,6 +30,12 @@ interface UploadFailureInput {
   details: string;
 }
 
+interface UnsupportedUploadInput {
+  table: string;
+  op: unknown;
+  id: string;
+}
+
 interface CrudPayloadInput {
   table: string;
   id: string;
@@ -92,16 +98,51 @@ export function buildUploadFailureMessage(input: UploadFailureInput): string {
   return `[powersync] upload failed table=${input.table} op=${String(input.op)} id=${input.id} function=${input.functionName}: ${input.details}`;
 }
 
+export function buildUnsupportedUploadMessage(input: UnsupportedUploadInput): string {
+  return `[powersync] unsupported local write table=${input.table} op=${String(input.op)} id=${input.id}. Add an upload route before marking this sync complete.`;
+}
+
 export function buildCrudUploadPayload(
   input: CrudPayloadInput,
   localRow?: Record<string, unknown> | null,
 ): Record<string, unknown> {
-  return {
+  const payload = {
     ...(input.opData ?? {}),
     ...(localRow ?? {}),
     id: input.id,
     table: input.table,
   };
+
+  // Sanitize product prices to prevent numeric overflow
+  if (input.table === 'products') {
+    const MAX_PRICE = 9999999999.99;
+
+    // Sanitize selling_price
+    if ('selling_price' in payload) {
+      const price = payload.selling_price;
+      const numPrice = typeof price === 'number' ? price : Number(price);
+      if (!Number.isFinite(numPrice) || numPrice < 0 || numPrice > MAX_PRICE) {
+        console.warn(
+          `[powersync] sanitizing invalid selling_price: ${numPrice} (max: ${MAX_PRICE})`,
+        );
+        delete payload.selling_price;
+      }
+    }
+
+    // Sanitize cost_price
+    if ('cost_price' in payload) {
+      const price = payload.cost_price;
+      const numPrice = typeof price === 'number' ? price : Number(price);
+      if (!Number.isFinite(numPrice) || numPrice < 0 || numPrice > MAX_PRICE) {
+        console.warn(
+          `[powersync] sanitizing invalid cost_price: ${numPrice} (max: ${MAX_PRICE})`,
+        );
+        delete payload.cost_price;
+      }
+    }
+  }
+
+  return payload;
 }
 
 export function getUploadFunctionName(table: string, op: unknown, deleteOp: unknown): string | null {
@@ -117,6 +158,10 @@ export function getUploadFunctionName(table: string, op: unknown, deleteOp: unkn
       ? 'create_refund'
     : table === 'inventory_adjustments'
       ? 'apply_inventory_adjustment'
+    : table === 'inventory_logs'
+      ? 'apply_inventory_adjustment'
+    : table === 'audit_logs'
+      ? 'write_audit_log'
     : table === 'products'
       ? 'save_product'
     : table === 'branches'

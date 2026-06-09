@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import {
   buildCrudUploadPayload,
   buildFunctionInvokeOptions,
+  buildUnsupportedUploadMessage,
   buildUploadFailureMessage,
   describeFunctionError,
   getUploadFunctionName,
@@ -93,6 +94,17 @@ test('buildUploadFailureMessage includes operation context and classified detail
   );
 });
 
+test('buildUnsupportedUploadMessage makes unmapped local writes block sync completion', () => {
+  assert.equal(
+    buildUnsupportedUploadMessage({
+      table: 'sale_items',
+      op: 'PUT',
+      id: 'sale-item-1',
+    }),
+    '[powersync] unsupported local write table=sale_items op=PUT id=sale-item-1. Add an upload route before marking this sync complete.',
+  );
+});
+
 test('buildCrudUploadPayload merges the latest local row for product updates', () => {
   assert.deepEqual(
     buildCrudUploadPayload(
@@ -164,6 +176,13 @@ test('getFunctionAccessToken falls back to the stored token when the client has 
 
 test('getUploadFunctionName routes business deletes to delete-business', () => {
   assert.equal(getUploadFunctionName('businesses', 'DELETE', 'DELETE'), 'delete-business');
+});
+
+test('getUploadFunctionName routes POS domain tables to bundle functions', () => {
+  assert.equal(getUploadFunctionName('sales', 'PUT', 'DELETE'), 'commit_sale');
+  assert.equal(getUploadFunctionName('refunds', 'PUT', 'DELETE'), 'create_refund');
+  assert.equal(getUploadFunctionName('inventory_logs', 'PUT', 'DELETE'), 'apply_inventory_adjustment');
+  assert.equal(getUploadFunctionName('audit_logs', 'PUT', 'DELETE'), 'write_audit_log');
 });
 
 test('getUploadFunctionName does not route unsupported deletes', () => {
