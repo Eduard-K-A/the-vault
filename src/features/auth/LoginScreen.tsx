@@ -14,8 +14,8 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function LoginScreen() {
   const navigation = useNavigation<Navigation>();
-  const [email, setEmail] = useState('cashier@thevault.local');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('eduard@gmail.com');
+  const [password, setPassword] = useState('11111111');
   const [loading, setLoading] = useState(false);
 
   async function handleSignIn() {
