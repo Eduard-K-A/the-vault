@@ -22,12 +22,29 @@ Deno.serve(async (request) => {
   const raw = unwrapPayload(body);
   const log = raw?.inventory_log && typeof raw.inventory_log === 'object' ? (raw.inventory_log as Record<string, unknown>) : null;
   const inventory = raw?.inventory_item && typeof raw.inventory_item === 'object' ? (raw.inventory_item as Record<string, unknown>) : null;
-  const businessId = stringValue(inventory?.business_id);
   const branchId = stringValue(log?.branch_id) ?? stringValue(inventory?.branch_id);
   const productId = stringValue(log?.product_id) ?? stringValue(inventory?.product_id);
+  let businessId = stringValue(inventory?.business_id);
 
-  if (!log || !inventory || !businessId || !branchId || !productId) {
+  if (!log || !inventory || !branchId || !productId) {
     return json({ error: 'inventory_log and inventory_item with business_id, branch_id, and product_id are required' }, 400);
+  }
+
+  if (!businessId) {
+    const { data: product, error: productError } = await clients.admin
+      .from('products')
+      .select('business_id')
+      .eq('id', productId)
+      .maybeSingle();
+
+    if (productError) {
+      return json({ error: productError.message }, 500);
+    }
+    businessId = stringValue(product?.business_id);
+  }
+
+  if (!businessId) {
+    return json({ error: 'inventory_item business_id is required and could not be resolved from product_id' }, 400);
   }
 
   const membershipError = await requireMembership(clients.admin, businessId, clients.user.id);
