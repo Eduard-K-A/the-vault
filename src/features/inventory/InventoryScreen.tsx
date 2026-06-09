@@ -17,6 +17,7 @@ import { formatCurrency } from '@/utils/formatCurrency';
 import { db } from '@/db/powersync';
 import { useCart } from '@/hooks/useCart';
 import { useProducts } from '@/hooks/useProducts';
+import { refreshBusinessDataFromDatabase } from '@/services/businessDataRefresh.service';
 import { syncPowerSyncNow } from '@/services/powersync.service';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
@@ -29,6 +30,7 @@ export default function InventoryScreen() {
   const navigation = useNavigation<Navigation>();
   const fullname = useAuthStore((state) => state.fullname);
   const role = useAuthStore((state) => state.role);
+  const businessId = useBusinessStore((state) => state.activeBusiness?.id ?? null);
   const branchId = useBusinessStore((state) => state.activeBranch?.id ?? null);
   const businessName = useBusinessStore((state) => state.activeBusiness?.name ?? 'Inventory');
   const [cartVisible, setCartVisible] = useState(false);
@@ -107,10 +109,16 @@ export default function InventoryScreen() {
   }
 
   async function handleManualSync() {
+    if (!businessId) {
+      Alert.alert('Sync failed', 'Select a business before syncing.');
+      return;
+    }
+
     try {
       setSyncLoading(true);
       await syncPowerSyncNow();
-      setToastMessage('Sync completed');
+      const result = await refreshBusinessDataFromDatabase(businessId);
+      setToastMessage(`Sync completed: ${result.productCount} products refreshed`);
     } catch (error) {
       Alert.alert('Sync failed', error instanceof Error ? error.message : 'Unknown error');
     } finally {

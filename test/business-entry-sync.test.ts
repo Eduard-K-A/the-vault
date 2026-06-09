@@ -6,6 +6,7 @@ import { enterSelectedBusiness } from '../src/store/businessEntrySync.ts';
 test('enterSelectedBusiness records selected business context and refreshes sync', async () => {
   const sessions: unknown[] = [];
   let syncCalls = 0;
+  const hydratedBusinessIds: string[] = [];
 
   await enterSelectedBusiness(
     {
@@ -16,6 +17,9 @@ test('enterSelectedBusiness records selected business context and refreshes sync
     {
       setSyncSession: (session) => {
         sessions.push(session);
+      },
+      hydrateBusinessData: async (businessId) => {
+        hydratedBusinessIds.push(businessId);
       },
       syncNow: async () => {
         syncCalls += 1;
@@ -30,6 +34,7 @@ test('enterSelectedBusiness records selected business context and refreshes sync
       branchId: 'branch-1',
     },
   ]);
+  assert.deepEqual(hydratedBusinessIds, ['business-1']);
   assert.equal(syncCalls, 1);
 });
 

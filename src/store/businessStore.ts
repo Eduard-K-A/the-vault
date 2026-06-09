@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { powersync } from '@/powersync';
+import { refreshBusinessDataFromDatabase } from '@/services/businessDataRefresh.service';
 import { syncPowerSyncNow } from '@/services/powersync.service';
 import { useSyncStore } from '@/store/syncStore';
 import type { Branch, Business, BusinessSummary } from '@/types/models';
@@ -49,12 +50,7 @@ export const useBusinessStore = create<BusinessState>((set, get) => ({
     }
 
     useAuthStore.getState().setError(null);
-    set({
-      activeBusiness: business,
-      activeBranch: branch,
-    });
-
-    console.log(`[business] initiating sync for business ${business.id}`);
+    console.log(`[business] hydrating database rows for business ${business.id}`);
     await enterSelectedBusiness(
       {
         userId: useAuthStore.getState().userId,
@@ -63,10 +59,26 @@ export const useBusinessStore = create<BusinessState>((set, get) => ({
       },
       {
         setSyncSession: useSyncStore.getState().setSession,
+        hydrateBusinessData: async (selectedBusinessId) => {
+          await refreshBusinessDataFromDatabase(selectedBusinessId);
+        },
         syncNow: syncPowerSyncNow,
         setLastError: useSyncStore.getState().setLastError,
       },
     );
+
+    const hydratedBusiness =
+      (await powersync.getOptional<Business>('SELECT * FROM businesses WHERE id = ?', [businessId])) ?? business;
+    const hydratedBranch =
+      branch?.id
+        ? ((await powersync.getOptional<Branch>('SELECT * FROM branches WHERE id = ?', [branch.id])) ?? branch)
+        : branch;
+
+    console.log(`[business] entering business ${hydratedBusiness.id}`);
+    set({
+      activeBusiness: hydratedBusiness,
+      activeBranch: hydratedBranch,
+    });
   },
   clearActiveBusiness: () => {
     set({
