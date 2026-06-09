@@ -8,6 +8,8 @@ interface SyncState {
   isOnline: boolean;
   remoteSyncConfigured: boolean;
   lastError: string | null;
+  lastSyncedAt: string | null;
+  pendingUploadCount: number;
   session: SyncSessionSnapshot;
   initialize: () => void;
   setPhase: (phase: SyncPhase) => void;
@@ -15,6 +17,8 @@ interface SyncState {
   setSession: (session: SyncSessionSnapshot) => void;
   clearSession: () => void;
   setLastError: (message: string | null) => void;
+  setLastSyncedAt: (timestamp: string | null) => void;
+  setPendingUploadCount: (count: number) => void;
 }
 
 export const useSyncStore = create<SyncState>((set, get) => ({
@@ -22,6 +26,8 @@ export const useSyncStore = create<SyncState>((set, get) => ({
   isOnline: true,
   remoteSyncConfigured: false,
   lastError: null,
+  lastSyncedAt: null,
+  pendingUploadCount: 0,
   session: {
     userId: null,
     businessId: null,
@@ -34,6 +40,7 @@ export const useSyncStore = create<SyncState>((set, get) => ({
       ),
       phase: 'booting',
       lastError: null,
+      pendingUploadCount: 0,
     });
   },
   setPhase: (phase) => {
@@ -58,9 +65,17 @@ export const useSyncStore = create<SyncState>((set, get) => ({
       },
       phase: 'unauthenticated',
       lastError: null,
+      pendingUploadCount: 0,
+      lastSyncedAt: null,
     });
   },
   setLastError: (message) => {
     set({ lastError: message });
+  },
+  setLastSyncedAt: (timestamp) => {
+    set({ lastSyncedAt: timestamp });
+  },
+  setPendingUploadCount: (count) => {
+    set({ pendingUploadCount: Math.max(0, count) });
   },
 }));

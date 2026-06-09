@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
 
 export function SyncStatusBadge() {
-  const { phase, isOnline, lastError } = useSyncStatus();
+  const { phase, isOnline, lastError, pendingUploadCount, lastSyncedAt } = useSyncStatus();
 
   if (phase === 'failed') {
     return <Badge label={lastError ?? 'Sync failed'} tone="danger" />;
@@ -15,8 +15,16 @@ export function SyncStatusBadge() {
   }
 
   if (phase === 'offline' || !isOnline) {
-    return <Badge label="Offline" tone="warning" />;
+    return <Badge label={pendingUploadCount > 0 ? `Offline: ${pendingUploadCount} pending` : 'Offline'} tone="warning" />;
   }
 
-  return <Badge label={phase === 'ready' ? 'Synced' : 'Syncing'} tone={phase === 'ready' ? 'success' : 'warning'} />;
+  if (phase === 'syncing') {
+    return <Badge label={pendingUploadCount > 0 ? `Uploading ${pendingUploadCount}` : 'Syncing'} tone="warning" />;
+  }
+
+  const syncedLabel = lastSyncedAt
+    ? `Synced ${new Date(lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+    : 'Synced';
+
+  return <Badge label={phase === 'ready' ? syncedLabel : 'Syncing'} tone={phase === 'ready' ? 'success' : 'warning'} />;
 }

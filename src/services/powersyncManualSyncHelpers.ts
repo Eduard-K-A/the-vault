@@ -3,8 +3,8 @@ export interface ManualSyncOperations {
   disconnect: () => Promise<void>;
   initialize: () => Promise<void>;
   connect: () => Promise<void>;
-  waitForFirstSync: () => Promise<void>;
   getUploadQueueCount: () => Promise<number>;
+  pullLatestData: () => Promise<void>;
   sleep?: (ms: number) => Promise<void>;
 }
 
@@ -89,14 +89,12 @@ export async function runManualSyncSteps(
   console.log('[powersync] manual sync waiting for upload queue');
   await waitForUploadQueueToDrain(operations, options);
 
-  if (!wasConnected) {
-    console.log('[powersync] manual sync waiting for first sync');
-    await withTimeout(
-      operations.waitForFirstSync(),
-      options.operationTimeoutMs,
-      manualSyncTimeout('waiting for the first sync to finish'),
-    );
-  }
+  console.log('[powersync] manual sync pulling latest data');
+  await withTimeout(
+    operations.pullLatestData(),
+    options.operationTimeoutMs,
+    manualSyncTimeout('pulling latest data'),
+  );
 
   console.log('[powersync] manual sync completed');
 }
