@@ -1,5 +1,7 @@
 import { powersync as powersyncDatabase } from '@/powersync';
 import { getBusinessDeletionStatements } from '@/db/businessDeletionHelpers';
+import { buildBusinessOwnerLookup, resolveProductAuditUserIds } from '@/db/productSnapshotHelpers';
+import { CREATE_SYNC_IMPORT_MARKERS_TABLE_SQL, SYNC_IMPORT_MARKERS_TABLE, syncImportMarkerKey } from '@/powersync/importMarkers';
 import type {
   AuditLog,
   Branch,
@@ -130,21 +132,36 @@ async function ensureInventoryRow(tx: any, productId: string, branchId: string):
     branchId,
   ])) as InventoryRecord | null;
   if (existing) {
+    if (!existing.business_id) {
+      const product = (await tx.getOptional('SELECT business_id FROM products WHERE id = ?', [productId])) as
+        | { business_id: string | null }
+        | null;
+      if (product?.business_id) {
+        await tx.execute('UPDATE inventory_items SET business_id = ? WHERE id = ?', [product.business_id, existing.id]);
+        return {
+          ...existing,
+          business_id: product.business_id,
+        };
+      }
+    }
     return existing;
   }
 
+  const product = (await tx.getOptional('SELECT business_id FROM products WHERE id = ?', [productId])) as
+    | { business_id: string | null }
+    | null;
   const row: InventoryRecord = {
     id: generateUUID(),
     product_id: productId,
     branch_id: branchId,
-    business_id: undefined,
+    business_id: product?.business_id ?? undefined,
     stock_quantity: 0,
     low_stock_threshold: 10,
     updated_at: now(),
   };
   await tx.execute(
     'INSERT INTO inventory_items (id, product_id, branch_id, business_id, stock_quantity, low_stock_threshold, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [row.id, row.product_id, row.branch_id, null, row.stock_quantity, row.low_stock_threshold, row.updated_at],
+    [row.id, row.product_id, row.branch_id, row.business_id ?? null, row.stock_quantity, row.low_stock_threshold, row.updated_at],
   );
   return row;
 }
@@ -164,6 +181,25 @@ async function writeAuditLog(tx: any, log: AuditLog): Promise<void> {
       log.source_device_id ?? null,
     ],
   );
+}
+
+async function ensureSyncImportMarkersTable(tx: any): Promise<void> {
+  await tx.execute(CREATE_SYNC_IMPORT_MARKERS_TABLE_SQL, []);
+}
+
+async function markSyncImportRow(tx: any, table: string, row: unknown): Promise<void> {
+  if (!row || typeof row !== 'object') {
+    return;
+  }
+
+  const id = (row as { id?: unknown }).id;
+  if (typeof id !== 'string') {
+    return;
+  }
+
+  await tx.execute(`INSERT OR REPLACE INTO ${SYNC_IMPORT_MARKERS_TABLE} (table_name, row_id) VALUES (?, ?)`, [
+    ...syncImportMarkerKey(table, id),
+  ]);
 }
 
 function toCategoryId(categoryId: string | null | undefined): string | null {
@@ -774,6 +810,9 @@ export async function applyBootstrapSnapshot(snapshot: {
   }>;
 }): Promise<void> {
   await powersyncDatabase.writeTransaction(async (tx) => {
+    await ensureSyncImportMarkersTable(tx);
+    const businessOwnersById = buildBusinessOwnerLookup(snapshot.businesses ?? []);
+
     await clearAndReplace(tx, 'profiles', snapshot.profiles ?? [], (row) => [
       row.id,
       row.fullname,
@@ -827,8 +866,8 @@ export async function applyBootstrapSnapshot(snapshot: {
       row.description ?? null,
       row.created_at,
       row.updated_at,
-      null,
-      null,
+      resolveProductAuditUserIds(row, businessOwnersById).createdBy,
+      resolveProductAuditUserIds(row, businessOwnersById).lastModifiedBy,
     ]);
     await clearAndReplace(tx, 'inventory_items', snapshot.inventory ?? [], (row) => [
       row.id,
@@ -953,6 +992,9 @@ export async function applyBusinessBootstrapSnapshot(snapshot: {
   }>;
 }): Promise<void> {
   await powersyncDatabase.writeTransaction(async (tx) => {
+    await ensureSyncImportMarkersTable(tx);
+    const businessOwnersById = buildBusinessOwnerLookup(snapshot.businesses ?? []);
+
     await upsertRows(tx, 'businesses', snapshot.businesses ?? [], (row) => [
       row.id,
       row.name,
@@ -997,8 +1039,8 @@ export async function applyBusinessBootstrapSnapshot(snapshot: {
       row.description ?? null,
       row.created_at,
       row.updated_at,
-      row.created_by ?? null,
-      row.last_modified_by ?? null,
+      resolveProductAuditUserIds(row, businessOwnersById).createdBy,
+      resolveProductAuditUserIds(row, businessOwnersById).lastModifiedBy,
     ]);
     await upsertRows(tx, 'inventory_items', snapshot.inventory ?? [], (row) => [
       row.id,
@@ -1101,6 +1143,7 @@ export async function applyBusinessBootstrapSnapshot(snapshot: {
 async function clearAndReplace(tx: any, table: string, rows: unknown[], toValues: (row: any) => unknown[]): Promise<void> {
   await tx.execute(`DELETE FROM ${table}`, []);
   for (const row of rows) {
+    await markSyncImportRow(tx, table, row);
     const values = toValues(row);
     const placeholders = values.map(() => '?').join(', ');
     await tx.execute(`INSERT INTO ${table} VALUES (${placeholders})`, values);
@@ -1109,6 +1152,7 @@ async function clearAndReplace(tx: any, table: string, rows: unknown[], toValues
 
 async function upsertRows(tx: any, table: string, rows: unknown[], toValues: (row: any) => unknown[]): Promise<void> {
   for (const row of rows) {
+    await markSyncImportRow(tx, table, row);
     const values = toValues(row);
     const placeholders = values.map(() => '?').join(', ');
     await tx.execute(`INSERT OR REPLACE INTO ${table} VALUES (${placeholders})`, values);

@@ -10,7 +10,8 @@ let initialized = false;
 let connectStreamPromise: Promise<void> | null = null;
 let manualSyncPromise: Promise<void> | null = null;
 let validationPromise: Promise<void> | null = null;
-const MANUAL_SYNC_TIMEOUT_MS = 20000;
+const MANUAL_SYNC_OPERATION_TIMEOUT_MS = 30000;
+const MANUAL_SYNC_UPLOAD_QUEUE_TIMEOUT_MS = 300000;
 const MANUAL_SYNC_POLL_MS = 500;
 
 function getSyncNowStatusSnapshot() {
@@ -174,8 +175,8 @@ async function runSyncPowerSyncNow(): Promise<void> {
         },
       },
       {
-        operationTimeoutMs: MANUAL_SYNC_TIMEOUT_MS,
-        uploadQueueTimeoutMs: MANUAL_SYNC_TIMEOUT_MS,
+        operationTimeoutMs: MANUAL_SYNC_OPERATION_TIMEOUT_MS,
+        uploadQueueTimeoutMs: MANUAL_SYNC_UPLOAD_QUEUE_TIMEOUT_MS,
         uploadQueuePollMs: MANUAL_SYNC_POLL_MS,
       },
     );

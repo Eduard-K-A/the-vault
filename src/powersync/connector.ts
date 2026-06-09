@@ -17,6 +17,7 @@ import {
   getUploadFunctionName,
   getFunctionAccessToken,
 } from '@/powersync/uploadHelpers';
+import { CREATE_SYNC_IMPORT_MARKERS_TABLE_SQL, SYNC_IMPORT_MARKERS_TABLE, syncImportMarkerKey } from '@/powersync/importMarkers';
 
 interface CrudOperationLike {
   table: string;
@@ -35,6 +36,30 @@ async function getLocalRow(
   id: string,
 ): Promise<Record<string, unknown> | null> {
   return (await database.getOptional<Record<string, unknown>>(`SELECT * FROM ${table} WHERE id = ?`, [id])) ?? null;
+}
+
+async function ensureSyncImportMarkersTable(database: AbstractPowerSyncDatabase): Promise<void> {
+  await database.execute(CREATE_SYNC_IMPORT_MARKERS_TABLE_SQL, []);
+}
+
+async function consumeSyncImportMarker(
+  database: AbstractPowerSyncDatabase,
+  operation: CrudOperationLike,
+): Promise<boolean> {
+  const [tableName, rowId] = syncImportMarkerKey(operation.table, operation.id);
+  const marker = await database.getOptional<{ row_id: string }>(
+    `SELECT row_id FROM ${SYNC_IMPORT_MARKERS_TABLE} WHERE table_name = ? AND row_id = ?`,
+    [tableName, rowId],
+  );
+  if (!marker) {
+    return false;
+  }
+
+  await database.execute(`DELETE FROM ${SYNC_IMPORT_MARKERS_TABLE} WHERE table_name = ? AND row_id = ?`, [
+    tableName,
+    rowId,
+  ]);
+  return true;
 }
 
 function parseAuditPayload(row: Record<string, unknown>): Record<string, unknown> | null {
@@ -58,6 +83,50 @@ function parseAuditPayload(row: Record<string, unknown>): Record<string, unknown
 function rowString(row: Record<string, unknown> | null, key: string): string | null {
   const value = row?.[key];
   return typeof value === 'string' ? value : null;
+}
+
+async function getInventoryItemForLog(
+  database: AbstractPowerSyncDatabase,
+  inventoryLog: Record<string, unknown> | null,
+): Promise<Record<string, unknown> | null> {
+  const productId = rowString(inventoryLog, 'product_id');
+  const branchId = rowString(inventoryLog, 'branch_id');
+  if (!productId || !branchId) {
+    return null;
+  }
+
+  return (
+    (await database.getOptional<Record<string, unknown>>(
+      'SELECT * FROM inventory_items WHERE product_id = ? AND branch_id = ?',
+      [productId, branchId],
+    )) ?? null
+  );
+}
+
+async function withInventoryBusinessId(
+  database: AbstractPowerSyncDatabase,
+  inventoryItem: Record<string, unknown> | null,
+  inventoryLog: Record<string, unknown> | null,
+): Promise<Record<string, unknown> | null> {
+  if (!inventoryItem || inventoryItem.business_id) {
+    return inventoryItem;
+  }
+
+  const productId = rowString(inventoryItem, 'product_id') ?? rowString(inventoryLog, 'product_id');
+  const product =
+    productId !== null
+      ? await database.getOptional<Record<string, unknown>>('SELECT business_id FROM products WHERE id = ?', [
+          productId,
+        ])
+      : null;
+  if (!product?.business_id) {
+    return inventoryItem;
+  }
+
+  return {
+    ...inventoryItem,
+    business_id: product.business_id,
+  };
 }
 
 export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
@@ -84,6 +153,8 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
     }
 
     try {
+      await ensureSyncImportMarkersTable(database);
+
       for (;;) {
         const transaction = await database.getNextCrudTransaction();
         if (!transaction) {
@@ -135,7 +206,17 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
 
           console.log(`[powersync] uploading transaction with ${operations.length} ops`);
 
+          for (const op of operations) {
+            if (await consumeSyncImportMarker(database, op)) {
+              console.log(`[powersync] skipping imported ${op.op} on ${op.table} (${op.id})`);
+              handled.add(crudKey(op.table, op.id));
+            }
+          }
+
           for (const op of operations.filter((entry) => entry.table === 'sales' && entry.op !== UpdateType.DELETE)) {
+            if (handled.has(crudKey(op.table, op.id))) {
+              continue;
+            }
             const sale = await getRow(op);
             const saleId = rowString(sale, 'id') ?? op.id;
             const saleItems: Record<string, unknown>[] = [];
@@ -192,6 +273,9 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
           }
 
           for (const op of operations.filter((entry) => entry.table === 'refunds' && entry.op !== UpdateType.DELETE)) {
+            if (handled.has(crudKey(op.table, op.id))) {
+              continue;
+            }
             const refund = await getRow(op);
             const refundId = rowString(refund, 'id') ?? op.id;
             const refundItems: Record<string, unknown>[] = [];
@@ -242,6 +326,24 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
             handled.add(crudKey(op.table, op.id));
           }
 
+          for (const op of operations.filter((entry) => entry.table === 'products' && entry.op !== UpdateType.DELETE)) {
+            if (handled.has(crudKey(op.table, op.id))) {
+              continue;
+            }
+            const localRow = await getRow(op);
+            const payload = buildCrudUploadPayload(
+              {
+                table: op.table,
+                id: op.id,
+                opData: op.opData as Record<string, unknown> | null,
+              },
+              localRow,
+            );
+
+            await invokeUpload(op, 'save_product', payload);
+            handled.add(crudKey(op.table, op.id));
+          }
+
           for (const op of operations.filter((entry) => entry.table === 'inventory_logs' && entry.op !== UpdateType.DELETE)) {
             if (handled.has(crudKey(op.table, op.id))) {
               continue;
@@ -258,6 +360,14 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
                 handled.add(crudKey(candidate.table, candidate.id));
                 break;
               }
+            }
+
+            if (!inventoryItem) {
+              inventoryItem = await getInventoryItemForLog(database, inventoryLog);
+            }
+
+            if (inventoryItem && !inventoryItem.business_id) {
+              inventoryItem = await withInventoryBusinessId(database, inventoryItem, inventoryLog);
             }
 
             await invokeUpload(op, 'apply_inventory_adjustment', {
