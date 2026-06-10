@@ -1,4 +1,4 @@
-import { applyBusinessBootstrapSnapshot, db, powersync } from '@/db/powersync';
+import { db, powersync } from '@/db/powersync';
 import {
   buildJoinedBusinessSummary,
   isSupabaseFunctionNotFoundError,
@@ -9,7 +9,6 @@ import {
 } from '@/services/joinBusinessHelpers';
 import { composeBusinessSummaries } from '@/services/businessSummaryHelpers';
 import { syncPowerSyncNow } from '@/services/powersync.service';
-import { fetchBusinessBootstrapSnapshot } from '@/services/remoteApi';
 import { getSupabaseClient } from '@/services/supabaseClient';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
@@ -196,10 +195,6 @@ export async function joinBusiness(input: {
     branchId: null,
   });
   await syncPowerSyncNow();
-  const remoteSnapshot = await fetchBusinessBootstrapSnapshot(businessId);
-  if (remoteSnapshot) {
-    await applyBusinessBootstrapSnapshot(remoteSnapshot);
-  }
 
   const localSummaries = await loadBusinessSummariesForUser(input.userId);
   const summary =

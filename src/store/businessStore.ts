@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 
 import { powersync } from '@/powersync';
-import { refreshBusinessDataFromDatabase } from '@/services/businessDataRefresh.service';
 import { syncPowerSyncNow } from '@/services/powersync.service';
 import { useSyncStore } from '@/store/syncStore';
 import type { Branch, Business, BusinessSummary } from '@/types/models';
@@ -59,9 +58,6 @@ export const useBusinessStore = create<BusinessState>((set, get) => ({
       },
       {
         setSyncSession: useSyncStore.getState().setSession,
-        hydrateBusinessData: async (selectedBusinessId) => {
-          await refreshBusinessDataFromDatabase(selectedBusinessId);
-        },
         syncNow: syncPowerSyncNow,
         setLastError: useSyncStore.getState().setLastError,
       },
