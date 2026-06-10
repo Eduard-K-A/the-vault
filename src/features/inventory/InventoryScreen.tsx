@@ -13,11 +13,11 @@ import CartSheet from '@/features/cart/CartSheet';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
+import { refreshBusinessDataFromDatabase } from '@/services/businessDataRefresh.service';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { db } from '@/db/powersync';
 import { useCart } from '@/hooks/useCart';
 import { useProducts } from '@/hooks/useProducts';
-import { refreshBusinessDataFromDatabase } from '@/services/businessDataRefresh.service';
 import { syncPowerSyncNow } from '@/services/powersync.service';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
@@ -117,8 +117,8 @@ export default function InventoryScreen() {
     try {
       setSyncLoading(true);
       await syncPowerSyncNow();
-      const result = await refreshBusinessDataFromDatabase(businessId);
-      setToastMessage(`Sync completed: ${result.productCount} products refreshed`);
+      await refreshBusinessDataFromDatabase(businessId);
+      setToastMessage('Sync completed');
     } catch (error) {
       Alert.alert('Sync failed', error instanceof Error ? error.message : 'Unknown error');
     } finally {
