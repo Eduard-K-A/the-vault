@@ -809,162 +809,34 @@ export async function applyBootstrapSnapshot(snapshot: {
     created_at: string;
   }>;
 }): Promise<void> {
-  await powersyncDatabase.writeTransaction(async (tx) => {
-    await ensureSyncImportMarkersTable(tx);
-    const businessOwnersById = buildBusinessOwnerLookup(snapshot.businesses ?? []);
+  await writeBusinessSnapshot(snapshot, 'replace');
+}
 
-    await clearAndReplace(tx, 'profiles', snapshot.profiles ?? [], (row) => [
-      row.id,
-      row.fullname,
-      row.email,
-      row.role ?? 'employee',
-      row.phone_number,
-      row.avatar_url,
-      row.created_at,
-    ]);
-    await clearAndReplace(tx, 'businesses', snapshot.businesses ?? [], (row) => [
-      row.id,
-      row.name,
-      row.owner_id,
-      row.join_code,
-      row.logo_url,
-      row.address,
-      row.is_active ? 1 : 0,
-      row.created_at,
-    ]);
-    await clearAndReplace(tx, 'branches', snapshot.branches ?? [], (row) => [
-      row.id,
-      row.business_id,
-      row.name,
-      row.is_active ? 1 : 0,
-      row.created_at ?? new Date().toISOString(),
-      row.updated_at ?? new Date().toISOString(),
-    ]);
-    await clearAndReplace(tx, 'business_members', snapshot.businessMembers ?? [], (row) => [
-      row.id,
-      row.business_id,
-      row.user_id,
-      row.role,
-      row.branch_id ?? null,
-      row.is_active === false ? 0 : 1,
-      row.joined_at,
-    ]);
-    await clearAndReplace(tx, 'categories', snapshot.categories ?? [], (row) => [row.id, row.business_id, row.name]);
-    await clearAndReplace(tx, 'products', snapshot.products ?? [], (row) => [
-      row.id,
-      row.business_id,
-      row.category_id ?? null,
-      row.name,
-      row.barcode,
-      row.sku,
-      row.selling_price,
-      row.cost_price,
-      row.image_url,
-      row.is_active ? 1 : 0,
-      row.is_archived ? 1 : 0,
-      row.version ?? 1,
-      row.description ?? null,
-      row.created_at,
-      row.updated_at,
-      resolveProductAuditUserIds(row, businessOwnersById).createdBy,
-      resolveProductAuditUserIds(row, businessOwnersById).lastModifiedBy,
-    ]);
-    await clearAndReplace(tx, 'inventory_items', snapshot.inventory ?? [], (row) => [
-      row.id,
-      row.product_id,
-      row.branch_id,
-      row.business_id ?? null,
-      row.stock_quantity,
-      row.low_stock_threshold,
-      row.updated_at,
-    ]);
-    await clearAndReplace(tx, 'sales', snapshot.sales ?? [], (row) => [
-      row.id,
-      row.business_id,
-      row.branch_id,
-      row.employee_id,
-      row.total_amount,
-      row.discount_amount,
-      row.payment_method,
-      row.status,
-      row.notes,
-      row.created_at,
-      row.synced_at,
-      row.reference_number ?? null,
-      row.vat_amount ?? null,
-      row.idempotency_key ?? null,
-    ]);
-    await clearAndReplace(tx, 'sale_items', snapshot.saleItems ?? [], (row) => [
-      row.id,
-      row.sale_id,
-      row.product_id,
-      row.business_id,
-      row.quantity,
-      row.unit_price,
-      row.subtotal,
-    ]);
-    await clearAndReplace(tx, 'payments', snapshot.payments ?? [], (row) => [
-      row.id,
-      row.sale_id,
-      row.business_id,
-      row.method,
-      row.amount_peso,
-    ]);
-    await clearAndReplace(tx, 'refunds', snapshot.refunds ?? [], (row) => [
-      row.id,
-      row.idempotency_key,
-      row.original_sale_id,
-      row.branch_id,
-      row.business_id,
-      row.reason,
-      row.total_peso,
-      row.created_at,
-      row.created_by,
-      row.source_device_id,
-      row.reference_number ?? null,
-    ]);
-    await clearAndReplace(tx, 'refund_items', snapshot.refundItems ?? [], (row) => [
-      row.id,
-      row.refund_id,
-      row.sale_item_id,
-      row.product_id,
-      row.quantity,
-      row.unit_price,
-      row.subtotal,
-    ]);
-    await clearAndReplace(tx, 'inventory_logs', snapshot.inventoryLogs ?? [], (row) => [
-      row.id,
-      row.product_id,
-      row.branch_id,
-      row.action_type,
-      row.quantity_before,
-      row.quantity_changed,
-      row.quantity_after,
-      row.reference_type,
-      row.reference_id,
-      row.performed_by,
-      row.created_at,
-    ]);
-    await clearAndReplace(tx, 'audit_logs', snapshot.auditLogs ?? [], (row) => [
-      row.id,
-      row.business_id,
-      row.branch_id ?? null,
-      row.actor_id,
-      row.event_type,
-      JSON.stringify(row.payload),
-      row.created_at,
-      row.source_device_id ?? null,
-    ]);
-    await clearAndReplace(tx, 'device_sessions', snapshot.deviceSessions ?? [], (row) => [
-      row.id,
-      row.user_id,
-      row.business_id,
-      row.device_id,
-      row.device_name,
-      row.last_seen_at,
-      row.created_at,
-    ]);
-  });
+export async function applyBusinessSnapshot(snapshot: {
+  businesses?: Business[];
+  branches?: Branch[];
+  businessMembers?: BusinessMember[];
+  categories?: Category[];
+  products?: Product[];
+  inventory?: InventoryRecord[];
+  sales?: Sale[];
+  saleItems?: SaleItem[];
+  payments?: Payment[];
+  refunds?: Refund[];
+  refundItems?: RefundItem[];
+  inventoryLogs?: InventoryLog[];
+  auditLogs?: AuditLog[];
+  deviceSessions?: Array<{
+    id: string;
+    user_id: string;
+    business_id: string | null;
+    device_id: string;
+    device_name: string | null;
+    last_seen_at: string;
+    created_at: string;
+  }>;
+}): Promise<void> {
+  await writeBusinessSnapshot(snapshot, 'merge');
 }
 
 export async function applyBusinessBootstrapSnapshot(snapshot: {
@@ -991,11 +863,73 @@ export async function applyBusinessBootstrapSnapshot(snapshot: {
     created_at: string;
   }>;
 }): Promise<void> {
+  await writeBusinessSnapshot(snapshot, 'replace');
+}
+
+async function writeBusinessSnapshot(
+  snapshot: {
+    businesses?: Business[];
+    branches?: Branch[];
+    businessMembers?: BusinessMember[];
+    categories?: Category[];
+    products?: Product[];
+    inventory?: InventoryRecord[];
+    sales?: Sale[];
+    saleItems?: SaleItem[];
+    payments?: Payment[];
+    refunds?: Refund[];
+    refundItems?: RefundItem[];
+    inventoryLogs?: InventoryLog[];
+    auditLogs?: AuditLog[];
+    profiles?: Array<{
+      id: string;
+      fullname: string;
+      email: string;
+      role?: UserRole | null;
+      phone_number: string | null;
+      avatar_url: string | null;
+      created_at: string;
+    }>;
+    deviceSessions?: Array<{
+      id: string;
+      user_id: string;
+      business_id: string | null;
+      device_id: string;
+      device_name: string | null;
+      last_seen_at: string;
+      created_at: string;
+    }>;
+  },
+  mode: 'replace' | 'merge',
+): Promise<void> {
   await powersyncDatabase.writeTransaction(async (tx) => {
     await ensureSyncImportMarkersTable(tx);
     const businessOwnersById = buildBusinessOwnerLookup(snapshot.businesses ?? []);
 
-    await upsertRows(tx, 'businesses', snapshot.businesses ?? [], (row) => [
+    const writeRows = async <T>(
+      localTx: any,
+      table: BusinessSnapshotTable,
+      rows: T[],
+      toValues: (row: T) => unknown[],
+    ): Promise<void> => {
+      if (mode === 'replace') {
+        await clearAndReplace(localTx, table, rows, toValues);
+        return;
+      }
+
+      await upsertRows(localTx, table, SNAPSHOT_TABLE_COLUMNS[table], rows, toValues);
+    };
+
+    await writeRows(tx, 'profiles', snapshot.profiles ?? [], (row) => [
+      row.id,
+      row.fullname,
+      row.email,
+      row.role ?? 'employee',
+      row.phone_number,
+      row.avatar_url,
+      row.created_at,
+    ]);
+    await writeRows(tx, 'businesses', snapshot.businesses ?? [], (row) => [
       row.id,
       row.name,
       row.owner_id,
@@ -1005,15 +939,18 @@ export async function applyBusinessBootstrapSnapshot(snapshot: {
       row.is_active ? 1 : 0,
       row.created_at,
     ]);
-    await upsertRows(tx, 'branches', snapshot.branches ?? [], (row) => [
-      row.id,
-      row.business_id,
-      row.name,
-      row.is_active ? 1 : 0,
-      row.created_at ?? new Date().toISOString(),
-      row.updated_at ?? new Date().toISOString(),
-    ]);
-    await upsertRows(tx, 'business_members', snapshot.businessMembers ?? [], (row) => [
+    await writeRows(tx, 'branches', snapshot.branches ?? [], (row) => {
+      const branchRow = row as Branch & { created_at?: string; updated_at?: string };
+      return [
+        branchRow.id,
+        branchRow.business_id,
+        branchRow.name,
+        branchRow.is_active ? 1 : 0,
+        branchRow.created_at ?? new Date().toISOString(),
+        branchRow.updated_at ?? new Date().toISOString(),
+      ];
+    });
+    await writeRows(tx, 'business_members', snapshot.businessMembers ?? [], (row) => [
       row.id,
       row.business_id,
       row.user_id,
@@ -1022,8 +959,8 @@ export async function applyBusinessBootstrapSnapshot(snapshot: {
       row.is_active === false ? 0 : 1,
       row.joined_at,
     ]);
-    await upsertRows(tx, 'categories', snapshot.categories ?? [], (row) => [row.id, row.business_id, row.name]);
-    await upsertRows(tx, 'products', snapshot.products ?? [], (row) => [
+    await writeRows(tx, 'categories', snapshot.categories ?? [], (row) => [row.id, row.business_id, row.name]);
+    await writeRows(tx, 'products', snapshot.products ?? [], (row) => [
       row.id,
       row.business_id,
       row.category_id ?? null,
@@ -1042,7 +979,7 @@ export async function applyBusinessBootstrapSnapshot(snapshot: {
       resolveProductAuditUserIds(row, businessOwnersById).createdBy,
       resolveProductAuditUserIds(row, businessOwnersById).lastModifiedBy,
     ]);
-    await upsertRows(tx, 'inventory_items', snapshot.inventory ?? [], (row) => [
+    await writeRows(tx, 'inventory_items', snapshot.inventory ?? [], (row) => [
       row.id,
       row.product_id,
       row.branch_id,
@@ -1051,7 +988,7 @@ export async function applyBusinessBootstrapSnapshot(snapshot: {
       row.low_stock_threshold,
       row.updated_at,
     ]);
-    await upsertRows(tx, 'sales', snapshot.sales ?? [], (row) => [
+    await writeRows(tx, 'sales', snapshot.sales ?? [], (row) => [
       row.id,
       row.business_id,
       row.branch_id,
@@ -1067,23 +1004,26 @@ export async function applyBusinessBootstrapSnapshot(snapshot: {
       row.vat_amount ?? null,
       row.idempotency_key ?? null,
     ]);
-    await upsertRows(tx, 'sale_items', snapshot.saleItems ?? [], (row) => [
-      row.id,
-      row.sale_id,
-      row.product_id,
-      row.business_id,
-      row.quantity,
-      row.unit_price,
-      row.subtotal,
-    ]);
-    await upsertRows(tx, 'payments', snapshot.payments ?? [], (row) => [
+    await writeRows(tx, 'sale_items', snapshot.saleItems ?? [], (row) => {
+      const saleItemRow = row as SaleItem & { business_id?: string };
+      return [
+        saleItemRow.id,
+        saleItemRow.sale_id,
+        saleItemRow.product_id,
+        saleItemRow.business_id ?? null,
+        saleItemRow.quantity,
+        saleItemRow.unit_price,
+        saleItemRow.subtotal,
+      ];
+    });
+    await writeRows(tx, 'payments', snapshot.payments ?? [], (row) => [
       row.id,
       row.sale_id,
       row.business_id,
       row.method,
       row.amount_peso,
     ]);
-    await upsertRows(tx, 'refunds', snapshot.refunds ?? [], (row) => [
+    await writeRows(tx, 'refunds', snapshot.refunds ?? [], (row) => [
       row.id,
       row.idempotency_key,
       row.original_sale_id,
@@ -1096,7 +1036,7 @@ export async function applyBusinessBootstrapSnapshot(snapshot: {
       row.source_device_id,
       row.reference_number ?? null,
     ]);
-    await upsertRows(tx, 'refund_items', snapshot.refundItems ?? [], (row) => [
+    await writeRows(tx, 'refund_items', snapshot.refundItems ?? [], (row) => [
       row.id,
       row.refund_id,
       row.sale_item_id,
@@ -1105,7 +1045,7 @@ export async function applyBusinessBootstrapSnapshot(snapshot: {
       row.unit_price,
       row.subtotal,
     ]);
-    await upsertRows(tx, 'inventory_logs', snapshot.inventoryLogs ?? [], (row) => [
+    await writeRows(tx, 'inventory_logs', snapshot.inventoryLogs ?? [], (row) => [
       row.id,
       row.product_id,
       row.branch_id,
@@ -1118,7 +1058,7 @@ export async function applyBusinessBootstrapSnapshot(snapshot: {
       row.performed_by,
       row.created_at,
     ]);
-    await upsertRows(tx, 'audit_logs', snapshot.auditLogs ?? [], (row) => [
+    await writeRows(tx, 'audit_logs', snapshot.auditLogs ?? [], (row) => [
       row.id,
       row.business_id,
       row.branch_id ?? null,
@@ -1128,7 +1068,7 @@ export async function applyBusinessBootstrapSnapshot(snapshot: {
       row.created_at,
       row.source_device_id ?? null,
     ]);
-    await upsertRows(tx, 'device_sessions', snapshot.deviceSessions ?? [], (row) => [
+    await writeRows(tx, 'device_sessions', snapshot.deviceSessions ?? [], (row) => [
       row.id,
       row.user_id,
       row.business_id,
@@ -1140,6 +1080,98 @@ export async function applyBusinessBootstrapSnapshot(snapshot: {
   });
 }
 
+type BusinessSnapshotTable =
+  | 'profiles'
+  | 'businesses'
+  | 'branches'
+  | 'business_members'
+  | 'categories'
+  | 'products'
+  | 'inventory_items'
+  | 'sales'
+  | 'sale_items'
+  | 'payments'
+  | 'refunds'
+  | 'refund_items'
+  | 'inventory_logs'
+  | 'audit_logs'
+  | 'device_sessions';
+
+const SNAPSHOT_TABLE_COLUMNS: Record<BusinessSnapshotTable, string[]> = {
+  profiles: ['id', 'fullname', 'email', 'role', 'phone_number', 'avatar_url', 'created_at'],
+  businesses: ['id', 'name', 'owner_id', 'join_code', 'logo_url', 'address', 'is_active', 'created_at'],
+  branches: ['id', 'business_id', 'name', 'is_active', 'created_at', 'updated_at'],
+  business_members: ['id', 'business_id', 'user_id', 'role', 'branch_id', 'is_active', 'joined_at'],
+  categories: ['id', 'business_id', 'name'],
+  products: [
+    'id',
+    'business_id',
+    'category_id',
+    'name',
+    'barcode',
+    'sku',
+    'selling_price',
+    'cost_price',
+    'image_url',
+    'is_active',
+    'is_archived',
+    'version',
+    'description',
+    'created_at',
+    'updated_at',
+    'created_by',
+    'last_modified_by',
+  ],
+  inventory_items: ['id', 'product_id', 'branch_id', 'business_id', 'stock_quantity', 'low_stock_threshold', 'updated_at'],
+  sales: [
+    'id',
+    'business_id',
+    'branch_id',
+    'employee_id',
+    'total_amount',
+    'discount_amount',
+    'payment_method',
+    'status',
+    'notes',
+    'created_at',
+    'synced_at',
+    'reference_number',
+    'vat_amount',
+    'idempotency_key',
+  ],
+  sale_items: ['id', 'sale_id', 'product_id', 'business_id', 'quantity', 'unit_price', 'subtotal'],
+  payments: ['id', 'sale_id', 'business_id', 'method', 'amount_peso'],
+  refunds: [
+    'id',
+    'idempotency_key',
+    'original_sale_id',
+    'branch_id',
+    'business_id',
+    'reason',
+    'total_peso',
+    'created_at',
+    'created_by',
+    'source_device_id',
+    'reference_number',
+  ],
+  refund_items: ['id', 'refund_id', 'sale_item_id', 'product_id', 'quantity', 'unit_price', 'subtotal'],
+  inventory_logs: [
+    'id',
+    'product_id',
+    'branch_id',
+    'action_type',
+    'quantity_before',
+    'quantity_changed',
+    'quantity_after',
+    'reference_type',
+    'reference_id',
+    'performed_by',
+    'created_at',
+  ],
+  audit_logs: ['id', 'business_id', 'branch_id', 'actor_id', 'event_type', 'payload', 'created_at', 'source_device_id'],
+  device_sessions: ['id', 'user_id', 'business_id', 'device_id', 'device_name', 'last_seen_at', 'created_at'],
+};
+
 async function clearAndReplace(tx: any, table: string, rows: unknown[], toValues: (row: any) => unknown[]): Promise<void> {
   await tx.execute(`DELETE FROM ${table}`, []);
   for (const row of rows) {
@@ -1150,11 +1182,18 @@ async function clearAndReplace(tx: any, table: string, rows: unknown[], toValues
   }
 }
 
-async function upsertRows(tx: any, table: string, rows: unknown[], toValues: (row: any) => unknown[]): Promise<void> {
+async function upsertRows(
+  tx: any,
+  table: string,
+  columns: string[],
+  rows: unknown[],
+  toValues: (row: any) => unknown[],
+): Promise<void> {
+  const columnList = columns.join(', ');
   for (const row of rows) {
     await markSyncImportRow(tx, table, row);
     const values = toValues(row);
     const placeholders = values.map(() => '?').join(', ');
-    await tx.execute(`INSERT OR REPLACE INTO ${table} VALUES (${placeholders})`, values);
+    await tx.execute(`INSERT OR REPLACE INTO ${table} (${columnList}) VALUES (${placeholders})`, values);
   }
 }

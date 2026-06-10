@@ -1,4 +1,4 @@
-import { applyBusinessBootstrapSnapshot } from '@/db/powersync';
+import { applyBusinessSnapshot } from '@/db/powersync';
 import { refreshBusinessDataWithDependencies } from '@/services/businessDataRefreshHelpers';
 import { fetchBusinessBootstrapSnapshot } from '@/services/remoteApi';
 
@@ -20,6 +20,6 @@ export async function refreshBusinessDataFromDatabase(
 ): Promise<BusinessDataRefreshResult> {
   return refreshBusinessDataWithDependencies(businessId, {
     fetchSnapshot: dependencies.fetchSnapshot ?? fetchBusinessBootstrapSnapshot,
-    applySnapshot: dependencies.applySnapshot ?? applyBusinessBootstrapSnapshot,
+    applySnapshot: dependencies.applySnapshot ?? applyBusinessSnapshot,
   });
 }
