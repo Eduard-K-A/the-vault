@@ -5,6 +5,7 @@ import { validateSyncBackend } from '@/services/syncValidation.service';
 import { cleanupInvalidProducts } from '@/db/productCleanupHelpers';
 import { useAuthStore } from '@/store/authStore';
 import { useSyncStore } from '@/store/syncStore';
+import { logPowerSyncBackground, logSyncDebug } from '@/utils/syncDebug';
 
 let initialized = false;
 let connectStreamPromise: Promise<void> | null = null;
@@ -34,7 +35,12 @@ function getSyncNowStatusSnapshot() {
   };
 }
 
-function logSyncNow(message: string, details?: Record<string, unknown>): void {
+function logSyncNow(message: string, details?: Record<string, unknown>, traceId?: string): void {
+  if (traceId) {
+    logSyncDebug(traceId, message, details);
+    return;
+  }
+
   if (details) {
     console.debug(`[sync-now] ${message}`, details);
     return;
@@ -45,17 +51,21 @@ function logSyncNow(message: string, details?: Record<string, unknown>): void {
 
 export async function initializePowerSync(): Promise<void> {
   if (initialized) {
+    logPowerSyncBackground('initialize skipped; already initialized', getSyncNowStatusSnapshot());
     return;
   }
 
   initialized = true;
+  logPowerSyncBackground('initializing database');
   await powersync.init();
+  logPowerSyncBackground('database initialized', getSyncNowStatusSnapshot());
 
   // Clean up products with invalid prices before syncing
   const cleanup = await cleanupInvalidProducts();
   if (cleanup.deleted > 0) {
     console.log(`[powersync] removed ${cleanup.deleted} products with invalid prices during initialization`);
   }
+  logPowerSyncBackground('invalid product cleanup completed', cleanup);
 
   if (!validationPromise) {
     validationPromise = validateSyncBackend()
@@ -74,19 +84,25 @@ export async function initializePowerSync(): Promise<void> {
 
 async function connectPowerSyncStream(): Promise<void> {
   if (connectStreamPromise) {
+    logPowerSyncBackground('connect already in-flight; reusing promise', getSyncNowStatusSnapshot());
     return connectStreamPromise;
   }
 
   connectStreamPromise = (async () => {
     const session = useAuthStore.getState();
     if (!session.accessToken) {
+      logPowerSyncBackground('connect skipped; no signed-in session');
       return;
     }
 
+    logPowerSyncBackground('connect starting', {
+      userId: session.userId,
+      ...getSyncNowStatusSnapshot(),
+    });
     useSyncStore.getState().setPhase('syncing');
     await initializePowerSync();
     await powersync.connect(new SupabasePowerSyncConnector());
-    logSyncNow('connect call completed', getSyncNowStatusSnapshot());
+    logPowerSyncBackground('connect call completed', getSyncNowStatusSnapshot());
   })();
 
   try {
@@ -97,32 +113,38 @@ async function connectPowerSyncStream(): Promise<void> {
 }
 
 export async function connectPowerSync(): Promise<void> {
+  logPowerSyncBackground('foreground connect requested', getSyncNowStatusSnapshot());
   await connectPowerSyncStream();
   const session = useAuthStore.getState();
   if (!session.accessToken) {
+    logPowerSyncBackground('foreground connect stopped; no signed-in session');
     return;
   }
 
   await powersync.waitForFirstSync();
+  logPowerSyncBackground('first sync completed', getSyncNowStatusSnapshot());
   useSyncStore.getState().setPhase('ready');
 }
 
 export async function disconnectPowerSync(): Promise<void> {
   if (!initialized) {
+    logPowerSyncBackground('disconnect skipped; not initialized');
     return;
   }
 
+  logPowerSyncBackground('disconnect requested', getSyncNowStatusSnapshot());
   await powersync.disconnectAndClear({ clearLocal: false });
+  logPowerSyncBackground('disconnect completed', getSyncNowStatusSnapshot());
   useSyncStore.getState().setPhase('unauthenticated');
 }
 
-export async function syncPowerSyncNow(): Promise<void> {
+export async function syncPowerSyncNow(traceId?: string): Promise<void> {
   if (manualSyncPromise) {
-    logSyncNow('already running; reusing in-flight sync');
+    logSyncNow('already running; reusing in-flight sync', undefined, traceId);
     return manualSyncPromise;
   }
 
-  manualSyncPromise = runSyncPowerSyncNow();
+  manualSyncPromise = runSyncPowerSyncNow(traceId);
   try {
     await manualSyncPromise;
   } finally {
@@ -130,15 +152,18 @@ export async function syncPowerSyncNow(): Promise<void> {
   }
 }
 
-async function runSyncPowerSyncNow(): Promise<void> {
+async function runSyncPowerSyncNow(traceId?: string): Promise<void> {
   const startedAt = Date.now();
   const session = useAuthStore.getState();
   if (!session.accessToken) {
-    logSyncNow('failed before start; no signed-in session');
+    logSyncNow('failed before start; no signed-in session', undefined, traceId);
     throw new Error('No signed-in session available.');
   }
 
-  logSyncNow('started', getSyncNowStatusSnapshot());
+  logSyncNow('started', {
+    userId: session.userId,
+    ...getSyncNowStatusSnapshot(),
+  }, traceId);
   useSyncStore.getState().setPhase('syncing');
   try {
     await runManualSyncSteps(
@@ -153,11 +178,11 @@ async function runSyncPowerSyncNow(): Promise<void> {
           logSyncNow('upload queue checked', {
             pendingUploads: count,
             ...getSyncNowStatusSnapshot(),
-          });
+          }, traceId);
           return count;
         },
         pullLatestData: async () => {
-          logSyncNow('pull confirmation started', getSyncNowStatusSnapshot());
+          logSyncNow('pull confirmation started', getSyncNowStatusSnapshot(), traceId);
           await waitForManualPullConfirmation({
             getStatus: () => powersync.currentStatus,
             waitForFirstSync: () => powersync.waitForFirstSync(),
@@ -167,11 +192,12 @@ async function runSyncPowerSyncNow(): Promise<void> {
                 'active-download': 'waiting for active download to become idle',
                 'existing-snapshot': 'using existing synced snapshot',
                 'first-sync': 'waiting for first sync snapshot',
+                'fresh-sync': 'waiting for fresh sync snapshot',
               };
-              logSyncNow(messages[path], getSyncNowStatusSnapshot());
+              logSyncNow(messages[path], getSyncNowStatusSnapshot(), traceId);
             },
           });
-          logSyncNow('pull confirmation completed', getSyncNowStatusSnapshot());
+          logSyncNow('pull confirmation completed', getSyncNowStatusSnapshot(), traceId);
         },
       },
       {
@@ -186,14 +212,14 @@ async function runSyncPowerSyncNow(): Promise<void> {
     logSyncNow('completed', {
       elapsedMs: Date.now() - startedAt,
       ...getSyncNowStatusSnapshot(),
-    });
+    }, traceId);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Manual sync failed';
     logSyncNow('failed', {
       elapsedMs: Date.now() - startedAt,
       error: message,
       ...getSyncNowStatusSnapshot(),
-    });
+    }, traceId);
     console.error(`[powersync] sync error: ${message}`);
     useSyncStore.getState().setLastError(message);
     useSyncStore.getState().setPhase('failed');

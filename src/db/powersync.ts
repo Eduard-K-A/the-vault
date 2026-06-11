@@ -1,7 +1,13 @@
 import { powersync as powersyncDatabase } from '@/powersync';
 import { getBusinessDeletionStatements } from '@/db/businessDeletionHelpers';
 import { buildBusinessOwnerLookup, resolveProductAuditUserIds } from '@/db/productSnapshotHelpers';
-import { CREATE_SYNC_IMPORT_MARKERS_TABLE_SQL, SYNC_IMPORT_MARKERS_TABLE, syncImportMarkerKey } from '@/powersync/importMarkers';
+import {
+  CREATE_SYNC_IMPORT_MARKERS_TABLE_SQL,
+  SYNC_IMPORT_MARKERS_TABLE,
+  markExistingRowsAsSyncImports,
+  syncImportMarkerKey,
+} from '@/powersync/importMarkers';
+import { logBusinessRefreshDebug } from '@/utils/syncDebug';
 import type {
   AuditLog,
   Branch,
@@ -835,8 +841,8 @@ export async function applyBusinessSnapshot(snapshot: {
     last_seen_at: string;
     created_at: string;
   }>;
-}): Promise<void> {
-  await writeBusinessSnapshot(snapshot, 'merge');
+}, traceId?: string): Promise<void> {
+  await writeBusinessSnapshot(snapshot, 'merge', traceId);
 }
 
 export async function applyBusinessBootstrapSnapshot(snapshot: {
@@ -862,8 +868,38 @@ export async function applyBusinessBootstrapSnapshot(snapshot: {
     last_seen_at: string;
     created_at: string;
   }>;
-}): Promise<void> {
-  await writeBusinessSnapshot(snapshot, 'replace');
+}, traceId?: string): Promise<void> {
+  await writeBusinessSnapshot(snapshot, 'replace', traceId);
+}
+
+async function getBusinessScopedLocalCounts(businessId: string | null): Promise<Record<string, number> | null> {
+  if (!businessId) {
+    return null;
+  }
+
+  const [products, inventory, branches, members] = await Promise.all([
+    powersyncDatabase.getOptional<{ count: number }>('SELECT COUNT(*) AS count FROM products WHERE business_id = ?', [
+      businessId,
+    ]),
+    powersyncDatabase.getOptional<{ count: number }>(
+      'SELECT COUNT(*) AS count FROM inventory_items WHERE business_id = ?',
+      [businessId],
+    ),
+    powersyncDatabase.getOptional<{ count: number }>('SELECT COUNT(*) AS count FROM branches WHERE business_id = ?', [
+      businessId,
+    ]),
+    powersyncDatabase.getOptional<{ count: number }>(
+      'SELECT COUNT(*) AS count FROM business_members WHERE business_id = ?',
+      [businessId],
+    ),
+  ]);
+
+  return {
+    products: products?.count ?? 0,
+    inventory: inventory?.count ?? 0,
+    branches: branches?.count ?? 0,
+    members: members?.count ?? 0,
+  };
 }
 
 async function writeBusinessSnapshot(
@@ -901,7 +937,17 @@ async function writeBusinessSnapshot(
     }>;
   },
   mode: 'replace' | 'merge',
+  traceId?: string,
 ): Promise<void> {
+  const businessId = snapshot.businesses?.[0]?.id ?? snapshot.products?.[0]?.business_id ?? null;
+  logBusinessRefreshDebug(traceId, 'local snapshot write started', {
+    mode,
+    businessId,
+    incomingProducts: snapshot.products?.length ?? 0,
+    incomingInventory: snapshot.inventory?.length ?? 0,
+    incomingBranches: snapshot.branches?.length ?? 0,
+    before: await getBusinessScopedLocalCounts(businessId),
+  });
   await powersyncDatabase.writeTransaction(async (tx) => {
     await ensureSyncImportMarkersTable(tx);
     const businessOwnersById = buildBusinessOwnerLookup(snapshot.businesses ?? []);
@@ -1078,6 +1124,11 @@ async function writeBusinessSnapshot(
       row.created_at,
     ]);
   });
+  logBusinessRefreshDebug(traceId, 'local snapshot write completed', {
+    mode,
+    businessId,
+    after: await getBusinessScopedLocalCounts(businessId),
+  });
 }
 
 type BusinessSnapshotTable =
@@ -1173,6 +1224,7 @@ const SNAPSHOT_TABLE_COLUMNS: Record<BusinessSnapshotTable, string[]> = {
 };
 
 async function clearAndReplace(tx: any, table: string, rows: unknown[], toValues: (row: any) => unknown[]): Promise<void> {
+  await markExistingRowsAsSyncImports(tx, table);
   await tx.execute(`DELETE FROM ${table}`, []);
   for (const row of rows) {
     await markSyncImportRow(tx, table, row);

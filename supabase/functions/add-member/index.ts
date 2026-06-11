@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { buildProfileFromAuthUser } from './profile.ts';
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -41,6 +42,26 @@ Deno.serve(async (request) => {
   const supabase = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false },
   });
+
+  const existingProfile = await supabase.from('profiles').select('id').eq('id', userId).maybeSingle();
+  if (existingProfile.error) {
+    return json({ error: existingProfile.error.message }, 500);
+  }
+
+  if (!existingProfile.data) {
+    const authUser = await supabase.auth.admin.getUserById(userId);
+    if (authUser.error || !authUser.data.user) {
+      return json({ error: authUser.error?.message ?? 'member user was not found' }, 400);
+    }
+
+    const { error: profileError } = await supabase.from('profiles').upsert(
+      buildProfileFromAuthUser(userId, authUser.data.user),
+      { onConflict: 'id' },
+    );
+    if (profileError) {
+      return json({ error: profileError.message }, 500);
+    }
+  }
 
   const { error } = await supabase.from('business_members').upsert(
     {

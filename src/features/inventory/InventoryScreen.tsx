@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
@@ -16,6 +16,7 @@ import { typography } from '@/constants/typography';
 import { refreshBusinessDataFromDatabase } from '@/services/businessDataRefresh.service';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { db } from '@/db/powersync';
+import { buildInventoryForBranchQuery } from '@/db/queries/inventoryQueries';
 import { useCart } from '@/hooks/useCart';
 import { useProducts } from '@/hooks/useProducts';
 import { syncPowerSyncNow } from '@/services/powersync.service';
@@ -23,6 +24,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
 import type { InventoryRecord, Product } from '@/types/models';
+import { createSyncTraceId, logSyncDebug } from '@/utils/syncDebug';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -40,11 +42,18 @@ export default function InventoryScreen() {
   const [restockQuantity, setRestockQuantity] = useState('1');
   const [restockLoading, setRestockLoading] = useState(false);
   const [syncLoading, setSyncLoading] = useState(false);
+  const lastInventoryViewSnapshot = useRef<{
+    businessId: string | null;
+    branchId: string | null;
+    productCount: number;
+    inventoryCount: number;
+  } | null>(null);
   const { products, findByBarcode } = useProducts(search);
   const { addItem, items, total } = useCart();
+  const inventoryQuery = useMemo(() => buildInventoryForBranchQuery(branchId), [branchId]);
   const { data: inventoryItems } = useQuery<InventoryRecord>(
-    'SELECT * FROM inventory_items WHERE branch_id = ?',
-    [branchId ?? ''],
+    inventoryQuery.sql,
+    inventoryQuery.parameters,
   );
 
   const inventoryByProductId = useMemo(() => {
@@ -114,17 +123,55 @@ export default function InventoryScreen() {
       return;
     }
 
+    const traceId = createSyncTraceId('sync-now');
+    logSyncDebug(traceId, 'button pressed', {
+      businessId,
+      branchId,
+      productCount: products.length,
+      inventoryCount: (inventoryItems as InventoryRecord[]).length,
+      syncLoading,
+    });
     try {
       setSyncLoading(true);
-      await syncPowerSyncNow();
-      await refreshBusinessDataFromDatabase(businessId);
+      logSyncDebug(traceId, 'PowerSync manual sync requested');
+      await syncPowerSyncNow(traceId);
+      logSyncDebug(traceId, 'Supabase business refresh requested', { businessId });
+      const refreshResult = await refreshBusinessDataFromDatabase(businessId, {}, traceId);
+      logSyncDebug(traceId, 'Supabase business refresh returned', { ...refreshResult });
       setToastMessage('Sync completed');
     } catch (error) {
+      logSyncDebug(traceId, 'button flow failed', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       Alert.alert('Sync failed', error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setSyncLoading(false);
+      logSyncDebug(traceId, 'button flow finished');
     }
   }
+
+  useEffect(() => {
+    const nextSnapshot = {
+      businessId,
+      branchId,
+      productCount: products.length,
+      inventoryCount: (inventoryItems as InventoryRecord[]).length,
+    };
+    const previous = lastInventoryViewSnapshot.current;
+    if (
+      !previous ||
+      previous.businessId !== nextSnapshot.businessId ||
+      previous.branchId !== nextSnapshot.branchId ||
+      previous.productCount !== nextSnapshot.productCount ||
+      previous.inventoryCount !== nextSnapshot.inventoryCount
+    ) {
+      console.debug('[inventory-view] visible data changed', {
+        previous,
+        next: nextSnapshot,
+      });
+    }
+    lastInventoryViewSnapshot.current = nextSnapshot;
+  }, [branchId, businessId, inventoryItems, products.length]);
 
   useEffect(() => {
     if (!toastMessage) {

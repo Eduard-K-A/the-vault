@@ -94,3 +94,25 @@ test('waitForManualPullConfirmation reports the selected confirmation path', asy
 
   assert.deepEqual(events, ['existing-snapshot']);
 });
+
+test('waitForManualPullConfirmation waits for a fresh sync when the existing snapshot is stale', async () => {
+  let waitForFreshSyncCalled = false;
+  const events: string[] = [];
+
+  await waitForManualPullConfirmation({
+    getStatus: () => ({
+      connected: true,
+      hasSynced: true,
+      lastSyncedAt: new Date('2026-06-11T09:00:56.000Z'),
+    }),
+    waitForFirstSync: async () => {},
+    waitForFreshSync: async () => {
+      waitForFreshSyncCalled = true;
+    },
+    requireFreshSyncSince: new Date('2026-06-11T09:01:00.000Z'),
+    debug: (message) => events.push(message),
+  });
+
+  assert.equal(waitForFreshSyncCalled, true);
+  assert.deepEqual(events, ['fresh-sync']);
+});

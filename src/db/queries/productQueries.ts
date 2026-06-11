@@ -1,16 +1,18 @@
 import type { Product, UserRole } from '@/types/models';
 
-export const PRODUCT_SEARCH_SQL = 'SELECT * FROM products WHERE business_id = ? AND is_active = 1 ORDER BY updated_at DESC';
+export const PRODUCT_SEARCH_SQL =
+  'SELECT * FROM products WHERE business_id = ? AND is_active = 1 UNION ALL SELECT fallback_products.* FROM fallback_products WHERE business_id = ? AND is_active = 1 AND NOT EXISTS (SELECT 1 FROM products WHERE products.id = fallback_products.id) ORDER BY updated_at DESC';
 
 const NO_ACTIVE_BUSINESS_ID = '__no_active_business__';
 
 export function buildProductsForBusinessQuery(businessId: string | null): {
   sql: string;
-  parameters: [string];
+  parameters: [string, string];
 } {
+  const business = businessId ?? NO_ACTIVE_BUSINESS_ID;
   return {
     sql: PRODUCT_SEARCH_SQL,
-    parameters: [businessId ?? NO_ACTIVE_BUSINESS_ID],
+    parameters: [business, business],
   };
 }
 

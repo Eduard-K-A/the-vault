@@ -5,14 +5,16 @@ import { buildProductsForBusinessQuery } from '../src/db/queries/productQueries.
 
 test('buildProductsForBusinessQuery fetches active products by business_id', () => {
   assert.deepEqual(buildProductsForBusinessQuery('business-1'), {
-    sql: 'SELECT * FROM products WHERE business_id = ? AND is_active = 1 ORDER BY updated_at DESC',
-    parameters: ['business-1'],
+    sql:
+      'SELECT * FROM products WHERE business_id = ? AND is_active = 1 UNION ALL SELECT fallback_products.* FROM fallback_products WHERE business_id = ? AND is_active = 1 AND NOT EXISTS (SELECT 1 FROM products WHERE products.id = fallback_products.id) ORDER BY updated_at DESC',
+    parameters: ['business-1', 'business-1'],
   });
 });
 
 test('buildProductsForBusinessQuery uses an impossible business id when no business is selected', () => {
   assert.deepEqual(buildProductsForBusinessQuery(null), {
-    sql: 'SELECT * FROM products WHERE business_id = ? AND is_active = 1 ORDER BY updated_at DESC',
-    parameters: ['__no_active_business__'],
+    sql:
+      'SELECT * FROM products WHERE business_id = ? AND is_active = 1 UNION ALL SELECT fallback_products.* FROM fallback_products WHERE business_id = ? AND is_active = 1 AND NOT EXISTS (SELECT 1 FROM products WHERE products.id = fallback_products.id) ORDER BY updated_at DESC',
+    parameters: ['__no_active_business__', '__no_active_business__'],
   });
 });

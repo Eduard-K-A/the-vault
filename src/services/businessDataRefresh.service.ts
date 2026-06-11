@@ -1,12 +1,13 @@
-import { applyBusinessSnapshot } from '@/db/powersync';
+import { applyBusinessFallbackCache } from '@/db/businessFallbackCache';
 import { refreshBusinessDataWithDependencies } from '@/services/businessDataRefreshHelpers';
 import { fetchBusinessBootstrapSnapshot } from '@/services/remoteApi';
+import { logBusinessRefreshDebug } from '@/utils/syncDebug';
 
 type BusinessSnapshot = NonNullable<Awaited<ReturnType<typeof fetchBusinessBootstrapSnapshot>>>;
 
 interface RefreshBusinessDataDependencies {
-  fetchSnapshot?: (businessId: string) => Promise<BusinessSnapshot | null>;
-  applySnapshot?: (snapshot: BusinessSnapshot) => Promise<void>;
+  fetchSnapshot?: (businessId: string, traceId?: string) => Promise<BusinessSnapshot | null>;
+  applySnapshot?: (snapshot: BusinessSnapshot, traceId?: string) => Promise<void>;
 }
 
 export interface BusinessDataRefreshResult {
@@ -17,9 +18,22 @@ export interface BusinessDataRefreshResult {
 export async function refreshBusinessDataFromDatabase(
   businessId: string,
   dependencies: RefreshBusinessDataDependencies = {},
+  traceId?: string,
 ): Promise<BusinessDataRefreshResult> {
-  return refreshBusinessDataWithDependencies(businessId, {
+  logBusinessRefreshDebug(traceId, 'started', { businessId });
+  const result = await refreshBusinessDataWithDependencies(businessId, {
     fetchSnapshot: dependencies.fetchSnapshot ?? fetchBusinessBootstrapSnapshot,
-    applySnapshot: dependencies.applySnapshot ?? applyBusinessSnapshot,
-  });
+    applySnapshot: async (snapshot) => {
+      logBusinessRefreshDebug(traceId, 'apply started', {
+        businessId,
+        products: snapshot.products?.length ?? 0,
+        inventory: snapshot.inventory?.length ?? 0,
+        branches: snapshot.branches?.length ?? 0,
+      });
+      await (dependencies.applySnapshot ?? applyBusinessFallbackCache)(snapshot, traceId);
+      logBusinessRefreshDebug(traceId, 'apply completed', { businessId });
+    },
+  }, traceId);
+  logBusinessRefreshDebug(traceId, 'completed', { ...result });
+  return result;
 }

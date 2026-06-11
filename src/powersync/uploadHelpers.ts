@@ -42,6 +42,22 @@ interface CrudPayloadInput {
   opData?: Record<string, unknown> | null;
 }
 
+interface CrudOperationSummary {
+  table: string;
+  op: unknown;
+  id: string;
+}
+
+const SNAPSHOT_IMPORT_TABLES = new Set([
+  'profiles',
+  'businesses',
+  'branches',
+  'business_members',
+  'categories',
+  'products',
+  'inventory_items',
+]);
+
 function getResponseLike(error: unknown): ResponseLike | null {
   if (!error || typeof error !== 'object' || !('context' in error)) {
     return null;
@@ -171,6 +187,34 @@ export function getUploadFunctionName(table: string, op: unknown, deleteOp: unkn
     : table === 'businesses'
       ? 'create-business'
     : null;
+}
+
+export function isLikelySnapshotImportTransaction(
+  operations: CrudOperationSummary[],
+  deleteOp: unknown,
+): boolean {
+  if (operations.length < 6) {
+    return false;
+  }
+
+  const tables = new Set(operations.map((operation) => operation.table));
+  const onlySnapshotTables = operations.every((operation) => SNAPSHOT_IMPORT_TABLES.has(operation.table));
+  if (!onlySnapshotTables || !tables.has('businesses') || !tables.has('business_members')) {
+    return false;
+  }
+
+  let replacePairCount = 0;
+  const deletedKeys = new Set<string>();
+  for (const operation of operations) {
+    const key = `${operation.table}:${operation.id}`;
+    if (operation.op === deleteOp) {
+      deletedKeys.add(key);
+    } else if (deletedKeys.has(key)) {
+      replacePairCount += 1;
+    }
+  }
+
+  return replacePairCount >= 2;
 }
 
 export async function getFunctionAccessToken(

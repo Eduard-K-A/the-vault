@@ -16,8 +16,10 @@ import {
   describeFunctionError,
   getUploadFunctionName,
   getFunctionAccessToken,
+  isLikelySnapshotImportTransaction,
 } from '@/powersync/uploadHelpers';
 import { CREATE_SYNC_IMPORT_MARKERS_TABLE_SQL, SYNC_IMPORT_MARKERS_TABLE, syncImportMarkerKey } from '@/powersync/importMarkers';
+import { logPowerSyncBackground } from '@/utils/syncDebug';
 
 interface CrudOperationLike {
   table: string;
@@ -133,9 +135,17 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
   async fetchCredentials(): Promise<PowerSyncCredentials | null> {
     const session = useAuthStore.getState();
     if (!session.accessToken || !offlineConfig.powerSyncUrl) {
+      logPowerSyncBackground('fetchCredentials returned null', {
+        hasAccessToken: Boolean(session.accessToken),
+        hasPowerSyncUrl: Boolean(offlineConfig.powerSyncUrl),
+      });
       return null;
     }
 
+    logPowerSyncBackground('fetchCredentials returned credentials', {
+      userId: session.userId,
+      endpoint: offlineConfig.powerSyncUrl,
+    });
     return {
       endpoint: offlineConfig.powerSyncUrl,
       token: session.accessToken,
@@ -145,24 +155,44 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
   async uploadData(database: AbstractPowerSyncDatabase): Promise<void> {
     const client = getSupabaseClient();
     if (!client) {
+      logPowerSyncBackground('uploadData skipped; Supabase client unavailable');
       return;
     }
     const accessToken = await getFunctionAccessToken(client, useAuthStore.getState().accessToken);
     if (!accessToken) {
+      logPowerSyncBackground('uploadData skipped; no access token');
       return;
     }
 
     try {
       await ensureSyncImportMarkersTable(database);
+      logPowerSyncBackground('uploadData started');
 
       for (;;) {
         const transaction = await database.getNextCrudTransaction();
         if (!transaction) {
+          logPowerSyncBackground('uploadData completed; no pending transaction');
           break;
         }
 
         try {
           const operations = transaction.crud as CrudOperationLike[];
+          logPowerSyncBackground('upload transaction found', {
+            operationCount: operations.length,
+            operations: operations.map((operation) => ({
+              table: operation.table,
+              op: String(operation.op),
+              id: operation.id,
+            })),
+          });
+          if (isLikelySnapshotImportTransaction(operations, UpdateType.DELETE)) {
+            logPowerSyncBackground('discarding stale snapshot import transaction', {
+              operationCount: operations.length,
+            });
+            await transaction.complete();
+            continue;
+          }
+
           const handled = new Set<string>();
           const rowsByKey = new Map<string, Record<string, unknown> | null>();
           const getRow = async (op: CrudOperationLike) => {
@@ -177,7 +207,13 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
             functionName: string,
             payload: Record<string, unknown>,
           ) => {
-            console.log(`[powersync] uploading ${op.op} on ${op.table} via ${functionName} (${op.id})`);
+            logPowerSyncBackground('edge function upload started', {
+              table: op.table,
+              op: String(op.op),
+              id: op.id,
+              functionName,
+              payloadKeys: Object.keys(payload),
+            });
             const { error } = await client.functions.invoke(
               functionName,
               buildFunctionInvokeOptions(
@@ -198,17 +234,34 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
                 details,
               });
               console.error(message);
+              logPowerSyncBackground('edge function upload failed', {
+                table: op.table,
+                op: String(op.op),
+                id: op.id,
+                functionName,
+                details,
+              });
               const uploadError = new Error(message);
               (uploadError as Error & { cause?: unknown }).cause = error;
               throw uploadError;
             }
+            logPowerSyncBackground('edge function upload completed', {
+              table: op.table,
+              op: String(op.op),
+              id: op.id,
+              functionName,
+            });
           };
 
-          console.log(`[powersync] uploading transaction with ${operations.length} ops`);
+          logPowerSyncBackground('uploading transaction', { operationCount: operations.length });
 
           for (const op of operations) {
             if (await consumeSyncImportMarker(database, op)) {
-              console.log(`[powersync] skipping imported ${op.op} on ${op.table} (${op.id})`);
+              logPowerSyncBackground('skipping imported operation', {
+                table: op.table,
+                op: String(op.op),
+                id: op.id,
+              });
               handled.add(crudKey(op.table, op.id));
             }
           }
@@ -383,7 +436,10 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
             }
             const functionName = getUploadFunctionName(op.table, op.op, UpdateType.DELETE);
             if (op.op === UpdateType.DELETE && !functionName) {
-              console.log(`[powersync] skipping DELETE on ${op.table} (${op.id})`);
+              logPowerSyncBackground('skipping unsupported delete upload', {
+                table: op.table,
+                id: op.id,
+              });
               continue;
             }
 
@@ -411,12 +467,18 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
           }
 
           await transaction.complete();
-          console.log('[powersync] transaction completed');
+          logPowerSyncBackground('upload transaction completed');
         } catch (error) {
+          logPowerSyncBackground('upload transaction failed', {
+            error: error instanceof Error ? error.message : String(error),
+          });
           throw error instanceof Error ? error : new Error('PowerSync upload failed');
         }
       }
     } catch (error) {
+      logPowerSyncBackground('uploadData failed', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       throw error instanceof Error ? error : new Error('PowerSync upload failed');
     }
   }

@@ -1,4 +1,5 @@
 import { getSupabaseClient } from '@/services/supabaseClient';
+import { logBusinessRefreshDebug } from '@/utils/syncDebug';
 
 export interface RemoteMutationResult {
   ok: boolean;
@@ -143,12 +144,25 @@ export async function fetchInitialBootstrapSnapshot() {
   };
 }
 
-export async function fetchBusinessBootstrapSnapshot(businessId: string) {
+function logQueryResult(
+  traceId: string | null | undefined,
+  label: string,
+  result: { data: unknown[] | null; error: { message: string } | null },
+): void {
+  logBusinessRefreshDebug(traceId, `query ${label}`, {
+    count: result.data?.length ?? 0,
+    error: result.error?.message ?? null,
+  });
+}
+
+export async function fetchBusinessBootstrapSnapshot(businessId: string, traceId?: string) {
   const client = getSupabaseClient();
   if (!client) {
+    logBusinessRefreshDebug(traceId, 'fetch skipped; Supabase client unavailable', { businessId });
     return null;
   }
 
+  logBusinessRefreshDebug(traceId, 'fetch started', { businessId });
   const [
     businesses,
     branches,
@@ -179,6 +193,20 @@ export async function fetchBusinessBootstrapSnapshot(businessId: string) {
     client.from('device_sessions').select('*').eq('business_id', businessId),
   ]);
 
+  logQueryResult(traceId, 'businesses', businesses);
+  logQueryResult(traceId, 'branches', branches);
+  logQueryResult(traceId, 'business_members', businessMembers);
+  logQueryResult(traceId, 'categories', categories);
+  logQueryResult(traceId, 'products', products);
+  logQueryResult(traceId, 'inventory_items', inventory);
+  logQueryResult(traceId, 'sales', sales);
+  logQueryResult(traceId, 'sale_items', saleItems);
+  logQueryResult(traceId, 'payments', payments);
+  logQueryResult(traceId, 'refunds', refunds);
+  logQueryResult(traceId, 'inventory_logs', inventoryLogs);
+  logQueryResult(traceId, 'audit_logs', auditLogs);
+  logQueryResult(traceId, 'device_sessions', deviceSessions);
+
   const businessRows = requireQueryData('businesses', businesses);
   const branchRows = requireQueryData('branches', branches);
   const businessMemberRows = requireQueryData('business members', businessMembers);
@@ -206,6 +234,13 @@ export async function fetchBusinessBootstrapSnapshot(businessId: string) {
     `[business] fetched ${productRows.length} product rows from database for business ${businessId} ` +
       `(businesses=${businessRows.length}, members=${businessMemberRows.length}, branches=${branchRows.length})`,
   );
+  logBusinessRefreshDebug(traceId, 'fetch completed', {
+    businessId,
+    products: productRows.length,
+    inventory: inventoryRows.length,
+    branches: branchRows.length,
+    members: businessMemberRows.length,
+  });
 
   return {
     businesses: businessRows,

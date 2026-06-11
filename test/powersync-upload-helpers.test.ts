@@ -9,6 +9,7 @@ import {
   describeFunctionError,
   getUploadFunctionName,
   getFunctionAccessToken,
+  isLikelySnapshotImportTransaction,
 } from '../src/powersync/uploadHelpers.ts';
 
 test('buildFunctionInvokeOptions sends the current access token as bearer auth', () => {
@@ -188,4 +189,46 @@ test('getUploadFunctionName routes POS domain tables to bundle functions', () =>
 test('getUploadFunctionName does not route unsupported deletes', () => {
   assert.equal(getUploadFunctionName('branches', 'DELETE', 'DELETE'), null);
   assert.equal(getUploadFunctionName('products', 'DELETE', 'DELETE'), null);
+});
+
+test('isLikelySnapshotImportTransaction detects stale bootstrap replace batches', () => {
+  assert.equal(
+    isLikelySnapshotImportTransaction(
+      [
+        { table: 'profiles', op: 'DELETE', id: 'user-1' },
+        { table: 'businesses', op: 'DELETE', id: 'business-1' },
+        { table: 'businesses', op: 'PUT', id: 'business-1' },
+        { table: 'branches', op: 'DELETE', id: 'branch-1' },
+        { table: 'branches', op: 'PUT', id: 'branch-1' },
+        { table: 'business_members', op: 'DELETE', id: 'member-1' },
+        { table: 'business_members', op: 'PUT', id: 'member-1' },
+        { table: 'products', op: 'DELETE', id: 'product-1' },
+        { table: 'products', op: 'PUT', id: 'product-1' },
+        { table: 'inventory_items', op: 'DELETE', id: 'inventory-1' },
+        { table: 'inventory_items', op: 'PUT', id: 'inventory-1' },
+      ],
+      'DELETE',
+    ),
+    true,
+  );
+});
+
+test('isLikelySnapshotImportTransaction does not hide ordinary local mutations', () => {
+  assert.equal(
+    isLikelySnapshotImportTransaction(
+      [
+        { table: 'products', op: 'DELETE', id: 'product-1' },
+        { table: 'products', op: 'PUT', id: 'product-1' },
+      ],
+      'DELETE',
+    ),
+    false,
+  );
+  assert.equal(
+    isLikelySnapshotImportTransaction(
+      [{ table: 'business_members', op: 'PUT', id: 'member-1' }],
+      'DELETE',
+    ),
+    false,
+  );
 });

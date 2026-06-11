@@ -99,7 +99,7 @@ Deno.serve(async (request) => {
         method: stringValue(payment.method) ?? 'cash',
         amount_peso: numberValue(payment.amount_peso),
       },
-      { onConflict: 'product_id,branch_id' },
+      { onConflict: 'id' },
     );
     if (error) {
       return json({ error: error.message }, 500);

@@ -6,6 +6,22 @@ export const INVENTORY_SQL = `
   WHERE branch_id = ?;
 `;
 
+const NO_ACTIVE_BRANCH_ID = '__no_active_branch__';
+
+export const INVENTORY_FOR_BRANCH_SQL =
+  'SELECT * FROM inventory_items WHERE branch_id = ? UNION ALL SELECT fallback_inventory_items.* FROM fallback_inventory_items WHERE branch_id = ? AND NOT EXISTS (SELECT 1 FROM inventory_items WHERE inventory_items.id = fallback_inventory_items.id)';
+
+export function buildInventoryForBranchQuery(branchId: string | null): {
+  sql: string;
+  parameters: [string, string];
+} {
+  const branch = branchId ?? NO_ACTIVE_BRANCH_ID;
+  return {
+    sql: INVENTORY_FOR_BRANCH_SQL,
+    parameters: [branch, branch],
+  };
+}
+
 export function getInventoryForBranch(inventory: InventoryRecord[], branchId: string): InventoryRecord[] {
   return inventory
     .filter((entry) => entry.branch_id === branchId)

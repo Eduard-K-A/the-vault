@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { selectActiveMembership } from '../_shared/membership.ts';
 
 export function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -83,13 +84,7 @@ export async function createClients(request: Request) {
 }
 
 export async function requireMembership(admin: any, businessId: string, userId: string): Promise<Response | null> {
-  const { data, error } = await admin
-    .from('business_members')
-    .select('id')
-    .eq('business_id', businessId)
-    .eq('user_id', userId)
-    .eq('is_active', true)
-    .maybeSingle();
+  const { data, error } = await selectActiveMembership(admin, businessId, userId);
 
   if (error) {
     return json({ error: error.message }, 500);
