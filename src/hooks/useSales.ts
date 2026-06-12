@@ -1,5 +1,7 @@
 import { useQuery } from '@powersync/react';
 import {
+  buildSaleItemsForBusinessQuery,
+  buildSalesForBusinessQuery,
   getSaleById,
   getSaleItemsBySaleId,
   getSalesForBusiness,
@@ -14,8 +16,10 @@ export function useSales() {
   const businessId = useBusinessStore((state) => state.activeBusiness?.id ?? null);
   const role = useAuthStore((state) => state.role);
 
-  const { data: sales } = useQuery<Sale>('SELECT * FROM sales WHERE business_id = ?', [businessId]);
-  const { data: saleItems } = useQuery<SaleItem>('SELECT * FROM sale_items');
+  const salesQuery = buildSalesForBusinessQuery(businessId);
+  const saleItemsQuery = buildSaleItemsForBusinessQuery(businessId);
+  const { data: sales } = useQuery<Sale>(salesQuery.sql, salesQuery.parameters);
+  const { data: saleItems } = useQuery<SaleItem>(saleItemsQuery.sql, saleItemsQuery.parameters);
   const saleRows = (sales as Sale[]) ?? [];
   const saleItemRows = (saleItems as SaleItem[]) ?? [];
 

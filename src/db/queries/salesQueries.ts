@@ -1,11 +1,43 @@
 import type { Payment, Sale, SaleItem } from '@/types/models';
 
+const NO_ACTIVE_BUSINESS = '__no_active_business__';
+
 export const EMPLOYEE_SALES_SQL = `
   SELECT *
   FROM sales
   WHERE employee_id = ? AND status = 'completed'
   ORDER BY created_at DESC;
 `;
+
+export function buildSalesForBusinessQuery(businessId: string | null): { sql: string; parameters: string[] } {
+  const scopedBusinessId = businessId ?? NO_ACTIVE_BUSINESS;
+
+  return {
+    sql:
+      'SELECT * FROM sales WHERE business_id = ? UNION ALL SELECT fallback_sales.* FROM fallback_sales WHERE business_id = ? AND NOT EXISTS (SELECT 1 FROM sales WHERE sales.id = fallback_sales.id) ORDER BY created_at DESC',
+    parameters: [scopedBusinessId, scopedBusinessId],
+  };
+}
+
+export function buildSaleItemsForBusinessQuery(businessId: string | null): { sql: string; parameters: string[] } {
+  const scopedBusinessId = businessId ?? NO_ACTIVE_BUSINESS;
+
+  return {
+    sql:
+      'SELECT * FROM sale_items WHERE business_id = ? UNION ALL SELECT fallback_sale_items.* FROM fallback_sale_items WHERE business_id = ? AND NOT EXISTS (SELECT 1 FROM sale_items WHERE sale_items.id = fallback_sale_items.id)',
+    parameters: [scopedBusinessId, scopedBusinessId],
+  };
+}
+
+export function buildPaymentsForBusinessQuery(businessId: string | null): { sql: string; parameters: string[] } {
+  const scopedBusinessId = businessId ?? NO_ACTIVE_BUSINESS;
+
+  return {
+    sql:
+      'SELECT * FROM payments WHERE business_id = ? UNION ALL SELECT fallback_payments.* FROM fallback_payments WHERE business_id = ? AND NOT EXISTS (SELECT 1 FROM payments WHERE payments.id = fallback_payments.id)',
+    parameters: [scopedBusinessId, scopedBusinessId],
+  };
+}
 
 export const OWNER_SALES_SQL = `
   SELECT *

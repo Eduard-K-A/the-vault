@@ -29,6 +29,9 @@ export async function refreshBusinessDataFromDatabase(
         products: snapshot.products?.length ?? 0,
         inventory: snapshot.inventory?.length ?? 0,
         branches: snapshot.branches?.length ?? 0,
+        sales: snapshot.sales?.length ?? 0,
+        saleItems: snapshot.saleItems?.length ?? 0,
+        payments: snapshot.payments?.length ?? 0,
       });
       await (dependencies.applySnapshot ?? applyBusinessFallbackCache)(snapshot, traceId);
       logBusinessRefreshDebug(traceId, 'apply completed', { businessId });

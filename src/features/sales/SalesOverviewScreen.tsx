@@ -7,6 +7,11 @@ import { useQuery } from '@powersync/react';
 import { Badge, Card, Screen, StatCard } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
 import { getOwnerAnalytics } from '@/db/queries/analyticsQueries';
+import {
+  buildPaymentsForBusinessQuery,
+  buildSaleItemsForBusinessQuery,
+  buildSalesForBusinessQuery,
+} from '@/db/queries/salesQueries';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
@@ -33,9 +38,12 @@ export default function SalesOverviewScreen() {
   const { data: categoryRows } = useQuery<Category>('SELECT * FROM categories');
   const { data: productRows } = useQuery<Product>('SELECT * FROM products');
   const { data: inventoryRows } = useQuery<InventoryRecord>('SELECT * FROM inventory_items');
-  const { data: saleRows } = useQuery<Sale>('SELECT * FROM sales');
-  const { data: itemRows } = useQuery<SaleItem>('SELECT * FROM sale_items');
-  const { data: paymentRows } = useQuery<Payment>('SELECT * FROM payments');
+  const salesQuery = buildSalesForBusinessQuery(businessId);
+  const saleItemsQuery = buildSaleItemsForBusinessQuery(businessId);
+  const paymentsQuery = buildPaymentsForBusinessQuery(businessId);
+  const { data: saleRows } = useQuery<Sale>(salesQuery.sql, salesQuery.parameters);
+  const { data: itemRows } = useQuery<SaleItem>(saleItemsQuery.sql, saleItemsQuery.parameters);
+  const { data: paymentRows } = useQuery<Payment>(paymentsQuery.sql, paymentsQuery.parameters);
   const { data: refundRows } = useQuery<Refund>('SELECT * FROM refunds');
   const { data: refundItemRows } = useQuery<RefundItem>('SELECT * FROM refund_items');
   const { data: auditLogRows } = useQuery<AuditLog>('SELECT * FROM audit_logs');

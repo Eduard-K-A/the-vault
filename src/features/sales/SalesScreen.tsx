@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
@@ -11,25 +11,126 @@ import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useSales } from '@/hooks/useSales';
+import { buildSalesForBusinessQuery } from '@/db/queries/salesQueries';
+import { refreshBusinessDataFromDatabase } from '@/services/businessDataRefresh.service';
+import { syncPowerSyncNow } from '@/services/powersync.service';
+import { powersync } from '@/db/powersync';
+import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
+import { createSyncTraceId, logSyncDebug } from '@/utils/syncDebug';
 import type { RootStackParamList } from '@/types/navigation';
 import { useQuery } from '@powersync/react';
 import type { Business } from '@/types/models';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
+interface EmployeeSalesSnapshot {
+  completedSaleCount: number;
+  latestSaleAt: string | null;
+}
+
+async function loadEmployeeSalesSnapshot(
+  businessId: string,
+  employeeId: string,
+): Promise<EmployeeSalesSnapshot> {
+  const salesQuery = buildSalesForBusinessQuery(businessId);
+  const row = await powersync.getOptional<{
+    count: number | string | null;
+    latest_sale_at: string | null;
+  }>(
+    `SELECT COUNT(*) AS count, MAX(created_at) AS latest_sale_at FROM (${salesQuery.sql}) AS employee_sales WHERE employee_id = ? AND status = 'completed'`,
+    [...salesQuery.parameters, employeeId],
+  );
+
+  return {
+    completedSaleCount: Number(row?.count ?? 0),
+    latestSaleAt: row?.latest_sale_at ?? null,
+  };
+}
+
 export default function SalesScreen() {
   const navigation = useNavigation<Navigation>();
   const { sales } = useSales();
+  const userId = useAuthStore((state) => state.userId);
   const activeBusiness = useBusinessStore((state) => state.activeBusiness);
   const activeBranch = useBusinessStore((state) => state.activeBranch);
   const availableBusinesses = useBusinessStore((state) => state.availableBusinesses);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string>('all');
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const { data: businessRows } = useQuery<Business>('SELECT * FROM businesses');
 
   useEffect(() => {
     setSelectedBusinessId(activeBusiness?.id ?? 'all');
   }, [activeBusiness?.id]);
+
+  useEffect(() => {
+    if (!toastMessage) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      setToastMessage(null);
+    }, 1800);
+
+    return () => clearTimeout(timeout);
+  }, [toastMessage]);
+
+  async function handleManualSync() {
+    if (!activeBusiness?.id) {
+      Alert.alert('Sync failed', 'Select a business before syncing sales.');
+      return;
+    }
+    if (!userId) {
+      Alert.alert('Sync failed', 'Sign in before syncing sales.');
+      return;
+    }
+
+    const traceId = createSyncTraceId('sync-now');
+    logSyncDebug(traceId, 'sales screen sync button pressed', {
+      businessId: activeBusiness.id,
+      branchId: activeBranch?.id ?? null,
+      employeeId: userId,
+      selectedBusinessId,
+      visibleSaleCount: filteredSales.length,
+      totalSaleCount: sales.length,
+      syncLoading,
+    });
+
+    try {
+      setSyncLoading(true);
+      const beforeSnapshot = await loadEmployeeSalesSnapshot(activeBusiness.id, userId);
+      logSyncDebug(traceId, 'sales screen employee sales before sync', {
+        businessId: activeBusiness.id,
+        employeeId: userId,
+        ...beforeSnapshot,
+      });
+      logSyncDebug(traceId, 'sales screen PowerSync manual sync requested');
+      await syncPowerSyncNow(traceId);
+      logSyncDebug(traceId, 'sales screen business refresh requested', {
+        businessId: activeBusiness.id,
+        employeeId: userId,
+      });
+      const refreshResult = await refreshBusinessDataFromDatabase(activeBusiness.id, {}, traceId);
+      logSyncDebug(traceId, 'sales screen business refresh returned', { ...refreshResult });
+      const afterSnapshot = await loadEmployeeSalesSnapshot(activeBusiness.id, userId);
+      logSyncDebug(traceId, 'sales screen employee sales after refresh', {
+        businessId: activeBusiness.id,
+        employeeId: userId,
+        beforeCompletedSaleCount: beforeSnapshot.completedSaleCount,
+        ...afterSnapshot,
+      });
+      setToastMessage(`${afterSnapshot.completedSaleCount} sales synced`);
+    } catch (error) {
+      logSyncDebug(traceId, 'sales screen sync failed', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      Alert.alert('Sync failed', error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setSyncLoading(false);
+      logSyncDebug(traceId, 'sales screen sync finished');
+    }
+  }
 
   const businessOptions = useMemo(() => {
     const summaries = availableBusinesses
@@ -116,7 +217,16 @@ export default function SalesScreen() {
                 Filter by business to separate sales from different workspaces.
               </Text>
             </View>
-            <Badge label={`${recentSales.length} records`} tone="accent" />
+            <View style={styles.heroActions}>
+              <Badge label={`${recentSales.length} records`} tone="accent" />
+              <Button
+                label="Sync now"
+                variant="secondary"
+                onPress={() => void handleManualSync()}
+                loading={syncLoading}
+                fullWidth={false}
+              />
+            </View>
           </View>
         </Card>
 
@@ -230,6 +340,11 @@ export default function SalesScreen() {
 
         <Button label="View analytics" onPress={() => navigation.navigate('Analytics')} />
       </View>
+      {toastMessage ? (
+        <View pointerEvents="none" style={styles.toast}>
+          <Text style={styles.toastLabel}>{toastMessage}</Text>
+        </View>
+      ) : null}
     </Screen>
   );
 }
@@ -329,6 +444,10 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     gap: dimensions.xs,
+  },
+  heroActions: {
+    alignItems: 'flex-end',
+    gap: dimensions.sm,
   },
   heroKicker: {
     ...typography.label,
@@ -462,5 +581,26 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.9,
     transform: [{ scale: 0.99 }],
+  },
+  toast: {
+    position: 'absolute',
+    left: dimensions.screenPaddingH,
+    right: dimensions.screenPaddingH,
+    top: dimensions.screenPaddingV + 12,
+    paddingHorizontal: dimensions.md,
+    paddingVertical: dimensions.sm,
+    borderRadius: dimensions.radiusFull,
+    backgroundColor: 'rgba(25, 28, 30, 0.92)',
+    shadowColor: colors.primary,
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 6,
+  },
+  toastLabel: {
+    ...typography.body,
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontWeight: '600',
   },
 });
