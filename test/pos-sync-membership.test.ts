@@ -3,7 +3,7 @@ import { test } from 'node:test';
 
 import { selectActiveMembership } from '../supabase/functions/_shared/membership.ts';
 
-test('selectActiveMembership limits duplicate active membership rows before maybeSingle', async () => {
+test('selectActiveMembership limits duplicate active membership rows and returns the first row', async () => {
   const calls: Array<{ method: string; args: unknown[] }> = [];
   const builder = {
     select(...args: unknown[]) {
@@ -18,9 +18,9 @@ test('selectActiveMembership limits duplicate active membership rows before mayb
       calls.push({ method: 'limit', args });
       return this;
     },
-    async maybeSingle() {
-      calls.push({ method: 'maybeSingle', args: [] });
-      return { data: { id: 'member-1' }, error: null };
+    then<TResult>(resolve: (value: { data: Array<{ id: string }>; error: null }) => TResult) {
+      calls.push({ method: 'then', args: [] });
+      return resolve({ data: [{ id: 'member-1' }, { id: 'member-2' }], error: null });
     },
   };
 
@@ -43,6 +43,6 @@ test('selectActiveMembership limits duplicate active membership rows before mayb
     { method: 'eq', args: ['user_id', 'user-1'] },
     { method: 'eq', args: ['is_active', true] },
     { method: 'limit', args: [1] },
-    { method: 'maybeSingle', args: [] },
+    { method: 'then', args: [] },
   ]);
 });
