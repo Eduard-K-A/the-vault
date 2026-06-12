@@ -7,7 +7,7 @@ import { useSyncStore } from '@/store/syncStore';
 import type { Branch, Business, BusinessSummary } from '@/types/models';
 import { useAuthStore } from './authStore';
 import { enterSelectedBusiness } from './businessEntrySync';
-import { buildFallbackBranchFromSummary, buildFallbackBusinessFromSummary } from './businessSelectionHelpers';
+import { buildFallbackBusinessFromSummary, resolveSelectableBranch } from './businessSelectionHelpers';
 
 interface BusinessState {
   activeBusiness: Business | null;
@@ -36,36 +36,52 @@ export const useBusinessStore = create<BusinessState>((set, get) => ({
 
     console.log(`[business] selecting business: ${business.name} (ID: ${business.id})`);
 
-    const branchId = available?.branchId;
-    const branch =
-      (branchId !== null
-        ? await powersync.getOptional<Branch>('SELECT * FROM branches WHERE id = ?', [branchId])
-        : await powersync.getOptional<Branch>(
-            'SELECT * FROM branches WHERE business_id = ? AND is_active = 1 ORDER BY created_at ASC LIMIT 1',
-            [businessId],
-          )) ?? buildFallbackBranchFromSummary(available);
+    const userId = useAuthStore.getState().userId;
+    let enteredBusiness = false;
+    const enterBusiness = async (selectedBranchId: string | null) => {
+      enteredBusiness = true;
+      await enterSelectedBusiness(
+        {
+          userId,
+          businessId: business.id,
+          branchId: selectedBranchId,
+        },
+        {
+          setSyncSession: useSyncStore.getState().setSession,
+          syncNow: syncPowerSyncNow,
+          hydrateBusinessData: async (selectedBusinessId) => {
+            await refreshBusinessDataFromDatabase(selectedBusinessId);
+          },
+          setLastError: useSyncStore.getState().setLastError,
+        },
+      );
+    };
+
+    const branch = await resolveSelectableBranch(
+      available,
+      (sql, params) => powersync.getOptional<Branch>(sql, params),
+      async () => {
+        useAuthStore.getState().setError(null);
+        console.log(`[business] hydrating database rows for business ${business.id}`);
+        await enterBusiness(null);
+      },
+    );
 
     if (branch) {
       console.log(`[business] selected branch: ${branch.name} (ID: ${branch.id})`);
     }
 
     useAuthStore.getState().setError(null);
-    console.log(`[business] hydrating database rows for business ${business.id}`);
-    await enterSelectedBusiness(
-      {
-        userId: useAuthStore.getState().userId,
+    if (!enteredBusiness) {
+      console.log(`[business] hydrating database rows for business ${business.id}`);
+      await enterBusiness(branch?.id ?? null);
+    } else if (branch) {
+      useSyncStore.getState().setSession({
+        userId,
         businessId: business.id,
-        branchId: branch?.id ?? null,
-      },
-      {
-        setSyncSession: useSyncStore.getState().setSession,
-        syncNow: syncPowerSyncNow,
-        hydrateBusinessData: async (selectedBusinessId) => {
-          await refreshBusinessDataFromDatabase(selectedBusinessId);
-        },
-        setLastError: useSyncStore.getState().setLastError,
-      },
-    );
+        branchId: branch.id,
+      });
+    }
 
     const hydratedBusiness =
       (await powersync.getOptional<Business>('SELECT * FROM businesses WHERE id = ?', [businessId])) ?? business;

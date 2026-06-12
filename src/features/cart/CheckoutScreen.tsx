@@ -14,6 +14,7 @@ import type { RootStackParamList } from '@/types/navigation';
 import type { PaymentMethod } from '@/types/models';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { generateUUID } from '@/utils/generateUUID';
+import { createSyncTraceId, logCompleteSaleDebug } from '@/utils/syncDebug';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -47,25 +48,49 @@ export default function CheckoutScreen() {
   const changeDue = Math.max(0, receivedTotal - total);
 
   async function handleCheckout() {
+    const checkoutTraceId = createSyncTraceId('button');
+    logCompleteSaleDebug(checkoutTraceId, 'button pressed', {
+      itemCount: items.length,
+      businessId: business?.id ?? null,
+      branchId: branch?.id ?? null,
+      subtotal,
+      discountAmount,
+      total,
+      receivedTotal,
+      paymentLineCount: paymentLines.length,
+      paymentMethods: paymentLines.map((line) => line.method),
+    });
+
     if (receivedTotal < total) {
+      logCompleteSaleDebug(checkoutTraceId, 'blocked: payment incomplete', {
+        total,
+        receivedTotal,
+      });
       Alert.alert('Payment incomplete', 'The split payment rows must cover the full total.');
       return;
     }
 
     try {
       setLoading(true);
+      logCompleteSaleDebug(checkoutTraceId, 'calling cart checkout');
       const saleId = await checkout(
         paymentLines[0]?.method,
         paymentLines.map((line) => ({
           method: line.method,
           amount_peso: Number(line.amount || 0),
         })),
+        checkoutTraceId,
       );
+      logCompleteSaleDebug(checkoutTraceId, 'checkout completed locally; navigating to receipt', { saleId });
       navigation.navigate('Receipt', { saleId });
     } catch (error) {
+      logCompleteSaleDebug(checkoutTraceId, 'checkout failed', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       Alert.alert('Checkout failed', error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setLoading(false);
+      logCompleteSaleDebug(checkoutTraceId, 'button process finished');
     }
   }
 

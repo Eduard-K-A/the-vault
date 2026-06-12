@@ -44,3 +44,17 @@ export function logPowerSyncBackground(message: string, details?: SyncDebugDetai
 
   console.debug(`[powersync-bg] ${message}`);
 }
+
+export function logCompleteSaleDebug(
+  traceId: string | null | undefined,
+  message: string,
+  details?: SyncDebugDetails,
+): void {
+  const prefix = traceId ? `[complete-sale:${traceId}]` : '[complete-sale]';
+  if (details) {
+    console.debug(`${prefix} ${message}`, details);
+    return;
+  }
+
+  console.debug(`${prefix} ${message}`);
+}

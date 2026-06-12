@@ -6,6 +6,7 @@ import { useBusinessStore } from '@/store/businessStore';
 import { useCartStore } from '@/store/cartStore';
 import type { PaymentMethod, Sale, SaleItem } from '@/types/models';
 import { generateUUID } from '@/utils/generateUUID';
+import { logCompleteSaleDebug } from '@/utils/syncDebug';
 
 export function useCart() {
   const items = useCartStore((state) => state.items);
@@ -28,12 +29,40 @@ export function useCart() {
   const total = useMemo(() => Math.max(0, subtotal - discountAmount), [subtotal, discountAmount]);
 
   const checkout = useCallback(
-    async (overridePaymentMethod?: PaymentMethod, splitPayments?: Array<{ method: PaymentMethod; amount_peso: number }>) => {
-      if (!businessId || !branchId || !userId) {
+    async (
+      overridePaymentMethod?: PaymentMethod,
+      splitPayments?: Array<{ method: PaymentMethod; amount_peso: number }>,
+      checkoutTraceId?: string,
+    ) => {
+      logCompleteSaleDebug(checkoutTraceId, 'cart checkout started', {
+        businessId,
+        branchId,
+        userId,
+        itemCount: items.length,
+        subtotal,
+        discountAmount,
+        total,
+        overridePaymentMethod: overridePaymentMethod ?? null,
+        splitPaymentCount: splitPayments?.length ?? 0,
+      });
+
+      if (!businessId) {
+        logCompleteSaleDebug(checkoutTraceId, 'validation failed: missing business');
         throw new Error('Missing active business context.');
       }
 
+      if (!branchId) {
+        logCompleteSaleDebug(checkoutTraceId, 'validation failed: missing branch');
+        throw new Error('Missing active branch context.');
+      }
+
+      if (!userId) {
+        logCompleteSaleDebug(checkoutTraceId, 'validation failed: missing user');
+        throw new Error('Missing signed-in user context.');
+      }
+
       if (items.length === 0) {
+        logCompleteSaleDebug(checkoutTraceId, 'validation failed: empty cart');
         throw new Error('Cart is empty.');
       }
 
@@ -65,16 +94,38 @@ export function useCart() {
         payments: undefined,
       };
 
+      logCompleteSaleDebug(checkoutTraceId, 'sale rows prepared', {
+        saleId,
+        idempotencyKey: sale.idempotency_key,
+        businessId: sale.business_id,
+        branchId: sale.branch_id,
+        employeeId: sale.employee_id,
+        itemCount: saleItems.length,
+        productIds: saleItems.map((item) => item.product_id),
+        totalAmount: sale.total_amount,
+        paymentMethod: sale.payment_method,
+        splitPayments: splitPayments?.map((payment) => ({
+          method: payment.method,
+          amount_peso: payment.amount_peso,
+        })) ?? null,
+      });
+
       const committedSale = await db.writeTransaction(async (tx) =>
         tx.createSale({
           sale,
           items: saleItems,
           actorId: userId,
           payments: splitPayments,
+          checkoutTraceId,
         }),
       );
 
+      logCompleteSaleDebug(checkoutTraceId, 'local transaction committed', {
+        saleId: committedSale.id,
+        referenceNumber: committedSale.reference_number ?? null,
+      });
       clearCart();
+      logCompleteSaleDebug(checkoutTraceId, 'cart cleared', { saleId: committedSale.id });
       return committedSale.id;
     },
     [branchId, businessId, clearCart, discountAmount, items, note, paymentMethod, total, userId],

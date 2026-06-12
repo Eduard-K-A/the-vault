@@ -19,7 +19,7 @@ import {
   isLikelySnapshotImportTransaction,
 } from '@/powersync/uploadHelpers';
 import { CREATE_SYNC_IMPORT_MARKERS_TABLE_SQL, SYNC_IMPORT_MARKERS_TABLE, syncImportMarkerKey } from '@/powersync/importMarkers';
-import { logPowerSyncBackground } from '@/utils/syncDebug';
+import { logCompleteSaleDebug, logPowerSyncBackground } from '@/utils/syncDebug';
 
 interface CrudOperationLike {
   table: string;
@@ -101,7 +101,12 @@ async function getInventoryItemForLog(
     (await database.getOptional<Record<string, unknown>>(
       'SELECT * FROM inventory_items WHERE product_id = ? AND branch_id = ?',
       [productId, branchId],
-    )) ?? null
+    )) ??
+    (await database.getOptional<Record<string, unknown>>(
+      'SELECT * FROM fallback_inventory_items WHERE product_id = ? AND branch_id = ?',
+      [productId, branchId],
+    )) ??
+    null
   );
 }
 
@@ -314,6 +319,37 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
               }
             }
 
+            for (const log of inventoryLogs) {
+              if (
+                inventoryItems.some(
+                  (item) => item.product_id === log.product_id && item.branch_id === log.branch_id,
+                )
+              ) {
+                continue;
+              }
+              const inventoryItem = await getInventoryItemForLog(database, log);
+              if (inventoryItem) {
+                inventoryItems.push(inventoryItem);
+              }
+            }
+
+            logCompleteSaleDebug(saleId, 'upload bundle prepared', {
+              operationId: op.id,
+              businessId: rowString(sale, 'business_id'),
+              branchId: rowString(sale, 'branch_id'),
+              employeeId: rowString(sale, 'employee_id'),
+              idempotencyKey: rowString(sale, 'idempotency_key'),
+              saleItemCount: saleItems.length,
+              paymentCount: payments.length,
+              inventoryLogCount: inventoryLogs.length,
+              inventoryItemCount: inventoryItems.length,
+              auditLogCount: auditLogs.length,
+              saleItemIds: saleItems.map((row) => row.id),
+              paymentIds: payments.map((row) => row.id),
+              inventoryLogIds: inventoryLogs.map((row) => row.id),
+              inventoryItemIds: inventoryItems.map((row) => row.id),
+              auditLogIds: auditLogs.map((row) => row.id),
+            });
             await invokeUpload(op, 'commit_sale', {
               sale,
               sale_items: saleItems,

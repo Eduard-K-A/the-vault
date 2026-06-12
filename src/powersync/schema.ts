@@ -25,6 +25,16 @@ export const AppSchema = new Schema({
     created_at: column.text,
     updated_at: column.text,
   }),
+  fallback_branches: new Table(
+    {
+      business_id: column.text,
+      name: column.text,
+      is_active: column.integer,
+      created_at: column.text,
+      updated_at: column.text,
+    },
+    { localOnly: true },
+  ),
   business_members: new Table({
     business_id: column.text,
     user_id: column.text,
@@ -122,6 +132,24 @@ export const AppSchema = new Schema({
     vat_amount: column.real,
     idempotency_key: column.text,
   }),
+  fallback_sales: new Table(
+    {
+      business_id: column.text,
+      branch_id: column.text,
+      employee_id: column.text,
+      total_amount: column.real,
+      discount_amount: column.real,
+      payment_method: column.text,
+      status: column.text,
+      notes: column.text,
+      created_at: column.text,
+      synced_at: column.text,
+      reference_number: column.text,
+      vat_amount: column.real,
+      idempotency_key: column.text,
+    },
+    { localOnly: true },
+  ),
   sale_items: new Table({
     sale_id: column.text,
     product_id: column.text,
@@ -130,12 +158,32 @@ export const AppSchema = new Schema({
     unit_price: column.real,
     subtotal: column.real,
   }),
+  fallback_sale_items: new Table(
+    {
+      sale_id: column.text,
+      product_id: column.text,
+      business_id: column.text,
+      quantity: column.integer,
+      unit_price: column.real,
+      subtotal: column.real,
+    },
+    { localOnly: true },
+  ),
   payments: new Table({
     sale_id: column.text,
     business_id: column.text,
     method: column.text,
     amount_peso: column.real,
   }),
+  fallback_payments: new Table(
+    {
+      sale_id: column.text,
+      business_id: column.text,
+      method: column.text,
+      amount_peso: column.real,
+    },
+    { localOnly: true },
+  ),
   refunds: new Table({
     idempotency_key: column.text,
     original_sale_id: column.text,

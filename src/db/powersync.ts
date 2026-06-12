@@ -1,5 +1,6 @@
 import { powersync as powersyncDatabase } from '@/powersync';
 import { getBusinessDeletionStatements } from '@/db/businessDeletionHelpers';
+import { buildSaleInventoryLookupQuery } from '@/db/queries/inventoryQueries';
 import { buildBusinessOwnerLookup, resolveProductAuditUserIds } from '@/db/productSnapshotHelpers';
 import {
   CREATE_SYNC_IMPORT_MARKERS_TABLE_SQL,
@@ -8,6 +9,7 @@ import {
   syncImportMarkerKey,
 } from '@/powersync/importMarkers';
 import { logBusinessRefreshDebug } from '@/utils/syncDebug';
+import { logCompleteSaleDebug } from '@/utils/syncDebug';
 import type {
   AuditLog,
   Branch,
@@ -71,6 +73,7 @@ export interface LocalTransaction {
     items: SaleItem[];
     actorId: string;
     payments?: Array<{ method: PaymentMethod; amount_peso: number }>;
+    checkoutTraceId?: string;
   }) => Promise<Sale>;
   createRefund: (input: {
     originalSaleId: string;
@@ -170,6 +173,32 @@ async function ensureInventoryRow(tx: any, productId: string, branchId: string):
     [row.id, row.product_id, row.branch_id, row.business_id ?? null, row.stock_quantity, row.low_stock_threshold, row.updated_at],
   );
   return row;
+}
+
+type SaleInventoryRecord = InventoryRecord & {
+  source_table?: 'inventory_items' | 'fallback_inventory_items';
+};
+
+async function getSaleInventoryRecord(tx: any, productId: string, branchId: string): Promise<SaleInventoryRecord | null> {
+  const lookup = buildSaleInventoryLookupQuery(productId, branchId);
+  return (await tx.getOptional(lookup.sql, lookup.parameters)) as SaleInventoryRecord | null;
+}
+
+async function updateSaleInventoryStock(
+  tx: any,
+  inventory: SaleInventoryRecord,
+  productId: string,
+  branchId: string,
+  quantity: number,
+): Promise<void> {
+  const table = inventory.source_table === 'fallback_inventory_items' ? 'fallback_inventory_items' : 'inventory_items';
+
+  await tx.execute(`UPDATE ${table} SET stock_quantity = ?, updated_at = ? WHERE product_id = ? AND branch_id = ?`, [
+    quantity,
+    now(),
+    productId,
+    branchId,
+  ]);
 }
 
 async function writeAuditLog(tx: any, log: AuditLog): Promise<void> {
@@ -401,6 +430,13 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
       }
     },
     createSale: async (input) => {
+      logCompleteSaleDebug(input.checkoutTraceId, 'db createSale started', {
+        saleId: input.sale.id,
+        businessId: input.sale.business_id,
+        branchId: input.sale.branch_id,
+        itemCount: input.items.length,
+        paymentCount: input.payments?.length ?? 0,
+      });
       const sale = {
         ...input.sale,
         synced_at: null,
@@ -410,15 +446,35 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
       } as Sale;
 
       for (const item of input.items) {
-        const inventory = (await tx.getOptional('SELECT * FROM inventory_items WHERE product_id = ? AND branch_id = ?', [
-          item.product_id,
-          sale.branch_id,
-        ])) as InventoryRecord | null;
+        const inventory = await getSaleInventoryRecord(tx, item.product_id, sale.branch_id);
+        logCompleteSaleDebug(input.checkoutTraceId, 'stock check', {
+          saleId: sale.id,
+          productId: item.product_id,
+          branchId: sale.branch_id,
+          requestedQuantity: item.quantity,
+          availableQuantity: inventory?.stock_quantity ?? null,
+          inventoryId: inventory?.id ?? null,
+          inventorySource: inventory?.source_table ?? null,
+        });
         if (!inventory || inventory.stock_quantity < item.quantity) {
+          logCompleteSaleDebug(input.checkoutTraceId, 'stock check failed', {
+            saleId: sale.id,
+            productId: item.product_id,
+            branchId: sale.branch_id,
+            requestedQuantity: item.quantity,
+            availableQuantity: inventory?.stock_quantity ?? null,
+            inventorySource: inventory?.source_table ?? null,
+          });
           throw new Error('INSUFFICIENT_STOCK');
         }
       }
 
+      logCompleteSaleDebug(input.checkoutTraceId, 'inserting sale row', {
+        saleId: sale.id,
+        referenceNumber: sale.reference_number,
+        idempotencyKey: sale.idempotency_key,
+        vatAmount: sale.vat_amount ?? 0,
+      });
       await tx.execute(
         'INSERT INTO sales (id, business_id, branch_id, employee_id, total_amount, discount_amount, payment_method, status, notes, created_at, synced_at, reference_number, vat_amount, idempotency_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
@@ -443,24 +499,35 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
       await tx.execute('DELETE FROM payments WHERE sale_id = ?', [sale.id]);
 
       for (const item of input.items) {
+        logCompleteSaleDebug(input.checkoutTraceId, 'inserting sale item', {
+          saleId: sale.id,
+          saleItemId: item.id,
+          productId: item.product_id,
+          quantity: item.quantity,
+          subtotal: item.subtotal,
+        });
         await tx.execute(
           'INSERT INTO sale_items (id, sale_id, product_id, business_id, quantity, unit_price, subtotal) VALUES (?, ?, ?, ?, ?, ?, ?)',
           [item.id, item.sale_id, item.product_id, sale.business_id, item.quantity, item.unit_price, item.subtotal],
         );
 
-        const inventory = (await tx.getOptional('SELECT * FROM inventory_items WHERE product_id = ? AND branch_id = ?', [
-          item.product_id,
-          sale.branch_id,
-        ])) as InventoryRecord | null;
+        const inventory = await getSaleInventoryRecord(tx, item.product_id, sale.branch_id);
         if (!inventory) {
           continue;
         }
         const before = inventory.stock_quantity;
         const after = Math.max(0, before - item.quantity);
-        await tx.execute(
-          'UPDATE inventory_items SET stock_quantity = ?, updated_at = ? WHERE product_id = ? AND branch_id = ?',
-          [after, now(), item.product_id, sale.branch_id],
-        );
+        logCompleteSaleDebug(input.checkoutTraceId, 'updating inventory after sale item', {
+          saleId: sale.id,
+          productId: item.product_id,
+          branchId: sale.branch_id,
+          inventoryId: inventory.id,
+          inventorySource: inventory.source_table ?? null,
+          quantityBefore: before,
+          quantityChanged: -item.quantity,
+          quantityAfter: after,
+        });
+        await updateSaleInventoryStock(tx, inventory, item.product_id, sale.branch_id, after);
         await tx.execute(
           'INSERT INTO inventory_logs (id, product_id, branch_id, action_type, quantity_before, quantity_changed, quantity_after, reference_type, reference_id, performed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
@@ -498,12 +565,23 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
               },
             ];
       for (const payment of payments) {
+        logCompleteSaleDebug(input.checkoutTraceId, 'inserting payment', {
+          saleId: sale.id,
+          paymentId: payment.id,
+          method: payment.method,
+          amount_peso: payment.amount_peso,
+        });
         await tx.execute(
           'INSERT INTO payments (id, sale_id, business_id, method, amount_peso) VALUES (?, ?, ?, ?, ?)',
           [payment.id, payment.sale_id, payment.business_id, payment.method, payment.amount_peso],
         );
       }
 
+      logCompleteSaleDebug(input.checkoutTraceId, 'inserting sale audit log', {
+        saleId: sale.id,
+        businessId: sale.business_id,
+        branchId: sale.branch_id,
+      });
       await tx.execute(
         'INSERT INTO audit_logs (id, business_id, branch_id, actor_id, event_type, payload, created_at, source_device_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         [
@@ -522,6 +600,7 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
           null,
         ],
       );
+      logCompleteSaleDebug(input.checkoutTraceId, 'db createSale completed', { saleId: sale.id });
       return sale;
     },
     createRefund: async (input) => {
