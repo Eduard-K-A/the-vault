@@ -23,7 +23,12 @@ export function ProductCard({ product, stockQuantity, onPress, onAdd, onEdit }: 
   const statusLabel = product.is_active ? (isOutOfStock ? 'Out of stock' : isLowStock ? 'Low stock' : 'In stock') : 'Archived';
 
   return (
-    <Pressable onPress={() => onPress?.(product)} style={styles.pressable}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${product.name} product card`}
+      onPress={() => onPress?.(product)}
+      style={styles.pressable}
+    >
       <Card style={[styles.card, isOutOfStock && styles.cardOut, isLowStock && styles.cardLow]}>
         <View style={styles.media}>
           {product.image_url ? (
@@ -59,6 +64,7 @@ export function ProductCard({ product, stockQuantity, onPress, onAdd, onEdit }: 
           {onAdd ? (
             <Pressable
               accessibilityRole="button"
+              accessibilityLabel={`Restock ${product.name}`}
               hitSlop={8}
               onPress={(event) => {
                 event.stopPropagation();

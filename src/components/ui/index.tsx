@@ -107,11 +107,12 @@ export function Card({ children, style, padded = true }: CardProps) {
 interface BadgeProps {
   label: string;
   tone?: 'neutral' | 'success' | 'warning' | 'danger' | 'primary' | 'accent';
+  accessibilityLabel?: string;
 }
 
-export function Badge({ label, tone = 'neutral' }: BadgeProps) {
+export function Badge({ label, tone = 'neutral', accessibilityLabel }: BadgeProps) {
   return (
-    <View style={[styles.badge, badgeToneStyles[tone]]}>
+    <View accessibilityLabel={accessibilityLabel ?? label} style={[styles.badge, badgeToneStyles[tone]]}>
       <Text style={styles.badgeText}>{label}</Text>
     </View>
   );
@@ -124,6 +125,7 @@ interface ButtonProps {
   loading?: boolean;
   disabled?: boolean;
   fullWidth?: boolean;
+  accessibilityLabel?: string;
 }
 
 export function Button({
@@ -133,12 +135,14 @@ export function Button({
   loading = false,
   disabled = false,
   fullWidth = true,
+  accessibilityLabel,
 }: ButtonProps) {
   const isDisabled = disabled || loading;
 
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
       onPress={onPress}
       disabled={isDisabled}
       style={({ pressed }) => [
@@ -161,6 +165,7 @@ export function Button({
 
 interface InputProps extends TextInputProps {
   label?: string;
+  accessibilityLabel?: string;
 }
 
 export function Input({ label, style, onFocus, onBlur, ...props }: InputProps) {
@@ -170,6 +175,7 @@ export function Input({ label, style, onFocus, onBlur, ...props }: InputProps) {
     <View style={styles.inputWrapper}>
       {label ? <Text style={styles.label}>{label}</Text> : null}
       <TextInput
+        accessibilityLabel={props.accessibilityLabel ?? label}
         placeholderTextColor={colors.textMuted}
         onFocus={(event) => {
           setFocused(true);
@@ -201,6 +207,7 @@ export function ModalSheet({ visible, title, children, onClose }: ModalSheetProp
       <Pressable style={styles.sheetOverlay} onPress={onClose}>
         <Pressable
           style={[styles.sheet, { paddingBottom: insets.bottom + dimensions.screenPaddingV }]}
+          accessibilityLabel={title ? `${title} sheet` : 'Modal sheet'}
           onPress={(event) => event.stopPropagation()}
         >
           <View style={styles.sheetHandle} />
