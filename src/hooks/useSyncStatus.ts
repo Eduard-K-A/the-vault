@@ -6,8 +6,10 @@ export function useSyncStatus(): {
   isOnline: boolean;
   phase: 'booting' | 'unauthenticated' | 'syncing' | 'ready' | 'offline' | 'degraded' | 'failed';
   lastError: string | null;
+  lastErrorCode: string | null;
   lastSyncedAt: string | null;
   pendingUploadCount: number;
+  failedUploadCount: number;
 } {
   const snapshot = useSyncExternalStore(
     useSyncStore.subscribe,
@@ -19,7 +21,9 @@ export function useSyncStatus(): {
     isOnline: snapshot.isOnline,
     phase: snapshot.phase,
     lastError: snapshot.lastError,
+    lastErrorCode: snapshot.lastErrorCode,
     lastSyncedAt: snapshot.lastSyncedAt,
     pendingUploadCount: snapshot.pendingUploadCount,
+    failedUploadCount: snapshot.failedUploadCount,
   };
 }

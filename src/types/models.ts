@@ -1,6 +1,8 @@
 export type UserRole = 'employee' | 'owner';
 export type PaymentMethod = 'cash' | 'gcash' | 'maya' | 'card';
+export type PaymentStatus = 'pending' | 'authorized' | 'captured' | 'paid' | 'failed' | 'refunded' | 'partially_refunded';
 export type SaleStatus = 'pending' | 'completed' | 'cancelled' | 'voided' | 'refunded';
+export type SaleSyncStatus = 'local_only' | 'sync_pending' | 'syncing' | 'synced' | 'sync_failed' | 'needs_review';
 export type InventoryActionType = 'sale' | 'restock' | 'adjustment' | 'refund' | 'initial';
 export type InventoryReferenceType = 'sale' | 'manual' | 'system';
 export type AuditEventType =
@@ -90,8 +92,15 @@ export interface Payment {
   id: string;
   sale_id: string;
   business_id: string;
+  branch_id?: string | null;
   method: PaymentMethod;
   amount_peso: number;
+  status?: PaymentStatus;
+  provider?: string | null;
+  provider_reference?: string | null;
+  offline_approved?: boolean;
+  created_at?: string;
+  synced_at?: string | null;
 }
 
 export interface Sale {
@@ -109,6 +118,13 @@ export interface Sale {
   reference_number?: string | null;
   vat_amount?: number;
   idempotency_key?: string | null;
+  sync_status?: SaleSyncStatus;
+  sync_attempt_count?: number;
+  last_sync_error_code?: string | null;
+  last_sync_error_message?: string | null;
+  last_sync_error_at?: string | null;
+  last_sync_attempt_at?: string | null;
+  server_confirmed_at?: string | null;
   payments?: Payment[];
 }
 
@@ -123,6 +139,7 @@ export interface SaleItem {
 
 export interface InventoryLog {
   id: string;
+  business_id?: string | null;
   product_id: string;
   branch_id: string;
   action_type: InventoryActionType;
@@ -131,8 +148,10 @@ export interface InventoryLog {
   quantity_after: number;
   reference_type: InventoryReferenceType;
   reference_id: string | null;
+  reason?: string | null;
   performed_by: string;
   created_at: string;
+  synced_at?: string | null;
 }
 
 export interface AuditLog {

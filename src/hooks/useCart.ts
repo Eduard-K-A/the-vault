@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 
 import { db } from '@/db/powersync';
 import { useAuthStore } from '@/store/authStore';
@@ -9,6 +9,7 @@ import { generateUUID } from '@/utils/generateUUID';
 import { logCompleteSaleDebug } from '@/utils/syncDebug';
 
 export function useCart() {
+  const checkoutInProgressRef = useRef(false);
   const items = useCartStore((state) => state.items);
   const paymentMethod = useCartStore((state) => state.paymentMethod);
   const discountAmount = useCartStore((state) => state.discountAmount);
@@ -34,6 +35,14 @@ export function useCart() {
       splitPayments?: Array<{ method: PaymentMethod; amount_peso: number }>,
       checkoutTraceId?: string,
     ) => {
+      if (checkoutInProgressRef.current) {
+        logCompleteSaleDebug(checkoutTraceId, 'validation failed: checkout already in progress');
+        throw new Error('CHECKOUT_IN_PROGRESS');
+      }
+
+      checkoutInProgressRef.current = true;
+
+      try {
       logCompleteSaleDebug(checkoutTraceId, 'cart checkout started', {
         businessId,
         branchId,
@@ -64,6 +73,17 @@ export function useCart() {
       if (items.length === 0) {
         logCompleteSaleDebug(checkoutTraceId, 'validation failed: empty cart');
         throw new Error('Cart is empty.');
+      }
+
+      if (splitPayments && splitPayments.length > 0) {
+        const splitTotal = splitPayments.reduce((sum, payment) => sum + payment.amount_peso, 0);
+        if (Math.abs(splitTotal - total) > 0.01) {
+          logCompleteSaleDebug(checkoutTraceId, 'validation failed: split payment total mismatch', {
+            splitTotal,
+            total,
+          });
+          throw new Error('PAYMENT_TOTAL_MISMATCH');
+        }
       }
 
       const saleId = generateUUID();
@@ -127,6 +147,9 @@ export function useCart() {
       clearCart();
       logCompleteSaleDebug(checkoutTraceId, 'cart cleared', { saleId: committedSale.id });
       return committedSale.id;
+      } finally {
+        checkoutInProgressRef.current = false;
+      }
     },
     [branchId, businessId, clearCart, discountAmount, items, note, paymentMethod, total, userId],
   );

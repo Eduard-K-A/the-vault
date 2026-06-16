@@ -96,15 +96,31 @@ export default function CartSheet({ visible, onClose }: CartSheetProps) {
                 </View>
                 <View style={styles.rowActions}>
                   <View style={styles.stepper}>
-                    <Pressable onPress={() => setQuantity(item.product_id, item.quantity - 1)} style={styles.stepperButton}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Decrease ${item.name} quantity`}
+                      onPress={() => setQuantity(item.product_id, item.quantity - 1)}
+                      style={styles.stepperButton}
+                    >
                       <Text style={styles.stepperText}>−</Text>
                     </Pressable>
                     <Text style={styles.quantity}>{item.quantity}</Text>
-                    <Pressable onPress={() => setQuantity(item.product_id, item.quantity + 1)} style={styles.stepperButton}>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Increase ${item.name} quantity`}
+                      onPress={() => setQuantity(item.product_id, item.quantity + 1)}
+                      style={styles.stepperButton}
+                    >
                       <Text style={styles.stepperText}>+</Text>
                     </Pressable>
                   </View>
-                  <Button label="Remove" variant="ghost" onPress={() => removeItem(item.product_id)} fullWidth={false} />
+                  <Button
+                    label="Remove"
+                    variant="ghost"
+                    accessibilityLabel={`Remove ${item.name}`}
+                    onPress={() => removeItem(item.product_id)}
+                    fullWidth={false}
+                  />
                 </View>
               </Card>
             )}
@@ -121,6 +137,7 @@ export default function CartSheet({ visible, onClose }: CartSheetProps) {
             <Button
               label={discountAmount > 0 ? 'Edit discount' : 'Add discount'}
               variant="secondary"
+              accessibilityLabel={discountAmount > 0 ? 'Edit discount' : 'Add discount'}
               onPress={handleOpenDiscount}
             />
             <View style={styles.summaryRowTotal}>
@@ -130,6 +147,7 @@ export default function CartSheet({ visible, onClose }: CartSheetProps) {
           </View>
           <Button
             label="Checkout"
+            accessibilityLabel="Checkout cart"
             onPress={() => {
               onClose();
               navigation.navigate('Checkout');
@@ -144,18 +162,21 @@ export default function CartSheet({ visible, onClose }: CartSheetProps) {
             <Button
               label="Amount"
               variant={discountMode === 'amount' ? 'primary' : 'secondary'}
+              accessibilityLabel="Set discount mode to amount"
               onPress={() => handleChangeDiscountMode('amount')}
               fullWidth={false}
             />
             <Button
               label="Percentage"
               variant={discountMode === 'percent' ? 'primary' : 'secondary'}
+              accessibilityLabel="Set discount mode to percentage"
               onPress={() => handleChangeDiscountMode('percent')}
               fullWidth={false}
             />
           </View>
           <Input
             label={discountMode === 'percent' ? 'Discount percentage' : 'Discount amount'}
+            accessibilityLabel={discountMode === 'percent' ? 'Discount percentage' : 'Discount amount'}
             value={discountDraft}
             onChangeText={setDiscountDraft}
             keyboardType="numeric"
@@ -167,8 +188,14 @@ export default function CartSheet({ visible, onClose }: CartSheetProps) {
               : `This will apply ${formatCurrency(Number(discountDraft || 0))} (${discountPercent}% of subtotal).`}
           </Text>
           <View style={styles.discountActions}>
-            <Button label="Cancel" variant="ghost" onPress={() => setDiscountVisible(false)} fullWidth={false} />
-            <Button label="Apply" onPress={handleSaveDiscount} />
+            <Button
+              label="Cancel"
+              variant="ghost"
+              accessibilityLabel="Cancel discount"
+              onPress={() => setDiscountVisible(false)}
+              fullWidth={false}
+            />
+            <Button label="Apply" accessibilityLabel="Apply discount" onPress={handleSaveDiscount} />
           </View>
         </View>
       </ModalSheet>

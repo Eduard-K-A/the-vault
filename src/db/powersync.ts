@@ -275,6 +275,7 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
       );
       const log: InventoryLog = {
         id: generateUUID(),
+        business_id: inventory.business_id ?? null,
         product_id: input.productId,
         branch_id: input.branchId,
         action_type:
@@ -290,13 +291,16 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
         quantity_after: quantityAfter,
         reference_type: input.referenceId ? 'sale' : input.reason === 'restock' ? 'manual' : 'system',
         reference_id: input.referenceId ?? null,
+        reason: input.notes ?? input.reason,
         performed_by: input.actorId,
         created_at: now(),
+        synced_at: null,
       };
       await tx.execute(
-        'INSERT INTO inventory_logs (id, product_id, branch_id, action_type, quantity_before, quantity_changed, quantity_after, reference_type, reference_id, performed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO inventory_logs (id, business_id, product_id, branch_id, action_type, quantity_before, quantity_changed, quantity_after, reference_type, reference_id, reason, performed_by, created_at, synced_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
           log.id,
+          log.business_id ?? null,
           log.product_id,
           log.branch_id,
           log.action_type,
@@ -305,8 +309,10 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
           log.quantity_after,
           log.reference_type,
           log.reference_id,
+          log.reason ?? null,
           log.performed_by,
           log.created_at,
+          log.synced_at ?? null,
         ],
       );
       return log;
@@ -443,6 +449,13 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
         reference_number: input.sale.reference_number ?? generateReferenceNumber('TXN'),
         vat_amount: roundMoney(input.sale.vat_amount ?? (input.sale.total_amount - input.sale.total_amount / 1.12)),
         idempotency_key: input.sale.idempotency_key ?? generateUUID(),
+        sync_status: input.sale.sync_status ?? 'sync_pending',
+        sync_attempt_count: input.sale.sync_attempt_count ?? 0,
+        last_sync_error_code: input.sale.last_sync_error_code ?? null,
+        last_sync_error_message: input.sale.last_sync_error_message ?? null,
+        last_sync_error_at: input.sale.last_sync_error_at ?? null,
+        last_sync_attempt_at: input.sale.last_sync_attempt_at ?? null,
+        server_confirmed_at: input.sale.server_confirmed_at ?? null,
       } as Sale;
 
       for (const item of input.items) {
@@ -476,7 +489,7 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
         vatAmount: sale.vat_amount ?? 0,
       });
       await tx.execute(
-        'INSERT INTO sales (id, business_id, branch_id, employee_id, total_amount, discount_amount, payment_method, status, notes, created_at, synced_at, reference_number, vat_amount, idempotency_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO sales (id, business_id, branch_id, employee_id, total_amount, discount_amount, payment_method, status, notes, created_at, synced_at, reference_number, vat_amount, idempotency_key, sync_status, sync_attempt_count, last_sync_error_code, last_sync_error_message, last_sync_error_at, last_sync_attempt_at, server_confirmed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
           sale.id,
           sale.business_id,
@@ -492,6 +505,13 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
           sale.reference_number,
           sale.vat_amount ?? 0,
           sale.idempotency_key ?? null,
+          sale.sync_status ?? 'sync_pending',
+          sale.sync_attempt_count ?? 0,
+          sale.last_sync_error_code ?? null,
+          sale.last_sync_error_message ?? null,
+          sale.last_sync_error_at ?? null,
+          sale.last_sync_attempt_at ?? null,
+          sale.server_confirmed_at ?? null,
         ],
       );
 
@@ -529,9 +549,10 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
         });
         await updateSaleInventoryStock(tx, inventory, item.product_id, sale.branch_id, after);
         await tx.execute(
-          'INSERT INTO inventory_logs (id, product_id, branch_id, action_type, quantity_before, quantity_changed, quantity_after, reference_type, reference_id, performed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO inventory_logs (id, business_id, product_id, branch_id, action_type, quantity_before, quantity_changed, quantity_after, reference_type, reference_id, reason, performed_by, created_at, synced_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             generateUUID(),
+            sale.business_id,
             item.product_id,
             sale.branch_id,
             'sale',
@@ -540,8 +561,10 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
             after,
             'sale',
             sale.id,
+            'sale checkout',
             input.actorId,
             now(),
+            null,
           ],
         );
       }
@@ -552,16 +575,30 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
               id: generateUUID(),
               sale_id: sale.id,
               business_id: sale.business_id,
+              branch_id: sale.branch_id,
               method: payment.method,
               amount_peso: payment.amount_peso,
+              status: 'paid' as const,
+              provider: payment.method,
+              provider_reference: null,
+              offline_approved: payment.method === 'cash',
+              created_at: now(),
+              synced_at: null,
             }))
           : [
               {
                 id: generateUUID(),
                 sale_id: sale.id,
                 business_id: sale.business_id,
+                branch_id: sale.branch_id,
                 method: sale.payment_method,
                 amount_peso: sale.total_amount,
+                status: 'paid' as const,
+                provider: sale.payment_method,
+                provider_reference: null,
+                offline_approved: sale.payment_method === 'cash',
+                created_at: now(),
+                synced_at: null,
               },
             ];
       for (const payment of payments) {
@@ -572,8 +609,21 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
           amount_peso: payment.amount_peso,
         });
         await tx.execute(
-          'INSERT INTO payments (id, sale_id, business_id, method, amount_peso) VALUES (?, ?, ?, ?, ?)',
-          [payment.id, payment.sale_id, payment.business_id, payment.method, payment.amount_peso],
+          'INSERT INTO payments (id, sale_id, business_id, branch_id, method, amount_peso, status, provider, provider_reference, offline_approved, created_at, synced_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [
+            payment.id,
+            payment.sale_id,
+            payment.business_id,
+            payment.branch_id ?? null,
+            payment.method,
+            payment.amount_peso,
+            payment.status ?? 'paid',
+            payment.provider ?? payment.method,
+            payment.provider_reference ?? null,
+            payment.offline_approved ? 1 : 0,
+            payment.created_at ?? now(),
+            payment.synced_at ?? null,
+          ],
         );
       }
 
@@ -658,9 +708,10 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
           [after, now(), item.product_id, input.branchId],
         );
         await tx.execute(
-          'INSERT INTO inventory_logs (id, product_id, branch_id, action_type, quantity_before, quantity_changed, quantity_after, reference_type, reference_id, performed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO inventory_logs (id, business_id, product_id, branch_id, action_type, quantity_before, quantity_changed, quantity_after, reference_type, reference_id, reason, performed_by, created_at, synced_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             generateUUID(),
+            input.businessId,
             item.product_id,
             input.branchId,
             'refund',
@@ -669,8 +720,10 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
             after,
             'sale',
             refund.id,
+            input.reason,
             input.actorId,
             now(),
+            null,
           ],
         );
       }
@@ -706,6 +759,7 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
       );
       const log: InventoryLog = {
         id: generateUUID(),
+        business_id: inventory.business_id ?? null,
         product_id: input.productId,
         branch_id: input.branchId,
         action_type: 'initial',
@@ -714,13 +768,16 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
         quantity_after: after,
         reference_type: 'system',
         reference_id: null,
+        reason: 'initial_count',
         performed_by: input.actorId,
         created_at: now(),
+        synced_at: null,
       };
       await tx.execute(
-        'INSERT INTO inventory_logs (id, product_id, branch_id, action_type, quantity_before, quantity_changed, quantity_after, reference_type, reference_id, performed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO inventory_logs (id, business_id, product_id, branch_id, action_type, quantity_before, quantity_changed, quantity_after, reference_type, reference_id, reason, performed_by, created_at, synced_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
           log.id,
+          log.business_id ?? null,
           log.product_id,
           log.branch_id,
           log.action_type,
@@ -729,14 +786,20 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
           log.quantity_after,
           log.reference_type,
           log.reference_id,
+          log.reason ?? null,
           log.performed_by,
           log.created_at,
+          log.synced_at ?? null,
         ],
       );
       return log;
     },
     markSaleSynced: async (saleId) => {
-      await tx.execute('UPDATE sales SET synced_at = ? WHERE id = ?', [now(), saleId]);
+      const confirmedAt = now();
+      await tx.execute(
+        "UPDATE sales SET synced_at = ?, sync_status = 'synced', last_sync_error_code = NULL, last_sync_error_message = NULL, last_sync_error_at = NULL, last_sync_attempt_at = ?, server_confirmed_at = ? WHERE id = ?",
+        [confirmedAt, confirmedAt, confirmedAt, saleId],
+      );
     },
     restockInventory: async (input) => {
       const inventory = await ensureInventoryRow(tx, input.productId, input.branchId);
@@ -748,6 +811,7 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
       );
       const log: InventoryLog = {
         id: generateUUID(),
+        business_id: inventory.business_id ?? null,
         product_id: input.productId,
         branch_id: input.branchId,
         action_type: 'restock',
@@ -756,13 +820,16 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
         quantity_after: quantityAfter,
         reference_type: input.referenceId ? 'sale' : 'manual',
         reference_id: input.referenceId ?? null,
+        reason: 'restock',
         performed_by: input.actorId,
         created_at: now(),
+        synced_at: null,
       };
       await tx.execute(
-        'INSERT INTO inventory_logs (id, product_id, branch_id, action_type, quantity_before, quantity_changed, quantity_after, reference_type, reference_id, performed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO inventory_logs (id, business_id, product_id, branch_id, action_type, quantity_before, quantity_changed, quantity_after, reference_type, reference_id, reason, performed_by, created_at, synced_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
           log.id,
+          log.business_id ?? null,
           log.product_id,
           log.branch_id,
           log.action_type,
@@ -771,8 +838,10 @@ async function buildTransaction(tx: any): Promise<LocalTransaction> {
           log.quantity_after,
           log.reference_type,
           log.reference_id,
+          log.reason ?? null,
           log.performed_by,
           log.created_at,
+          log.synced_at ?? null,
         ],
       );
       return log;
@@ -1128,6 +1197,13 @@ async function writeBusinessSnapshot(
       row.reference_number ?? null,
       row.vat_amount ?? null,
       row.idempotency_key ?? null,
+      row.sync_status ?? (row.synced_at ? 'synced' : 'sync_pending'),
+      row.sync_attempt_count ?? 0,
+      row.last_sync_error_code ?? null,
+      row.last_sync_error_message ?? null,
+      row.last_sync_error_at ?? null,
+      row.last_sync_attempt_at ?? null,
+      row.server_confirmed_at ?? row.synced_at ?? null,
     ]);
     await writeRows(tx, 'sale_items', snapshot.saleItems ?? [], (row) => {
       const saleItemRow = row as SaleItem & { business_id?: string };
@@ -1145,8 +1221,15 @@ async function writeBusinessSnapshot(
       row.id,
       row.sale_id,
       row.business_id,
+      row.branch_id ?? null,
       row.method,
       row.amount_peso,
+      row.status ?? 'paid',
+      row.provider ?? row.method,
+      row.provider_reference ?? null,
+      row.offline_approved ? 1 : 0,
+      row.created_at ?? new Date().toISOString(),
+      row.synced_at ?? null,
     ]);
     await writeRows(tx, 'refunds', snapshot.refunds ?? [], (row) => [
       row.id,
@@ -1172,6 +1255,7 @@ async function writeBusinessSnapshot(
     ]);
     await writeRows(tx, 'inventory_logs', snapshot.inventoryLogs ?? [], (row) => [
       row.id,
+      row.business_id ?? null,
       row.product_id,
       row.branch_id,
       row.action_type,
@@ -1180,8 +1264,10 @@ async function writeBusinessSnapshot(
       row.quantity_after,
       row.reference_type,
       row.reference_id,
+      row.reason ?? null,
       row.performed_by,
       row.created_at,
+      row.synced_at ?? null,
     ]);
     await writeRows(tx, 'audit_logs', snapshot.auditLogs ?? [], (row) => [
       row.id,
@@ -1268,9 +1354,29 @@ const SNAPSHOT_TABLE_COLUMNS: Record<BusinessSnapshotTable, string[]> = {
     'reference_number',
     'vat_amount',
     'idempotency_key',
+    'sync_status',
+    'sync_attempt_count',
+    'last_sync_error_code',
+    'last_sync_error_message',
+    'last_sync_error_at',
+    'last_sync_attempt_at',
+    'server_confirmed_at',
   ],
   sale_items: ['id', 'sale_id', 'product_id', 'business_id', 'quantity', 'unit_price', 'subtotal'],
-  payments: ['id', 'sale_id', 'business_id', 'method', 'amount_peso'],
+  payments: [
+    'id',
+    'sale_id',
+    'business_id',
+    'branch_id',
+    'method',
+    'amount_peso',
+    'status',
+    'provider',
+    'provider_reference',
+    'offline_approved',
+    'created_at',
+    'synced_at',
+  ],
   refunds: [
     'id',
     'idempotency_key',
@@ -1287,6 +1393,7 @@ const SNAPSHOT_TABLE_COLUMNS: Record<BusinessSnapshotTable, string[]> = {
   refund_items: ['id', 'refund_id', 'sale_item_id', 'product_id', 'quantity', 'unit_price', 'subtotal'],
   inventory_logs: [
     'id',
+    'business_id',
     'product_id',
     'branch_id',
     'action_type',
@@ -1295,8 +1402,10 @@ const SNAPSHOT_TABLE_COLUMNS: Record<BusinessSnapshotTable, string[]> = {
     'quantity_after',
     'reference_type',
     'reference_id',
+    'reason',
     'performed_by',
     'created_at',
+    'synced_at',
   ],
   audit_logs: ['id', 'business_id', 'branch_id', 'actor_id', 'event_type', 'payload', 'created_at', 'source_device_id'],
   device_sessions: ['id', 'user_id', 'business_id', 'device_id', 'device_name', 'last_seen_at', 'created_at'],

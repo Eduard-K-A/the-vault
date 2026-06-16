@@ -311,6 +311,8 @@ export default function InventoryScreen() {
         </View>
       ) : null}
       <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={role === 'owner' ? 'Add product' : 'Open cart'}
         onPress={() => (role === 'owner' ? navigation.navigate('AddProduct') : setCartVisible(true))}
         style={({ pressed }) => [
           styles.fab,

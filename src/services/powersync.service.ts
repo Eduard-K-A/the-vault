@@ -3,6 +3,7 @@ import { runManualSyncSteps } from '@/services/powersyncManualSyncHelpers';
 import { waitForManualPullConfirmation } from '@/services/powersyncPullWaitHelpers';
 import { validateSyncBackend } from '@/services/syncValidation.service';
 import { cleanupInvalidProducts } from '@/db/productCleanupHelpers';
+import { ensureLocalSchemaCompatibility } from '@/powersync/localSchemaCompatibility';
 import { useAuthStore } from '@/store/authStore';
 import { useSyncStore } from '@/store/syncStore';
 import { logPowerSyncBackground, logSyncDebug } from '@/utils/syncDebug';
@@ -58,6 +59,7 @@ export async function initializePowerSync(): Promise<void> {
   initialized = true;
   logPowerSyncBackground('initializing database');
   await powersync.init();
+  await ensureLocalSchemaCompatibility(powersync);
   logPowerSyncBackground('database initialized', getSyncNowStatusSnapshot());
 
   // Clean up products with invalid prices before syncing

@@ -3,6 +3,7 @@ import {
   json,
   nullableString,
   numberValue,
+  requireBranchAccess,
   requireMembership,
   stringValue,
   unwrapPayload,
@@ -52,6 +53,11 @@ Deno.serve(async (request) => {
     return membershipError;
   }
 
+  const branchAccessError = await requireBranchAccess(clients.admin, businessId, branchId);
+  if (branchAccessError) {
+    return branchAccessError;
+  }
+
   const now = new Date().toISOString();
   const { error: inventoryError } = await clients.admin.from('inventory_items').upsert(
     {
@@ -72,6 +78,7 @@ Deno.serve(async (request) => {
   const { error: logError } = await clients.admin.from('inventory_logs').upsert(
     {
       id: stringValue(log.id),
+      business_id: businessId,
       product_id: productId,
       branch_id: branchId,
       action_type: stringValue(log.action_type) ?? 'adjustment',
@@ -80,8 +87,10 @@ Deno.serve(async (request) => {
       quantity_after: numberValue(log.quantity_after),
       reference_type: stringValue(log.reference_type) ?? 'manual',
       reference_id: nullableString(log.reference_id),
+      reason: nullableString(log.reason),
       performed_by: stringValue(log.performed_by) ?? clients.user.id,
       created_at: stringValue(log.created_at) ?? now,
+      synced_at: now,
     },
     { onConflict: 'id' },
   );

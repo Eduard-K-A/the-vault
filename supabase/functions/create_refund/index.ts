@@ -4,7 +4,8 @@ import {
   nullableString,
   numberValue,
   parsePayload,
-  requireMembership,
+  requireBranchAccess,
+  requireOwner,
   stringValue,
   tableRows,
   unwrapPayload,
@@ -31,9 +32,14 @@ Deno.serve(async (request) => {
     return json({ error: 'refund id, business_id, and branch_id are required' }, 400);
   }
 
-  const membershipError = await requireMembership(clients.admin, businessId, clients.user.id);
-  if (membershipError) {
-    return membershipError;
+  const permissionError = await requireOwner(clients.admin, businessId, clients.user.id);
+  if (permissionError) {
+    return permissionError;
+  }
+
+  const branchAccessError = await requireBranchAccess(clients.admin, businessId, branchId);
+  if (branchAccessError) {
+    return branchAccessError;
   }
 
   const now = new Date().toISOString();
@@ -97,6 +103,7 @@ Deno.serve(async (request) => {
     const { error } = await clients.admin.from('inventory_logs').upsert(
       {
         id: stringValue(log.id),
+        business_id: businessId,
         product_id: stringValue(log.product_id),
         branch_id: stringValue(log.branch_id),
         action_type: stringValue(log.action_type) ?? 'refund',
@@ -105,8 +112,10 @@ Deno.serve(async (request) => {
         quantity_after: numberValue(log.quantity_after),
         reference_type: stringValue(log.reference_type) ?? 'sale',
         reference_id: nullableString(log.reference_id) ?? refundId,
+        reason: nullableString(log.reason),
         performed_by: stringValue(log.performed_by) ?? clients.user.id,
         created_at: stringValue(log.created_at) ?? now,
+        synced_at: now,
       },
       { onConflict: 'id' },
     );

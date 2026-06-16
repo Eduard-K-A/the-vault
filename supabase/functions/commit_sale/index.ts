@@ -1,9 +1,11 @@
 import {
   createClients,
   json,
+  booleanValue,
   nullableString,
   numberValue,
   parsePayload,
+  requireBranchAccess,
   stringValue,
   tableRows,
   unwrapPayload,
@@ -101,6 +103,14 @@ Deno.serve(async (request) => {
   }
   logCommitSale('membership accepted', { saleId, businessId, userId: clients.user.id });
 
+  logCommitSale('branch lookup started', { saleId, businessId, branchId });
+  const branchAccessError = await requireBranchAccess(clients.admin, businessId, branchId);
+  if (branchAccessError) {
+    logCommitSale('branch lookup rejected', { saleId, businessId, branchId });
+    return branchAccessError;
+  }
+  logCommitSale('branch lookup accepted', { saleId, businessId, branchId });
+
   const now = new Date().toISOString();
   logCommitSale('existing sale lookup started', {
     saleId,
@@ -139,6 +149,13 @@ Deno.serve(async (request) => {
         reference_number: nullableString(sale.reference_number),
         vat_amount: numberValue(sale.vat_amount),
         idempotency_key: nullableString(sale.idempotency_key) ?? saleId,
+        sync_status: 'synced',
+        sync_attempt_count: numberValue(sale.sync_attempt_count, 1),
+        last_sync_error_code: null,
+        last_sync_error_message: null,
+        last_sync_error_at: null,
+        last_sync_attempt_at: now,
+        server_confirmed_at: now,
       },
       { onConflict: 'id' },
     );
@@ -148,6 +165,13 @@ Deno.serve(async (request) => {
     logCommitSale('sales upsert completed', { saleId });
   } else {
     logCommitSale('sales upsert skipped; sale already exists', { saleId });
+    return json({
+      ok: true,
+      sale_id: saleId,
+      already_committed: true,
+      synced_at: now,
+      server_reference_number: nullableString(sale.reference_number),
+    });
   }
 
   const saleItems = tableRows(raw?.sale_items);
@@ -181,8 +205,15 @@ Deno.serve(async (request) => {
         id: paymentId,
         sale_id: saleId,
         business_id: businessId,
+        branch_id: nullableString(payment.branch_id) ?? branchId,
         method: stringValue(payment.method) ?? 'cash',
         amount_peso: numberValue(payment.amount_peso),
+        status: stringValue(payment.status) ?? 'paid',
+        provider: nullableString(payment.provider) ?? stringValue(payment.method) ?? 'cash',
+        provider_reference: nullableString(payment.provider_reference),
+        offline_approved: booleanValue(payment.offline_approved, false),
+        created_at: stringValue(payment.created_at) ?? now,
+        synced_at: now,
       },
       { onConflict: 'id' },
     );
@@ -231,6 +262,7 @@ Deno.serve(async (request) => {
     const { error } = await clients.admin.from('inventory_logs').upsert(
       {
         id: inventoryLogId,
+        business_id: businessId,
         product_id: stringValue(log.product_id),
         branch_id: stringValue(log.branch_id),
         action_type: stringValue(log.action_type) ?? 'sale',
@@ -239,8 +271,10 @@ Deno.serve(async (request) => {
         quantity_after: numberValue(log.quantity_after),
         reference_type: stringValue(log.reference_type) ?? 'sale',
         reference_id: nullableString(log.reference_id) ?? saleId,
+        reason: nullableString(log.reason),
         performed_by: stringValue(log.performed_by) ?? employeeId,
         created_at: stringValue(log.created_at) ?? now,
+        synced_at: now,
       },
       { onConflict: 'id' },
     );
@@ -274,5 +308,11 @@ Deno.serve(async (request) => {
   logCommitSale('audit logs upsert completed', { saleId, count: auditLogs.length });
 
   logCommitSale('request completed', { saleId });
-  return json({ ok: true });
+  return json({
+    ok: true,
+    sale_id: saleId,
+    already_committed: false,
+    synced_at: now,
+    server_reference_number: nullableString(sale.reference_number),
+  });
 });

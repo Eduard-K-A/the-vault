@@ -35,6 +35,16 @@ export function numberValue(value: unknown, fallback = 0): number {
   return Number.isFinite(number) ? number : fallback;
 }
 
+export function booleanValue(value: unknown, fallback: boolean): boolean {
+  if (value === true || value === 1) {
+    return true;
+  }
+  if (value === false || value === 0) {
+    return false;
+  }
+  return fallback;
+}
+
 export function parsePayload(value: unknown): Record<string, unknown> {
   if (value && typeof value === 'object') {
     return value as Record<string, unknown>;
@@ -91,4 +101,36 @@ export async function requireMembership(admin: any, businessId: string, userId: 
   }
 
   return data ? null : json({ error: 'forbidden' }, 403);
+}
+
+export async function requireBranchAccess(admin: any, businessId: string, branchId: string): Promise<Response | null> {
+  const { data, error } = await admin
+    .from('branches')
+    .select('id')
+    .eq('id', branchId)
+    .eq('business_id', businessId)
+    .limit(1);
+
+  if (error) {
+    return json({ error: error.message }, 500);
+  }
+
+  return data?.[0] ? null : json({ error: 'branch_not_found_or_forbidden' }, 403);
+}
+
+export async function requireOwner(admin: any, businessId: string, userId: string): Promise<Response | null> {
+  const { data, error } = await admin
+    .from('business_members')
+    .select('role')
+    .eq('business_id', businessId)
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .limit(1);
+
+  if (error) {
+    return json({ error: error.message }, 500);
+  }
+
+  const role = data?.[0]?.role;
+  return role === 'owner' ? null : json({ error: 'permission_denied' }, 403);
 }

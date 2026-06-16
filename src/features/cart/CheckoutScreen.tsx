@@ -147,6 +147,8 @@ export default function CheckoutScreen() {
                 <Text style={styles.paymentLineLabel}>Payment {index + 1}</Text>
                 {paymentLines.length > 1 ? (
                   <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove payment ${index + 1}`}
                     onPress={() => setPaymentLines((current) => current.filter((entry) => entry.id !== line.id))}
                   >
                     <Text style={styles.removePayment}>Remove</Text>
@@ -160,6 +162,8 @@ export default function CheckoutScreen() {
                   return (
                     <Pressable
                       key={method}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Select ${method} payment for payment ${index + 1}`}
                       onPress={() =>
                         setPaymentLines((current) =>
                           current.map((entry) => (entry.id === line.id ? { ...entry, method } : entry)),
@@ -180,6 +184,7 @@ export default function CheckoutScreen() {
 
               <Input
                 label="Amount"
+                accessibilityLabel={`Payment ${index + 1} amount`}
                 value={line.amount}
                 onChangeText={(value) =>
                   setPaymentLines((current) =>
@@ -196,6 +201,7 @@ export default function CheckoutScreen() {
               label="Add payment line"
               variant="secondary"
               fullWidth={false}
+              accessibilityLabel="Add payment line"
               onPress={() =>
                 setPaymentLines((current) => [
                   ...current,
@@ -207,6 +213,7 @@ export default function CheckoutScreen() {
               label="Reset total"
               variant="ghost"
               fullWidth={false}
+              accessibilityLabel="Reset payment total"
               onPress={() =>
                 setPaymentLines([{ id: generateUUID(), method: paymentMethod, amount: total.toFixed(2) }])
               }
@@ -242,7 +249,12 @@ export default function CheckoutScreen() {
 
         <View style={styles.footer}>
           <Text style={styles.footerNote}>Saving offline. Will sync when connected.</Text>
-          <Button label="Complete Sale" onPress={handleCheckout} loading={loading} />
+          <Button
+            label="Complete Sale"
+            accessibilityLabel="Complete sale"
+            onPress={handleCheckout}
+            loading={loading}
+          />
         </View>
       </ScrollView>
     </Screen>

@@ -14,6 +14,7 @@ import { formatDate } from '@/utils/formatDate';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import { db } from '@/db/powersync';
+import { assertRoleCanPerform, canRolePerform } from '@/services/authorization.service';
 import { getDeviceIdentity } from '@/services/device.service';
 import type { RootStackParamList } from '@/types/navigation';
 import type { Product, Sale, SaleItem } from '@/types/models';
@@ -40,7 +41,7 @@ export default function TransactionDetailScreen() {
   const canRefund = Boolean(
     sale &&
       sale.status === 'completed' &&
-      (role === 'owner' || (role === 'employee' && sale.employee_id === userId)),
+      canRolePerform(role, 'sale.refund'),
   );
 
   function handleBack() {
@@ -64,6 +65,7 @@ export default function TransactionDetailScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
+            assertRoleCanPerform(role, 'sale.refund');
             await db.writeTransaction(async (tx) =>
               tx.createRefund({
                 originalSaleId: sale.id,

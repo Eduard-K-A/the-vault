@@ -87,6 +87,7 @@ export const schemaStatements = {
   inventory_logs: `
     CREATE TABLE IF NOT EXISTS inventory_logs (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      business_id UUID NOT NULL REFERENCES businesses(id),
       product_id UUID NOT NULL REFERENCES products(id),
       branch_id UUID NOT NULL REFERENCES branches(id),
       action_type TEXT NOT NULL,
@@ -95,8 +96,10 @@ export const schemaStatements = {
       quantity_after INTEGER NOT NULL,
       reference_type TEXT NOT NULL,
       reference_id UUID,
+      reason TEXT,
       performed_by UUID NOT NULL REFERENCES auth.users(id),
-      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      synced_at TIMESTAMPTZ
     );
   `,
   sales: `
@@ -114,7 +117,15 @@ export const schemaStatements = {
       synced_at TIMESTAMPTZ,
       reference_number TEXT,
       vat_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
-      idempotency_key UUID
+      idempotency_key UUID NOT NULL,
+      sync_status TEXT NOT NULL DEFAULT 'sync_pending' CHECK (sync_status IN ('local_only', 'sync_pending', 'syncing', 'synced', 'sync_failed', 'needs_review')),
+      sync_attempt_count INTEGER NOT NULL DEFAULT 0 CHECK (sync_attempt_count >= 0),
+      last_sync_error_code TEXT,
+      last_sync_error_message TEXT,
+      last_sync_error_at TIMESTAMPTZ,
+      last_sync_attempt_at TIMESTAMPTZ,
+      server_confirmed_at TIMESTAMPTZ,
+      UNIQUE (business_id, idempotency_key)
     );
   `,
   sale_items: `
@@ -133,8 +144,16 @@ export const schemaStatements = {
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       sale_id UUID NOT NULL REFERENCES sales(id),
       business_id UUID NOT NULL REFERENCES businesses(id),
+      branch_id UUID REFERENCES branches(id),
       method TEXT NOT NULL,
-      amount_peso NUMERIC(12,2) NOT NULL CHECK (amount_peso > 0)
+      amount_peso NUMERIC(12,2) NOT NULL CHECK (amount_peso > 0),
+      status TEXT NOT NULL DEFAULT 'paid' CHECK (status IN ('pending', 'authorized', 'captured', 'paid', 'failed', 'refunded', 'partially_refunded')),
+      provider TEXT,
+      provider_reference TEXT,
+      offline_approved BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      synced_at TIMESTAMPTZ,
+      UNIQUE (business_id, provider, provider_reference)
     );
   `,
   refunds: `

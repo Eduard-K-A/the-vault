@@ -36,6 +36,25 @@ interface UnsupportedUploadInput {
   id: string;
 }
 
+export type UploadErrorCode =
+  | 'network_unavailable'
+  | 'timeout'
+  | 'auth_expired'
+  | 'permission_denied'
+  | 'validation_failed'
+  | 'conflict_requires_review'
+  | 'server_error'
+  | 'unknown';
+
+export interface UploadErrorClassification {
+  code: UploadErrorCode;
+  retryable: boolean;
+  requiresAuth: boolean;
+  requiresReview: boolean;
+  status: number | null;
+  message: string;
+}
+
 interface CrudPayloadInput {
   table: string;
   id: string;
@@ -65,6 +84,11 @@ function getResponseLike(error: unknown): ResponseLike | null {
 
   const context = (error as { context?: unknown }).context;
   return context && typeof context === 'object' ? (context as ResponseLike) : null;
+}
+
+function statusFromError(error: unknown): number | null {
+  const status = getResponseLike(error)?.status;
+  return typeof status === 'number' ? status : null;
 }
 
 async function readResponseBody(response: ResponseLike): Promise<string> {
@@ -235,4 +259,120 @@ export async function describeFunctionError(error: unknown): Promise<string> {
   }
 
   return error instanceof Error ? error.message : String(error);
+}
+
+export async function classifyFunctionError(error: unknown): Promise<UploadErrorClassification> {
+  const status = statusFromError(error);
+  const message = await describeFunctionError(error);
+  const normalized = message.toLowerCase();
+
+  if (status === 401 || normalized.includes('jwt expired') || normalized.includes('auth expired')) {
+    return {
+      code: 'auth_expired',
+      retryable: false,
+      requiresAuth: true,
+      requiresReview: false,
+      status,
+      message,
+    };
+  }
+
+  if (status === 403) {
+    return {
+      code: 'permission_denied',
+      retryable: false,
+      requiresAuth: false,
+      requiresReview: true,
+      status,
+      message,
+    };
+  }
+
+  if (status === 409) {
+    return {
+      code: 'conflict_requires_review',
+      retryable: false,
+      requiresAuth: false,
+      requiresReview: true,
+      status,
+      message,
+    };
+  }
+
+  if (status === 400 || status === 422) {
+    return {
+      code: 'validation_failed',
+      retryable: false,
+      requiresAuth: false,
+      requiresReview: true,
+      status,
+      message,
+    };
+  }
+
+  if (status === 408 || normalized.includes('timeout') || normalized.includes('timed out')) {
+    return {
+      code: 'timeout',
+      retryable: true,
+      requiresAuth: false,
+      requiresReview: false,
+      status,
+      message,
+    };
+  }
+
+  if (status !== null && status >= 500) {
+    return {
+      code: 'server_error',
+      retryable: true,
+      requiresAuth: false,
+      requiresReview: false,
+      status,
+      message,
+    };
+  }
+
+  if (
+    normalized.includes('network') ||
+    normalized.includes('failed to fetch') ||
+    normalized.includes('fetch failed') ||
+    normalized.includes('offline')
+  ) {
+    return {
+      code: 'network_unavailable',
+      retryable: true,
+      requiresAuth: false,
+      requiresReview: false,
+      status,
+      message,
+    };
+  }
+
+  return {
+    code: 'unknown',
+    retryable: false,
+    requiresAuth: false,
+    requiresReview: true,
+    status,
+    message,
+  };
+}
+
+export function getUploadRetryDelayMs(
+  attemptNumber: number,
+  options: {
+    baseDelayMs?: number;
+    maxDelayMs?: number;
+    jitterRatio?: number;
+    random?: () => number;
+  } = {},
+): number {
+  const baseDelayMs = options.baseDelayMs ?? 1000;
+  const maxDelayMs = options.maxDelayMs ?? 60000;
+  const jitterRatio = options.jitterRatio ?? 0.2;
+  const random = options.random ?? Math.random;
+  const normalizedAttempt = Math.max(1, Math.floor(attemptNumber));
+  const exponentialDelay = Math.min(maxDelayMs, baseDelayMs * 2 ** (normalizedAttempt - 1));
+  const jitter = exponentialDelay * jitterRatio * random();
+  return Math.round(Math.min(maxDelayMs, exponentialDelay + jitter));
 }
