@@ -13,10 +13,11 @@ import {
   buildFunctionInvokeOptions,
   buildUnsupportedUploadMessage,
   buildUploadFailureMessage,
-  describeFunctionError,
+  classifyFunctionError,
   getUploadFunctionName,
   getFunctionAccessToken,
   isLikelySnapshotImportTransaction,
+  type UploadErrorClassification,
 } from '@/powersync/uploadHelpers';
 import { CREATE_SYNC_IMPORT_MARKERS_TABLE_SQL, SYNC_IMPORT_MARKERS_TABLE, syncImportMarkerKey } from '@/powersync/importMarkers';
 import { logCompleteSaleDebug, logPowerSyncBackground } from '@/utils/syncDebug';
@@ -230,7 +231,8 @@ export class SupabasePowerSyncConnector implements PowerSyncBackendConnector {
               ),
             );
             if (error) {
-              const details = await describeFunctionError(error);
+              const classification = await classifyFunctionError(error);
+              const details = `[${classification.code}] ${classification.message}`;
               const message = buildUploadFailureMessage({
                 table: op.table,
                 op: op.op,

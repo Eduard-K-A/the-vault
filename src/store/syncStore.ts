@@ -8,8 +8,10 @@ interface SyncState {
   isOnline: boolean;
   remoteSyncConfigured: boolean;
   lastError: string | null;
+  lastErrorCode: string | null;
   lastSyncedAt: string | null;
   pendingUploadCount: number;
+  failedUploadCount: number;
   session: SyncSessionSnapshot;
   initialize: () => void;
   setPhase: (phase: SyncPhase) => void;
@@ -17,8 +19,10 @@ interface SyncState {
   setSession: (session: SyncSessionSnapshot) => void;
   clearSession: () => void;
   setLastError: (message: string | null) => void;
+  setLastErrorCode: (code: string | null) => void;
   setLastSyncedAt: (timestamp: string | null) => void;
   setPendingUploadCount: (count: number) => void;
+  setFailedUploadCount: (count: number) => void;
 }
 
 export const useSyncStore = create<SyncState>((set, get) => ({
@@ -26,8 +30,10 @@ export const useSyncStore = create<SyncState>((set, get) => ({
   isOnline: true,
   remoteSyncConfigured: false,
   lastError: null,
+  lastErrorCode: null,
   lastSyncedAt: null,
   pendingUploadCount: 0,
+  failedUploadCount: 0,
   session: {
     userId: null,
     businessId: null,
@@ -40,7 +46,9 @@ export const useSyncStore = create<SyncState>((set, get) => ({
       ),
       phase: 'booting',
       lastError: null,
+      lastErrorCode: null,
       pendingUploadCount: 0,
+      failedUploadCount: 0,
     });
   },
   setPhase: (phase) => {
@@ -54,6 +62,7 @@ export const useSyncStore = create<SyncState>((set, get) => ({
       session,
       phase: 'syncing',
       lastError: null,
+      lastErrorCode: null,
     });
   },
   clearSession: () => {
@@ -65,17 +74,25 @@ export const useSyncStore = create<SyncState>((set, get) => ({
       },
       phase: 'unauthenticated',
       lastError: null,
+      lastErrorCode: null,
       pendingUploadCount: 0,
+      failedUploadCount: 0,
       lastSyncedAt: null,
     });
   },
   setLastError: (message) => {
     set({ lastError: message });
   },
+  setLastErrorCode: (code) => {
+    set({ lastErrorCode: code });
+  },
   setLastSyncedAt: (timestamp) => {
     set({ lastSyncedAt: timestamp });
   },
   setPendingUploadCount: (count) => {
     set({ pendingUploadCount: Math.max(0, count) });
+  },
+  setFailedUploadCount: (count) => {
+    set({ failedUploadCount: Math.max(0, count) });
   },
 }));

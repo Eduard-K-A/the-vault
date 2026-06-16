@@ -7,7 +7,9 @@ import {
   buildFunctionInvokeOptions,
   buildUnsupportedUploadMessage,
   buildUploadFailureMessage,
+  classifyFunctionError,
   describeFunctionError,
+  getUploadRetryDelayMs,
   getUploadFunctionName,
   getFunctionAccessToken,
   isLikelySnapshotImportTransaction,
@@ -81,6 +83,81 @@ test('describeFunctionError makes Supabase function 404 responses actionable', a
     await describeFunctionError(error),
     'HTTP 404 NOT_FOUND: Requested function was not found. Deploy the Edge Function to the configured Supabase project or update the connector function name.',
   );
+});
+
+test('classifyFunctionError pauses upload when auth expires', async () => {
+  const classification = await classifyFunctionError({
+    context: {
+      status: 401,
+      statusText: 'Unauthorized',
+      clone() {
+        return {
+          async text() {
+            return '{"message":"JWT expired"}';
+          },
+        };
+      },
+    },
+  });
+
+  assert.deepEqual(classification, {
+    code: 'auth_expired',
+    retryable: false,
+    requiresAuth: true,
+    requiresReview: false,
+    status: 401,
+    message: 'HTTP 401 Unauthorized: JWT expired',
+  });
+});
+
+test('classifyFunctionError marks validation failures as requiring review', async () => {
+  const classification = await classifyFunctionError({
+    context: {
+      status: 422,
+      statusText: 'Unprocessable Entity',
+      clone() {
+        return {
+          async text() {
+            return '{"code":"VALIDATION_FAILED","message":"payment total does not match sale total"}';
+          },
+        };
+      },
+    },
+  });
+
+  assert.equal(classification.code, 'validation_failed');
+  assert.equal(classification.retryable, false);
+  assert.equal(classification.requiresReview, true);
+  assert.equal(classification.status, 422);
+});
+
+test('classifyFunctionError retries transient network and server errors', async () => {
+  const networkClassification = await classifyFunctionError(new Error('Failed to fetch'));
+  assert.equal(networkClassification.code, 'network_unavailable');
+  assert.equal(networkClassification.retryable, true);
+
+  const serverClassification = await classifyFunctionError({
+    context: {
+      status: 503,
+      statusText: 'Service Unavailable',
+      clone() {
+        return {
+          async text() {
+            return 'temporarily unavailable';
+          },
+        };
+      },
+    },
+  });
+
+  assert.equal(serverClassification.code, 'server_error');
+  assert.equal(serverClassification.retryable, true);
+});
+
+test('getUploadRetryDelayMs applies bounded exponential backoff with jitter', () => {
+  assert.equal(getUploadRetryDelayMs(1, { random: () => 0, jitterRatio: 0 }), 1000);
+  assert.equal(getUploadRetryDelayMs(4, { random: () => 0, jitterRatio: 0 }), 8000);
+  assert.equal(getUploadRetryDelayMs(10, { random: () => 1, maxDelayMs: 30000 }), 30000);
 });
 
 test('buildUploadFailureMessage includes operation context and classified details', () => {

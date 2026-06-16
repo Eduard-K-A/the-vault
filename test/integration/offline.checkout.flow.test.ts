@@ -14,7 +14,7 @@ import {
   setPowerSyncStatus,
   setPowerSyncUploadQueueCount,
 } from '../__mocks__/powersync';
-import { mockSupabaseClient } from '../__mocks__/supabase';
+import { mockSupabaseClient, setFunctionResult } from '../__mocks__/supabase';
 import {
   createBranch,
   createBusiness,
@@ -217,5 +217,107 @@ describe('offline checkout flow', () => {
     );
     const firstTransaction = await database.getNextCrudTransaction.mock.results[0].value;
     expect(firstTransaction?.complete).toHaveBeenCalled();
+    expect(database.execute).not.toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE sales SET'),
+      expect.anything(),
+    );
+  });
+
+  it('classifies failed commit_sale uploads without completing the queued transaction', async () => {
+    const sale = createSale({
+      id: 'sale-1',
+      business_id: 'business-1',
+      branch_id: 'branch-1',
+      employee_id: 'employee-1',
+      idempotency_key: 'idem-1',
+    });
+    const database = createUploadDatabase({
+      sales: { [sale.id]: sale },
+      sale_items: {
+        'sale-item-1': createSaleItem({
+          id: 'sale-item-1',
+          sale_id: sale.id,
+          product_id: 'product-1',
+        }),
+      },
+      payments: {
+        'payment-1': createPayment({
+          id: 'payment-1',
+          sale_id: sale.id,
+          business_id: sale.business_id,
+        }),
+      },
+      inventory_items: {
+        'inventory-1': createInventoryItem({
+          id: 'inventory-1',
+          product_id: 'product-1',
+          branch_id: sale.branch_id,
+          business_id: sale.business_id,
+        }),
+      },
+      inventory_logs: {
+        'inventory-log-1': {
+          id: 'inventory-log-1',
+          product_id: 'product-1',
+          branch_id: sale.branch_id,
+          reference_id: sale.id,
+        },
+      },
+      audit_logs: {
+        'audit-1': {
+          id: 'audit-1',
+          payload: JSON.stringify({ saleId: sale.id }),
+        },
+      },
+    });
+
+    setFunctionResult('commit_sale', {
+      data: null,
+      error: {
+        message: 'Edge Function returned a non-2xx status code',
+        context: {
+          status: 422,
+          statusText: 'Unprocessable Entity',
+          clone() {
+            return {
+              async text() {
+                return '{"code":"VALIDATION_FAILED","message":"payment total does not match sale total"}';
+              },
+            };
+          },
+        },
+      },
+    });
+
+    jest.resetModules();
+    jest.doMock('@/services/supabaseClient', () => ({
+      getSupabaseClient: () => mockSupabaseClient,
+    }));
+    jest.doMock('../../src/services/supabaseClient', () => ({
+      getSupabaseClient: () => mockSupabaseClient,
+    }));
+    jest.doMock('@/store/authStore', () => ({
+      useAuthStore: {
+        getState: () => ({
+          accessToken: 'access-token',
+          userId: 'employee-1',
+        }),
+      },
+    }));
+    jest.doMock('@supabase/supabase-js', () => ({
+      createClient: () => mockSupabaseClient,
+    }));
+
+    const { SupabasePowerSyncConnector } = require('@/powersync/connector') as typeof import('@/powersync/connector');
+    await expect(new SupabasePowerSyncConnector().uploadData(database as never)).rejects.toThrow(
+      'validation_failed',
+    );
+
+    const firstTransaction = await database.getNextCrudTransaction.mock.results[0].value;
+    expect(firstTransaction?.complete).not.toHaveBeenCalled();
+    expect(database.execute).not.toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE sales SET'),
+      expect.anything(),
+    );
   });
 });

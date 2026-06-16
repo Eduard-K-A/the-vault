@@ -124,6 +124,7 @@ export function createInventoryItem(overrides: Partial<InventoryRecord> = {}): I
 export function createInventoryLog(overrides: Partial<InventoryLog> = {}): InventoryLog {
   return {
     id: nextId('inventory-log'),
+    business_id: 'business-1',
     product_id: 'product-1',
     branch_id: 'branch-1',
     action_type: 'sale',
@@ -132,8 +133,10 @@ export function createInventoryLog(overrides: Partial<InventoryLog> = {}): Inven
     quantity_after: 9,
     reference_type: 'sale',
     reference_id: 'sale-1',
+    reason: 'sale checkout',
     performed_by: 'profile-1',
     created_at: '2026-01-01T00:00:00.000Z',
+    synced_at: null,
     ...overrides,
   };
 }
@@ -170,6 +173,13 @@ export function createSale(overrides: Partial<Sale> = {}): Sale {
     reference_number: 'TXN-1',
     vat_amount: 10.71,
     idempotency_key: nextId('idem'),
+    sync_status: 'sync_pending',
+    sync_attempt_count: 0,
+    last_sync_error_code: null,
+    last_sync_error_message: null,
+    last_sync_error_at: null,
+    last_sync_attempt_at: null,
+    server_confirmed_at: null,
     ...overrides,
   };
 }
@@ -191,8 +201,15 @@ export function createPayment(overrides: Partial<Payment> = {}): Payment {
     id: nextId('payment'),
     sale_id: 'sale-1',
     business_id: 'business-1',
+    branch_id: 'branch-1',
     method: 'cash',
     amount_peso: 100,
+    status: 'paid',
+    provider: 'cash',
+    provider_reference: null,
+    offline_approved: true,
+    created_at: '2026-01-01T00:00:00.000Z',
+    synced_at: null,
     ...overrides,
   };
 }

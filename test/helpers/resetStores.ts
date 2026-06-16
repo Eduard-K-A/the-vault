@@ -33,8 +33,10 @@ export function resetAllStores(): void {
     isOnline: true,
     remoteSyncConfigured: false,
     lastError: null,
+    lastErrorCode: null,
     lastSyncedAt: null,
     pendingUploadCount: 0,
+    failedUploadCount: 0,
     session: {
       userId: null,
       businessId: null,
