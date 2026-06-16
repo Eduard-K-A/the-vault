@@ -1,0 +1,21 @@
+appId: ${APP_ID}
+---
+- launchApp
+- assertVisible: "POSly"
+- tapOn:
+    id: "sync-status"
+- assertVisible: "Products"
+- tapOn:
+    point: "50%,45%"
+- assertVisible: "Open cart"
+- tapOn: "Open cart"
+- assertVisible: "Cart"
+- tapOn: "Checkout cart"
+- assertVisible: "Checkout"
+- setAirplaneMode: true
+- assertVisible: "Saving offline. Will sync when connected."
+- tapOn: "Complete sale"
+- assertVisible: "Sale Complete!"
+- setAirplaneMode: false
+- tapOn: "Done"
+- assertVisible: "POSly"

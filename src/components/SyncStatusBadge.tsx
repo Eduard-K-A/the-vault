@@ -4,14 +4,28 @@ import { Badge } from '@/components/ui';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
 
 export function SyncStatusBadge() {
-  const { phase, isOnline, lastError, pendingUploadCount, lastSyncedAt } = useSyncStatus();
+  const { phase, isOnline, lastError, pendingUploadCount, failedUploadCount, lastSyncedAt } = useSyncStatus();
 
   if (phase === 'failed') {
-    return <Badge label={lastError ?? 'Sync failed'} tone="danger" accessibilityLabel="Sync status" />;
+    return (
+      <Badge
+        label={failedUploadCount > 0 ? `${failedUploadCount} needs attention` : (lastError ?? 'Sync failed')}
+        tone="danger"
+        accessibilityLabel="Sync status"
+        testID="sync-status"
+      />
+    );
   }
 
   if (phase === 'degraded') {
-    return <Badge label={lastError ?? 'Sync degraded'} tone="warning" accessibilityLabel="Sync status" />;
+    return (
+      <Badge
+        label={failedUploadCount > 0 ? `${failedUploadCount} needs attention` : (lastError ?? 'Sync degraded')}
+        tone="warning"
+        accessibilityLabel="Sync status"
+        testID="sync-status"
+      />
+    );
   }
 
   if (phase === 'offline' || !isOnline) {
@@ -20,6 +34,7 @@ export function SyncStatusBadge() {
         label={pendingUploadCount > 0 ? `Offline: ${pendingUploadCount} pending` : 'Offline'}
         tone="warning"
         accessibilityLabel="Sync status"
+        testID="sync-status"
       />
     );
   }
@@ -30,6 +45,7 @@ export function SyncStatusBadge() {
         label={pendingUploadCount > 0 ? `Uploading ${pendingUploadCount}` : 'Syncing'}
         tone="warning"
         accessibilityLabel="Sync status"
+        testID="sync-status"
       />
     );
   }
@@ -43,6 +59,7 @@ export function SyncStatusBadge() {
       label={phase === 'ready' ? syncedLabel : 'Syncing'}
       tone={phase === 'ready' ? 'success' : 'warning'}
       accessibilityLabel="Sync status"
+      testID="sync-status"
     />
   );
 }

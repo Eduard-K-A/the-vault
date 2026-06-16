@@ -108,11 +108,12 @@ interface BadgeProps {
   label: string;
   tone?: 'neutral' | 'success' | 'warning' | 'danger' | 'primary' | 'accent';
   accessibilityLabel?: string;
+  testID?: string;
 }
 
-export function Badge({ label, tone = 'neutral', accessibilityLabel }: BadgeProps) {
+export function Badge({ label, tone = 'neutral', accessibilityLabel, testID }: BadgeProps) {
   return (
-    <View accessibilityLabel={accessibilityLabel ?? label} style={[styles.badge, badgeToneStyles[tone]]}>
+    <View testID={testID} accessibilityLabel={accessibilityLabel ?? label} style={[styles.badge, badgeToneStyles[tone]]}>
       <Text style={styles.badgeText}>{label}</Text>
     </View>
   );

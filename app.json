@@ -13,16 +13,16 @@
     "ios": {
       "supportsTablet": false
     },
-    "extra": {
-      "eas": {
-        "projectId": "00000000-0000-0000-0000-000000000000"
-      }
-    },
     "plugins": [
       "@journeyapps/react-native-quick-sqlite"
     ],
     "android": {
       "package": "com.anonymous.thevault"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "392f6168-ffd8-4318-8fda-3d4292e37cab"
+      }
     }
   }
 }
