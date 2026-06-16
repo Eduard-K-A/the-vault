@@ -37,6 +37,7 @@ import OwnerSettingsScreen from '@/features/settings/OwnerSettingsScreen';
 import SalesOverviewScreen from '@/features/sales/SalesOverviewScreen';
 import SalesScreen from '@/features/sales/SalesScreen';
 import SettingsScreen from '@/features/settings/SettingsScreen';
+import SyncDiagnosticsScreen from '@/features/settings/SyncDiagnosticsScreen';
 import TransactionDetailScreen from '@/features/sales/TransactionDetailScreen';
 import JoinBusinessScreen from '@/features/business/JoinBusinessScreen';
 import RestockModal from '@/features/inventory/RestockModal';
@@ -211,6 +212,7 @@ export function RootNavigator() {
       <Stack.Screen name="BranchManagement" component={BranchManagementScreen} />
       <Stack.Screen name="AuditLog" component={AuditLogScreen} />
       <Stack.Screen name="Reports" component={ReportsScreen} />
+      <Stack.Screen name="SyncDiagnostics" component={SyncDiagnosticsScreen} />
       <Stack.Screen name="Restock" component={RestockModal} />
     </Stack.Navigator>
   );

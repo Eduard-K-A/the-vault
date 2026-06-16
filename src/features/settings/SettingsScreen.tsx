@@ -1,5 +1,7 @@
 import React from 'react';
 import { Alert, Image, StyleSheet, Text, View } from 'react-native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
 import { Badge, Button, Card, Screen } from '@/components/ui';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
@@ -10,8 +12,12 @@ import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
 import { Input } from '@/components/ui';
+import type { RootStackParamList } from '@/types/navigation';
+
+type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function SettingsScreen() {
+  const navigation = useNavigation<Navigation>();
   const userId = useAuthStore((state) => state.userId);
   const email = useAuthStore((state) => state.email);
   const fullname = useAuthStore((state) => state.fullname);
@@ -167,6 +173,7 @@ export default function SettingsScreen() {
             <Badge label={phase} tone={phase === 'ready' ? 'success' : phase === 'offline' ? 'warning' : 'primary'} />
             {lastError ? <Badge label={lastError} tone="danger" /> : null}
           </View>
+          <Button label="Open diagnostics" variant="secondary" onPress={() => navigation.navigate('SyncDiagnostics')} />
         </Card>
 
         <Card style={styles.sectionCard}>

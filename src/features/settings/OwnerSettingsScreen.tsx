@@ -168,6 +168,13 @@ export default function OwnerSettingsScreen() {
             <Text style={styles.gridTitle}>Performance</Text>
             <Text style={styles.gridBody}>Leaderboard &amp; sales trends</Text>
           </Pressable>
+          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('SyncDiagnostics')}>
+            <View style={styles.iconBubble}>
+              <Text style={styles.iconGlyph}>↻</Text>
+            </View>
+            <Text style={styles.gridTitle}>Sync Diagnostics</Text>
+            <Text style={styles.gridBody}>Pending uploads and retry tools</Text>
+          </Pressable>
         </View>
 
         <Card style={styles.dangerCard}>

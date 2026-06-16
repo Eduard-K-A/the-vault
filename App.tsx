@@ -6,12 +6,21 @@ import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
+import { AppErrorBoundary } from './src/components/AppErrorBoundary';
 import { RootNavigator } from './src/app/RootNavigator';
 import { hydrateSession } from './src/services/auth.service';
+import { offlineConfig } from './src/config/offline';
+import { initializeObservability } from './src/services/observability.service';
 import { useAuthStore } from './src/store/authStore';
 import { colors } from './src/constants/colors';
 import { powersync } from './src/powersync';
 import { PowerSyncContext } from '@powersync/react';
+
+initializeObservability({
+  appEnv: offlineConfig.appEnv,
+  appVersion: offlineConfig.appVersion,
+  remoteSinkConfigured: Boolean(offlineConfig.sentryDsn),
+});
 
 const navigationTheme = {
   ...DefaultTheme,
@@ -37,9 +46,11 @@ export default function App() {
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
         <PowerSyncContext.Provider value={powersync}>
-          <NavigationContainer theme={navigationTheme}>
-            <RootNavigator />
-          </NavigationContainer>
+          <AppErrorBoundary>
+            <NavigationContainer theme={navigationTheme}>
+              <RootNavigator />
+            </NavigationContainer>
+          </AppErrorBoundary>
         </PowerSyncContext.Provider>
         <StatusBar style="auto" />
       </GestureHandlerRootView>

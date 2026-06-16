@@ -41,6 +41,7 @@ export type SharedStackParamList = {
   BranchManagement: undefined;
   AuditLog: undefined;
   Reports: undefined;
+  SyncDiagnostics: undefined;
   Restock: { productId: string };
 };
 
