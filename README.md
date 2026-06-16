@@ -19,6 +19,9 @@ The application bootstraps session state on launch, restores local auth from sec
 - Inventory browsing, adding, editing, and restocking
 - Sales workflow with cart, checkout, and receipt screens
 - Analytics and transaction detail views
+- Offline checkout with queued sale, payment, inventory, and audit uploads
+- Manual sync controls and sync diagnostics
+- App error boundary and sanitized observability hooks
 - Settings screens for business administration, reports, audit logs, and business deletion
 - Local persistence and offline-first data access
 - Secure session storage
@@ -56,7 +59,9 @@ The application bootstraps session state on launch, restores local auth from sec
 
 - `src/config/offline.ts` reads runtime configuration from environment variables.
 - `src/services/offline.service.ts` and `src/services/powersync.service.ts` coordinate the local runtime and sync connection.
-- Manual sync reports the current phase in logs so timeout failures identify where the sync stalled.
+- Manual sync reports the current phase in logs so timeout failures identify whether sync stopped while connecting, draining uploads, or waiting for pull confirmation.
+- Offline checkout writes sale, sale item, payment, inventory, and audit rows locally first. PowerSync later uploads the bundled transaction through Supabase Edge Functions.
+- Sync diagnostics are available from Settings so testers can inspect connectivity, pending uploads, failed uploads, last sync time, and retry sync manually.
 - When the remote sync configuration is missing, the app can still boot locally, but remote sync features will not be fully available.
 
 ## Project Structure
@@ -74,8 +79,13 @@ src/
   powersync/           PowerSync schema, system, and connector setup
   services/            Application services for auth, business, sync, export, and remote APIs
   store/               Zustand state stores
+  testing/             Load fixture helpers for stress and beta test data
   types/               Shared TypeScript types and navigation contracts
   utils/               Formatting, validation, and helper utilities
+supabase/
+  functions/           Edge Functions used by PowerSync uploads
+  migrations/          Supabase schema and RLS migrations
+test/                  Node, Jest, component, integration, and static contract tests
 ```
 
 ## Main Screens
@@ -105,6 +115,7 @@ src/
   - Branch Management
   - Reports
   - Audit Log
+  - Sync Diagnostics
   - Employee List
   - Employee Detail
   - Restock
@@ -125,10 +136,12 @@ Create a local `.env` file or set environment variables before starting the app.
 | Variable | Required | Description |
 | --- | --- | --- |
 | `EXPO_PUBLIC_APP_ENV` | No | App environment label. Defaults to `development`. |
+| `EXPO_PUBLIC_APP_VERSION` | No | App version label used in observability metadata. |
 | `EXPO_PUBLIC_SUPABASE_URL` | Yes for remote auth/sync | Supabase project URL. |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Yes for remote auth/sync | Supabase anonymous API key. |
 | `EXPO_PUBLIC_POWERSYNC_URL` | Yes for remote sync | PowerSync service URL. |
 | `EXPO_PUBLIC_POWERSYNC_SCHEMA` | No | PowerSync schema name. Defaults to `public`. |
+| `EXPO_PUBLIC_SENTRY_DSN` | No | Optional remote observability DSN. The app still uses sanitized local logging without it. |
 
 If the Supabase and PowerSync variables are missing, the app can still start, but remote authentication and sync features will not work as intended.
 
@@ -150,6 +163,25 @@ npm start
 
 ```bash
 npm run android
+```
+
+This installs a development build and usually requires Metro to stay running while testing.
+
+### Build an Android APK with EAS
+
+Use this path for unplugged device testing. The preview APK bundles the JavaScript into the app and does not require USB, Metro, or your laptop after installation.
+
+```bash
+npx --yes eas-cli login
+npx --yes eas-cli build --profile preview --platform android
+```
+
+When the build finishes, open the EAS link or scan the QR code on the Android device and install the APK. If Android blocks the install, allow APK installs from the browser or Files app in Android settings.
+
+Before installing a new beta build, uninstall the older development build or clear app data if you need a clean local database:
+
+```bash
+adb shell pm clear com.anonymous.thevault
 ```
 
 ### Run on iOS
@@ -178,6 +210,53 @@ npm run typecheck
 npm run lint
 ```
 
+### Unit, component, and integration tests
+
+```bash
+npm run test
+npm run test:jest
+```
+
+### Full local verification
+
+```bash
+npm run verify
+```
+
+`npm run verify` runs Node tests, Jest tests, TypeScript type checking, ESLint, and React/React Native dependency alignment checks.
+
+### Maestro offline checkout flow
+
+The Maestro flow is intended for an installed Android app with seeded test data and a signed-in session.
+
+```bash
+npm run test:e2e:offline-checkout
+```
+
+The flow toggles airplane mode, completes checkout offline, restores connectivity, and confirms the app returns to the POS workspace.
+
+## Supabase Deployment
+
+Remote database and Edge Function changes are not applied by running the mobile app. Deploy backend changes before beta testing sync.
+
+### Push migrations
+
+```bash
+npx supabase db push
+```
+
+This applies schema and RLS migrations, including POS sync lifecycle fields, payment lifecycle fields, branch-scoped policies, and inventory log hardening.
+
+### Deploy Edge Functions
+
+```bash
+npx supabase functions deploy commit_sale
+npx supabase functions deploy create_refund
+npx supabase functions deploy apply_inventory_adjustment
+```
+
+The mobile app uses these functions during PowerSync upload. If a function is missing or stale, checkout may work locally but uploads will fail or remain pending.
+
 ## Runtime Notes
 
 - The app uses Hermes, portrait orientation, and the `thevault` URL scheme.
@@ -185,6 +264,7 @@ npm run lint
 - PowerSync is initialized on app launch and after session hydration.
 - Role-based routing determines whether the user sees the owner or employee workspace.
 - Owner-facing destructive actions use typed confirmation and operate on the current business, not just the active branch.
+- Do not update synced PowerSync rows from inside `uploadData()` after a successful upload. That creates new local PATCH operations and can cause an infinite upload loop.
 
 ## Database and Sync Model
 
@@ -203,6 +283,8 @@ The PowerSync schema includes tables for:
 - Audit logs
 - Device sessions
 
+Sales include sync lifecycle and idempotency fields. Payments track payment lifecycle separately from sale status. Inventory logs are scoped by business and branch for auditability.
+
 Business and product deletes are cascaded through Supabase, while the local PowerSync client also clears dependent rows to keep the offline store aligned after destructive actions.
 
 This structure supports both operational workflows and historical reporting while keeping the local client database aligned with the remote backend when sync is available.
@@ -213,6 +295,9 @@ This structure supports both operational workflows and historical reporting whil
 - If login fails with a Supabase error, confirm `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` are set correctly.
 - If sync is unavailable, verify `EXPO_PUBLIC_POWERSYNC_URL` and the remote schema setup.
 - If manual sync fails, check the phase-specific log line to see whether it stopped while connecting, draining uploads, or waiting for first sync.
+- If sync stays in an infinite upload loop, check whether local code is writing to synced tables inside PowerSync `uploadData()`. Successful upload handlers must not create new local CRUD entries for the same row.
+- If Android startup fails with `Cannot add a column to a view`, rebuild with the local schema compatibility fix and clear old app data before retesting.
+- If an EAS build says the experience/project id does not exist, remove stale placeholder `extra.eas.projectId` values from `app.json` and rerun the EAS build so Expo can create or link the real project.
 - If a product edit appears stuck after login, re-run manual sync after the `save_product` function is deployed to the project.
 - If native modules fail to build, ensure you are using a development build or a native runtime that includes the required Expo and PowerSync dependencies.
 
@@ -221,7 +306,8 @@ This structure supports both operational workflows and historical reporting whil
 - Keep feature code grouped by domain under `src/features`.
 - Prefer shared UI primitives from `src/components/ui` before creating new one-off controls.
 - Update TypeScript types and PowerSync schema together when changing persisted data.
-- Run `npm run typecheck` and `npm run lint` before opening a pull request.
+- Run `npm run verify` before opening a pull request.
+- Keep Supabase migrations and Edge Functions aligned with PowerSync upload payloads.
 
 ## License
 
