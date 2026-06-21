@@ -45,7 +45,7 @@ export default function SignupScreen() {
   }
 
   return (
-    <Screen onBack={handleBack} action={<BrandMark compact />}>
+    <Screen onBack={handleBack} action={<BrandMark compact />} scrollable>
       <View style={styles.header}>
         <Text style={styles.title}>Create account</Text>
         <Text style={styles.subtitle}>Choose a role to tailor the workspace.</Text>

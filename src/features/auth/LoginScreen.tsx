@@ -39,7 +39,7 @@ export default function LoginScreen() {
   }
 
   return (
-    <Screen onBack={handleBack}>
+    <Screen onBack={handleBack} scrollable>
       <View style={styles.header}>
         <Text style={styles.title}>Welcome back</Text>
         <Text style={styles.subtitle}>Sign in to continue</Text>

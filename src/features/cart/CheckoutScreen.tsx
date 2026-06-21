@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
@@ -29,7 +29,7 @@ interface PaymentLine {
 export default function CheckoutScreen() {
   const navigation = useNavigation<Navigation>();
   const role = useAuthStore((state) => state.role);
-  const { items, subtotal, discountAmount, total, paymentMethod, setPaymentMethod, checkout } = useCart();
+  const { items, subtotal, discountAmount, total, paymentMethod, checkout } = useCart();
   const business = useBusinessStore((state) => state.activeBusiness);
   const branch = useBusinessStore((state) => state.activeBranch);
   const [loading, setLoading] = useState(false);
@@ -104,8 +104,7 @@ export default function CheckoutScreen() {
   }
 
   return (
-    <Screen title="POSly" onBack={handleBack}>
-      <ScrollView contentContainerStyle={styles.content}>
+    <Screen title="POSly" onBack={handleBack} scrollable contentStyle={styles.content}>
         <View style={styles.pageHeader}>
           <Text style={styles.pageTitle}>Checkout</Text>
           <Text style={styles.pageSubtitle}>All writes happen locally before sync.</Text>
@@ -171,10 +170,10 @@ export default function CheckoutScreen() {
                       }
                       style={[styles.paymentTile, active && styles.paymentTileActive]}
                     >
-                      <Text style={styles.paymentIcon}>
+                      <Text style={[styles.paymentIcon, active && styles.paymentIconActive]}>
                         {method === 'cash' ? '▭' : method === 'card' ? '▤' : method === 'gcash' ? '◫' : '◪'}
                       </Text>
-                      <Text style={styles.paymentLabel}>
+                      <Text style={[styles.paymentLabel, active && styles.paymentLabelActive]}>
                         {method === 'gcash' ? 'GCash' : method === 'maya' ? 'Maya' : method[0].toUpperCase() + method.slice(1)}
                       </Text>
                     </Pressable>
@@ -256,7 +255,6 @@ export default function CheckoutScreen() {
             loading={loading}
           />
         </View>
-      </ScrollView>
     </Screen>
   );
 }
@@ -340,15 +338,22 @@ const styles = StyleSheet.create({
   },
   paymentTileActive: {
     borderColor: colors.accent,
-    borderWidth: 2,
+    backgroundColor: colors.accent,
   },
   paymentIcon: {
     ...typography.title,
     color: colors.accent,
   },
+  paymentIconActive: {
+    color: colors.chipActiveText,
+  },
   paymentLabel: {
     ...typography.body,
     color: colors.text,
+  },
+  paymentLabelActive: {
+    color: colors.chipActiveText,
+    fontWeight: '600',
   },
   paymentActions: {
     flexDirection: 'row',
@@ -392,8 +397,8 @@ const styles = StyleSheet.create({
   },
   changeValue: {
     ...typography.subtitle,
-    color: '#065F46',
-    backgroundColor: '#A7F3D0',
+    color: colors.success,
+    backgroundColor: colors.successBg,
     paddingHorizontal: dimensions.md,
     paddingVertical: dimensions.xs,
     borderRadius: dimensions.radiusFull,

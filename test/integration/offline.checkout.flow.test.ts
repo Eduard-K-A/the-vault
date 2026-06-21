@@ -97,7 +97,7 @@ describe('offline checkout flow', () => {
 
     await render(React.createElement(SyncStatusBadge));
 
-    expect(screen.getByLabelText('Sync status')).toHaveTextContent('Offline: 1 pending');
+    expect(screen.getByLabelText('Sync status')).toHaveTextContent('Offline - 1 queued');
   });
 
   it('completes checkout offline through local primary-table writes', async () => {

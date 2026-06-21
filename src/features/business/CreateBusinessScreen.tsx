@@ -41,7 +41,7 @@ export default function CreateBusinessScreen() {
   }
 
   return (
-    <Screen title="POSly" onBack={handleBack}>
+    <Screen title="POSly" onBack={handleBack} scrollable>
       <View style={styles.header}>
         <Text style={styles.title}>Create business</Text>
         <Text style={styles.subtitle}>Set up your first workspace.</Text>

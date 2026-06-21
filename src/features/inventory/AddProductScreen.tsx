@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
-import { Button, Card, Input, Screen } from '@/components/ui';
+import { Button, Card, Input, PlaceholderAction, Screen } from '@/components/ui';
 import { colors } from '@/constants/colors';
+import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { db } from '@/db/powersync';
 import { useAuthStore } from '@/store/authStore';
@@ -101,22 +102,30 @@ export default function AddProductScreen() {
   }
 
   return (
-    <Screen title="POSly" onBack={handleBack}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Add New Product</Text>
-          <Text style={styles.subtitle}>Enter product details to add to inventory.</Text>
-        </View>
+    <Screen title="Add Product" onBack={handleBack} scrollable contentStyle={styles.content}>
+        <Card style={styles.photoCard}>
+          <Text style={styles.photoIcon}>▧</Text>
+          <Text style={styles.photoTitle}>Product photo</Text>
+          <View style={styles.photoActions}>
+            <PlaceholderAction label="Add photo" message="Photo upload is coming soon. SKU and product info save normally." />
+            <PlaceholderAction label="Use camera" message="Photo upload is coming soon. SKU and product info save normally." />
+          </View>
+        </Card>
         <Card style={styles.card}>
           <Input label="Product name" value={name} onChangeText={setName} />
-          <Input label="Barcode" value={barcode} onChangeText={setBarcode} autoCapitalize="characters" />
+          <Text style={styles.helperText}>Category metadata is coming soon. Use description for now.</Text>
+          <View style={styles.scanRow}>
+            <View style={styles.scanInput}>
+              <Input label="Barcode" value={barcode} onChangeText={setBarcode} autoCapitalize="characters" />
+            </View>
+            <PlaceholderAction label="Scan barcode" message="Scanner is coming soon. Enter SKU manually." />
+          </View>
           <Input label="SKU" value={sku} onChangeText={setSku} autoCapitalize="characters" />
           <Input label="Initial stock" value={initialStock} onChangeText={setInitialStock} keyboardType="numeric" />
           <Input label="Selling price" value={sellingPrice} onChangeText={setSellingPrice} keyboardType="numeric" />
           <Input label="Cost price" value={costPrice} onChangeText={setCostPrice} keyboardType="numeric" />
           <Button label="Save" onPress={handleSave} loading={loading} />
         </Card>
-      </ScrollView>
     </Screen>
   );
 }
@@ -126,20 +135,40 @@ const styles = StyleSheet.create({
     gap: 16,
     paddingBottom: 8,
   },
-  header: {
-    gap: 4,
+  photoCard: {
+    minHeight: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: dimensions.sm,
   },
-  title: {
-    fontSize: 28,
-    lineHeight: 36,
-    fontWeight: '700',
-    color: colors.text,
+  photoIcon: {
+    ...typography.title,
+    color: colors.textSecondary,
+    opacity: 0.5,
   },
-  subtitle: {
-    ...typography.body,
-    color: colors.textMuted,
+  photoTitle: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  photoActions: {
+    flexDirection: 'row',
+    gap: dimensions.sm,
+    flexWrap: 'wrap',
   },
   card: {
     gap: 16,
+  },
+  helperText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+  },
+  scanRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: dimensions.sm,
+  },
+  scanInput: {
+    flex: 1,
+    minWidth: 0,
   },
 });
