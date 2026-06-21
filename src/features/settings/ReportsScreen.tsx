@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
-import { Button, Card, Screen } from '@/components/ui';
+import { Button, Card, PlaceholderAction, Screen } from '@/components/ui';
 import { exportInventoryReport, exportSalesReport } from '@/services/export.service';
 import { useBusinessStore } from '@/store/businessStore';
 import { colors } from '@/constants/colors';
@@ -59,14 +59,13 @@ export default function ReportsScreen() {
   }
 
   return (
-    <Screen title="POSly" onBack={handleBack} scrollable contentStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Reports</Text>
-        <Text style={styles.subtitle}>Export business data to Excel.</Text>
-      </View>
+    <Screen title="Reports" onBack={handleBack} scrollable contentStyle={styles.content}>
       <Card style={styles.card}>
         <Text style={styles.helper}>Exports use SheetJS and the native share sheet.</Text>
-        <Button label="Export sales" onPress={handleExportSales} loading={loading} />
+        <Button label="Export Excel" onPress={handleExportSales} loading={loading} />
+        <PlaceholderAction label="Export CSV" message="CSV/PDF export is coming soon. Excel export is available now." />
+        <PlaceholderAction label="Export PDF" message="CSV/PDF export is coming soon. Excel export is available now." />
+        <Text style={styles.helper}>CSV/PDF export is coming soon. Excel export is available now.</Text>
         <Button label="Export inventory" variant="secondary" onPress={handleExportInventory} loading={loading} />
       </Card>
     </Screen>
@@ -76,17 +75,6 @@ export default function ReportsScreen() {
 const styles = StyleSheet.create({
   content: {
     paddingBottom: dimensions.xl + 24,
-  },
-  header: {
-    gap: dimensions.xs,
-  },
-  title: {
-    ...typography.title,
-    color: colors.text,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textMuted,
   },
   card: {
     gap: dimensions.md,

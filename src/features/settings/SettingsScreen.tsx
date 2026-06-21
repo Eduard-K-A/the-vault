@@ -103,17 +103,12 @@ export default function SettingsScreen() {
 
   return (
     <Screen
-      title="Employee Settings"
+      title="Settings"
       action={<Badge label={role ?? 'member'} tone="primary" />}
       scrollable
       contentStyle={styles.content}
     >
       <View style={styles.stack}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Employee settings</Text>
-          <Text style={styles.subtitle}>Manage your profile, switch workspaces, and sign out.</Text>
-        </View>
-
         <Card style={styles.profileCard}>
           <View style={styles.profileTop}>
             <View style={styles.avatarFrame}>
@@ -178,12 +173,11 @@ export default function SettingsScreen() {
 
         <Card style={styles.sectionCard}>
           <View style={styles.sectionCopy}>
-            <Text style={styles.sectionTitle}>Sign out</Text>
+            <Text style={styles.sectionTitle}>Session</Text>
             <Text style={styles.sectionBody}>End the current session on this device.</Text>
           </View>
-          <Button label="Sign out" variant="danger" onPress={handleLogout} />
+          <Button label="Log out" variant="ghost" onPress={handleLogout} />
         </Card>
-        <Text style={styles.version}>POSly Terminal v2.4.0</Text>
       </View>
     </Screen>
   );
@@ -195,17 +189,6 @@ const styles = StyleSheet.create({
   },
   stack: {
     gap: dimensions.lg,
-  },
-  header: {
-    gap: dimensions.xs,
-  },
-  title: {
-    ...typography.title,
-    color: colors.text,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textMuted,
   },
   profileCard: {
     gap: dimensions.md,
@@ -266,11 +249,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: dimensions.xs,
-  },
-  version: {
-    ...typography.label,
-    color: colors.textMuted,
-    textAlign: 'center',
-    textTransform: 'uppercase',
   },
 });

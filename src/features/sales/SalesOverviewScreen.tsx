@@ -1,10 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@powersync/react';
 
-import { Badge, Card, Screen, StatCard } from '@/components/ui';
+import { Badge, Card, Screen } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
 import { getOwnerAnalytics } from '@/db/queries/analyticsQueries';
 import {
@@ -17,17 +15,14 @@ import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useBusinessStore } from '@/store/businessStore';
-import type { RootStackParamList } from '@/types/navigation';
 import type { AuditLog, Branch, Business, BusinessMember, Category, InventoryRecord, Payment, Profile, Product, Refund, RefundItem, Sale, SaleItem } from '@/types/models';
 
-type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type PeriodKey = 'Today' | '7 Days' | '30 Days' | 'Custom';
 
 const PERIODS: PeriodKey[] = ['Today', '7 Days', '30 Days', 'Custom'];
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function SalesOverviewScreen() {
-  const navigation = useNavigation<Navigation>();
   const [period, setPeriod] = useState<PeriodKey>('Today');
   const businessId = useBusinessStore((store) => store.activeBusiness?.id ?? null);
   const branchId = useBusinessStore((store) => store.activeBranch?.id ?? null);
@@ -111,18 +106,15 @@ export default function SalesOverviewScreen() {
 
   if (!analytics) {
     return (
-      <Screen title="Sales overview" subtitle="Business-wide sales and analytics." scrollable contentStyle={styles.content}>
+      <Screen title="Sales" subtitle="Branch performance" scrollable contentStyle={styles.content}>
         <EmptyState title="Select a business" description="Owners need an active business to view sales data." />
       </Screen>
     );
   }
 
   return (
-      <Screen title="Store POS" scrollable contentStyle={styles.content}>
+      <Screen scrollable contentStyle={styles.content}>
       <View style={styles.stack}>
-        <View style={styles.pageHeader}>
-          <Text style={styles.pageTitle}>Sales Overview</Text>
-        </View>
         <View style={styles.periodRow}>
           {PERIODS.map((item) => {
             const active = item === period;
@@ -142,17 +134,14 @@ export default function SalesOverviewScreen() {
         <Card style={styles.hero}>
           <Text style={styles.kicker}>Total revenue</Text>
           <Text style={styles.revenue}>{formatCurrency(metrics.revenue)}</Text>
-          <View style={styles.heroBadge}>
-            <Text style={styles.heroBadgeArrow}>↗</Text>
-            <Text style={styles.heroBadgeText}>+12.4% vs last period</Text>
-          </View>
+          <Text style={styles.heroMeta}>{metrics.transactions} transactions - {formatCurrency(metrics.averageValue)} avg order</Text>
         </Card>
 
         <View style={styles.metricsGrid}>
-          <MetricCard icon="▦" label="Transactions" value={String(metrics.transactions)} delta="+4.2%" tone="success" />
-          <MetricCard icon="◔" label="Average Value" value={formatCurrency(metrics.averageValue)} delta="−0.0%" tone="neutral" />
-          <MetricCard icon="◫" label="Net Revenue" value={formatCurrency(metrics.netRevenue)} delta="+11.5%" tone="success" />
-          <MetricCard icon="▤" label="Top Method" value={metrics.topMethod.name} delta={metrics.topMethod.share} tone="neutral" />
+          <MetricCard icon="▦" label="Transactions" value={String(metrics.transactions)} />
+          <MetricCard icon="◔" label="Average Value" value={formatCurrency(metrics.averageValue)} />
+          <MetricCard icon="◫" label="Net Revenue" value={formatCurrency(metrics.netRevenue)} />
+          <MetricCard icon="▤" label="Top Method" value={metrics.topMethod.name} />
         </View>
 
         <Card style={styles.chartCard}>
@@ -174,7 +163,7 @@ export default function SalesOverviewScreen() {
                         styles.barFill,
                         {
                           height: `${height}%`,
-                          backgroundColor: active ? colors.accent : '#C7C4F5',
+                          backgroundColor: active ? colors.accent : colors.border,
                         },
                         active && styles.barFillActive,
                       ]}
@@ -239,7 +228,7 @@ export default function SalesOverviewScreen() {
                           styles.rankFill,
                           {
                             width: `${width}%`,
-                            backgroundColor: index === 0 ? colors.accent : index === 1 ? '#6D67EA' : index === 2 ? '#8E89EA' : '#B5B1F2',
+                            backgroundColor: index === 0 ? colors.accent : colors.border,
                           },
                         ]}
                       />
@@ -300,11 +289,9 @@ interface MetricCardProps {
   icon: string;
   label: string;
   value: string;
-  delta: string;
-  tone: 'success' | 'neutral';
 }
 
-function MetricCard({ icon, label, value, delta, tone }: MetricCardProps) {
+function MetricCard({ icon, label, value }: MetricCardProps) {
   return (
     <Card style={styles.metricCard}>
       <View style={styles.metricHeader}>
@@ -312,7 +299,6 @@ function MetricCard({ icon, label, value, delta, tone }: MetricCardProps) {
         <Text style={styles.metricLabel}>{label}</Text>
       </View>
       <Text style={styles.metricValue}>{value}</Text>
-      <Text style={[styles.metricDelta, tone === 'success' ? styles.metricDeltaSuccess : styles.metricDeltaNeutral]}>{delta}</Text>
     </Card>
   );
 }
@@ -404,11 +390,11 @@ function getInitials(name: string): string {
     .join('');
 }
 
-const paymentColors = ['#4B41E1', '#6D67EA', '#00A36C', '#C8C7D1'];
+const paymentColors = [colors.accent, colors.border, colors.success, colors.textSecondary];
 const performerAvatarStyles = [
-  { backgroundColor: '#D9D6FF' },
-  { backgroundColor: '#E0F7EF' },
-  { backgroundColor: '#F0E0FF' },
+  { backgroundColor: colors.accentSubtle },
+  { backgroundColor: colors.successBg },
+  { backgroundColor: colors.warningBg },
 ];
 
 const styles = StyleSheet.create({
@@ -417,13 +403,6 @@ const styles = StyleSheet.create({
   },
   stack: {
     gap: dimensions.lg,
-  },
-  pageHeader: {
-    gap: dimensions.xs,
-  },
-  pageTitle: {
-    ...typography.title,
-    color: colors.text,
   },
   periodRow: {
     flexDirection: 'row',
@@ -434,22 +413,22 @@ const styles = StyleSheet.create({
     minHeight: 42,
     paddingHorizontal: dimensions.md,
     borderRadius: dimensions.radiusFull,
-    borderWidth: 1,
+    borderWidth: dimensions.cardBorderWidth,
     borderColor: colors.border,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   periodChipActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
+    backgroundColor: colors.chipActiveBg,
+    borderColor: colors.chipActiveBg,
   },
   periodLabel: {
     ...typography.caption,
     color: colors.textMuted,
   },
   periodLabelActive: {
-    color: '#FFFFFF',
+    color: colors.chipActiveText,
     fontWeight: '700',
   },
   hero: {
@@ -461,32 +440,18 @@ const styles = StyleSheet.create({
   },
   kicker: {
     ...typography.label,
-    color: '#C6C4DF',
+    color: colors.accentSubtle,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   revenue: {
-    ...typography.title,
-    color: '#FFFFFF',
+    ...typography.priceHero,
+    color: colors.chipActiveText,
   },
-  heroBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: dimensions.xs,
-    paddingHorizontal: dimensions.md,
-    paddingVertical: dimensions.xs,
-    borderRadius: dimensions.radiusFull,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
-  },
-  heroBadgeArrow: {
-    color: '#6FFBBE',
-    fontWeight: '700',
-  },
-  heroBadgeText: {
-    ...typography.label,
-    color: '#6FFBBE',
+  heroMeta: {
+    ...typography.caption,
+    color: colors.accentSubtle,
+    textAlign: 'center',
   },
   metricsGrid: {
     flexDirection: 'row',
@@ -514,15 +479,6 @@ const styles = StyleSheet.create({
   metricValue: {
     ...typography.subtitle,
     color: colors.text,
-  },
-  metricDelta: {
-    ...typography.label,
-  },
-  metricDeltaSuccess: {
-    color: colors.success,
-  },
-  metricDeltaNeutral: {
-    color: colors.textMuted,
   },
   chartCard: {
     gap: dimensions.md,
@@ -716,7 +672,7 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#6FFBBE',
+    backgroundColor: colors.successBg,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
@@ -753,10 +709,10 @@ const styles = StyleSheet.create({
     height: 180,
     borderRadius: 90,
     borderWidth: 8,
-    borderColor: '#5B53E8',
-    borderTopColor: '#A9A7F4',
-    borderRightColor: '#6E68EA',
-    borderBottomColor: '#5B53E8',
+    borderColor: colors.accent,
+    borderTopColor: colors.accentSubtle,
+    borderRightColor: colors.accent,
+    borderBottomColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.surfaceMuted,

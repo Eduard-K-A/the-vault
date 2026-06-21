@@ -48,9 +48,9 @@ const OwnerTabs = createBottomTabNavigator<OwnerTabParamList>();
 
 function TabIcon({ active, glyph }: { active: boolean; glyph: string }) {
   return (
-    <View style={[styles.tabIcon, active && styles.tabIconActive]}>
-      <Text style={[styles.tabGlyph, active && styles.tabGlyphActive]}>{glyph}</Text>
+    <View style={styles.tabIcon}>
       {active ? <View style={styles.tabDot} /> : null}
+      <Text style={[styles.tabGlyph, active && styles.tabGlyphActive]}>{glyph}</Text>
     </View>
   );
 }
@@ -64,26 +64,21 @@ const tabBarOptions = {
     fontSize: 11,
     lineHeight: 16,
     fontWeight: '500' as const,
-    letterSpacing: 0.15,
+    textTransform: 'uppercase' as const,
     marginBottom: 2,
   },
   tabBarStyle: {
     backgroundColor: colors.surface,
     borderTopColor: colors.border,
-    borderTopWidth: 1,
-    height: dimensions.tabBarHeight + 8,
-    paddingBottom: 8,
-    paddingTop: 6,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: -4 },
-    elevation: 8,
+    borderTopWidth: dimensions.cardBorderWidth,
+    height: dimensions.tabBarHeight,
+    paddingBottom: 4,
+    paddingTop: 4,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   tabBarItemStyle: {
-    borderRadius: dimensions.radiusMd,
-    marginHorizontal: 6,
-    marginVertical: 4,
+    minHeight: dimensions.tabBarHeight,
   },
   tabBarShowLabel: true,
 };
@@ -134,21 +129,17 @@ function OwnerTabNavigator() {
 
 const styles = StyleSheet.create({
   tabIcon: {
-    width: 38,
-    height: 34,
-    borderRadius: 17,
+    width: 48,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 1,
+    gap: 4,
     marginBottom: 0,
-  },
-  tabIconActive: {
-    backgroundColor: '#E2E0FC',
   },
   tabGlyph: {
     color: colors.textMuted,
-    fontSize: 16,
-    lineHeight: 16,
+    fontSize: 24,
+    lineHeight: 24,
     fontWeight: '600',
   },
   tabGlyphActive: {

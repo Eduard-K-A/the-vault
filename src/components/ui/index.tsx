@@ -1,7 +1,9 @@
 import React from 'react';
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -20,6 +22,100 @@ import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+
+interface AppHeaderProps {
+  title: string;
+  subtitle?: string;
+  sync?: React.ReactNode;
+  action?: React.ReactNode;
+}
+
+export function AppHeader({ title, subtitle, sync, action }: AppHeaderProps) {
+  return (
+    <View style={styles.appHeader}>
+      <View style={styles.appHeaderCopy}>
+        <Text style={styles.title} numberOfLines={1}>{title}</Text>
+        {subtitle ? <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text> : null}
+      </View>
+      <View style={styles.appHeaderActions}>
+        {sync}
+        {action}
+      </View>
+    </View>
+  );
+}
+
+interface IconButtonProps {
+  label: string;
+  icon: string;
+  onPress?: () => void;
+  disabled?: boolean;
+}
+
+export function IconButton({ label, icon, onPress, disabled = false }: IconButtonProps) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [styles.iconActionButton, pressed && !disabled && styles.iconButtonPressed, disabled && styles.buttonDisabled]}
+    >
+      <Text style={styles.iconActionText}>{icon}</Text>
+    </Pressable>
+  );
+}
+
+interface SegmentedControlOption {
+  label: string;
+  value: string;
+}
+
+interface SegmentedControlProps {
+  accessibilityLabel: string;
+  value: string;
+  options: SegmentedControlOption[];
+  onChange: (value: string) => void;
+}
+
+export function SegmentedControl({ accessibilityLabel, value, options, onChange }: SegmentedControlProps) {
+  return (
+    <View accessibilityLabel={accessibilityLabel} style={styles.segmentedControl}>
+      {options.map((option) => {
+        const active = option.value === value;
+        return (
+          <Pressable
+            key={option.value}
+            accessibilityRole="button"
+            onPress={() => onChange(option.value)}
+            style={[styles.segment, active && styles.segmentActive]}
+          >
+            <Text style={[styles.segmentLabel, active && styles.segmentLabelActive]}>{option.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+interface PlaceholderActionProps {
+  label: string;
+  message: string;
+  onUnavailable?: (message: string) => void;
+}
+
+export function PlaceholderAction({ label, message, onUnavailable }: PlaceholderActionProps) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={() => onUnavailable?.(message)}
+      style={({ pressed }) => [styles.placeholderAction, pressed && styles.buttonPressed]}
+    >
+      <Text style={styles.placeholderActionLabel}>{label}</Text>
+    </Pressable>
+  );
+}
 
 interface ScreenProps {
   children: React.ReactNode;
@@ -45,6 +141,8 @@ export function Screen({
   const insets = useSafeAreaInsets();
   const showHeader = Boolean(title || onBack || action);
   const rightAction = action ?? (showHeader ? <View style={styles.headerSpacer} /> : null);
+  const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : 'height';
+  const keyboardVerticalOffset = insets.top + dimensions.screenPaddingV;
 
   return (
     <View
@@ -56,40 +154,47 @@ export function Screen({
         },
       ]}
     >
-      <View pointerEvents="none" style={styles.decorLeft} />
-      <View pointerEvents="none" style={styles.decorRight} />
-      <View style={styles.shell}>
-        {showHeader ? (
-          <View style={styles.topBar}>
-            {onBack ? (
-              <Pressable
-                accessibilityRole="button"
-                onPress={onBack}
-                style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}
-              >
-                <Text style={styles.iconText}>←</Text>
-              </Pressable>
-            ) : (
-              <View style={styles.iconButton} />
-            )}
-            <View style={styles.titleWrap}>
-              {title ? <Text style={styles.title}>{title}</Text> : null}
-              {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+      <KeyboardAvoidingView
+        behavior={keyboardBehavior}
+        keyboardVerticalOffset={keyboardVerticalOffset}
+        style={styles.keyboardAvoiding}
+        testID="screen-keyboard-avoiding-view"
+      >
+        <View style={styles.shell}>
+          {showHeader ? (
+            <View style={styles.topBar}>
+              {onBack ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={backLabel}
+                  onPress={onBack}
+                  style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}
+                >
+                  <Text style={styles.iconText}>←</Text>
+                </Pressable>
+              ) : (
+                <View style={styles.iconButton} />
+              )}
+              <View style={styles.titleWrap}>
+                {title ? <Text style={styles.title}>{title}</Text> : null}
+                {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+              </View>
+              <View style={styles.rightAction}>{rightAction}</View>
             </View>
-            <View style={styles.rightAction}>{rightAction}</View>
-          </View>
-        ) : null}
-        {scrollable ? (
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={[styles.scrollBody, contentStyle]}
-          >
-            {children}
-          </ScrollView>
-        ) : (
-          <View style={[styles.body, contentStyle]}>{children}</View>
-        )}
-      </View>
+          ) : null}
+          {scrollable ? (
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={[styles.scrollBody, contentStyle]}
+              keyboardShouldPersistTaps="handled"
+            >
+              {children}
+            </ScrollView>
+          ) : (
+            <View style={[styles.body, contentStyle]}>{children}</View>
+          )}
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -114,7 +219,7 @@ interface BadgeProps {
 export function Badge({ label, tone = 'neutral', accessibilityLabel, testID }: BadgeProps) {
   return (
     <View testID={testID} accessibilityLabel={accessibilityLabel ?? label} style={[styles.badge, badgeToneStyles[tone]]}>
-      <Text style={styles.badgeText}>{label}</Text>
+      <Text style={[styles.badgeText, badgeTextToneStyles[tone]]}>{label}</Text>
     </View>
   );
 }
@@ -156,7 +261,7 @@ export function Button({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' || variant === 'danger' ? '#FFFFFF' : colors.accent} />
+        <ActivityIndicator color={variant === 'primary' ? colors.chipActiveText : variant === 'danger' ? colors.danger : colors.accent} />
       ) : (
         <Text style={[styles.buttonText, buttonTextStyles[variant]]}>{label}</Text>
       )}
@@ -202,19 +307,27 @@ interface ModalSheetProps {
 
 export function ModalSheet({ visible, title, children, onClose }: ModalSheetProps) {
   const insets = useSafeAreaInsets();
+  const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : 'height';
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.sheetOverlay} onPress={onClose}>
-        <Pressable
-          style={[styles.sheet, { paddingBottom: insets.bottom + dimensions.screenPaddingV }]}
-          accessibilityLabel={title ? `${title} sheet` : 'Modal sheet'}
-          onPress={(event) => event.stopPropagation()}
+        <KeyboardAvoidingView
+          behavior={keyboardBehavior}
+          keyboardVerticalOffset={insets.top}
+          style={styles.sheetKeyboardAvoiding}
+          testID="modal-sheet-keyboard-avoiding-view"
         >
-          <View style={styles.sheetHandle} />
-          {title ? <Text style={styles.sheetTitle}>{title}</Text> : null}
-          {children}
-        </Pressable>
+          <Pressable
+            style={[styles.sheet, { paddingBottom: insets.bottom + dimensions.screenPaddingV }]}
+            accessibilityLabel={title ? `${title} sheet` : 'Modal sheet'}
+            onPress={(event) => event.stopPropagation()}
+          >
+            <View style={styles.sheetHandle} />
+            {title ? <Text style={styles.sheetTitle}>{title}</Text> : null}
+            {children}
+          </Pressable>
+        </KeyboardAvoidingView>
       </Pressable>
     </Modal>
   );
@@ -263,59 +376,142 @@ export function StatCard({ label, value, tone = 'primary', style, compact = fals
 }
 
 const styles = StyleSheet.create({
+  appHeader: {
+    minHeight: dimensions.headerHeight,
+    paddingHorizontal: dimensions.screenPaddingH,
+    backgroundColor: colors.surface,
+    borderBottomWidth: dimensions.cardBorderWidth,
+    borderBottomColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: dimensions.sm,
+  },
+  appHeaderCopy: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'flex-start',
+  },
+  appHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: dimensions.xs,
+  },
+  iconActionButton: {
+    width: dimensions.touchTarget,
+    height: dimensions.touchTarget,
+    borderRadius: dimensions.radiusFull,
+    borderWidth: dimensions.cardBorderWidth,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconActionText: {
+    ...typography.subtitle,
+    color: colors.textSecondary,
+  },
+  segmentedControl: {
+    minHeight: dimensions.touchTarget,
+    borderRadius: dimensions.radiusMd,
+    borderWidth: dimensions.cardBorderWidth,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    flexDirection: 'row',
+    overflow: 'hidden',
+  },
+  segment: {
+    flex: 1,
+    minHeight: dimensions.touchTarget,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: dimensions.sm,
+  },
+  segmentActive: {
+    backgroundColor: colors.chipActiveBg,
+  },
+  segmentLabel: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  segmentLabelActive: {
+    color: colors.chipActiveText,
+  },
+  placeholderAction: {
+    minHeight: dimensions.touchTarget,
+    opacity: 0.5,
+    borderRadius: dimensions.radiusLg,
+    borderWidth: dimensions.cardBorderWidth,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: dimensions.md,
+  },
+  placeholderActionLabel: {
+    ...typography.bodyMedium,
+    color: colors.text,
+  },
   screen: {
     flex: 1,
     backgroundColor: colors.background,
-    paddingHorizontal: dimensions.screenPaddingH,
     overflow: 'hidden',
+  },
+  keyboardAvoiding: {
+    flex: 1,
+    width: '100%',
   },
   shell: {
     flex: 1,
     width: '100%',
     maxWidth: 720,
     alignSelf: 'center',
-    gap: dimensions.lg,
+    gap: 0,
   },
   topBar: {
-    minHeight: 54,
+    minHeight: dimensions.headerHeight,
     flexDirection: 'row',
     alignItems: 'center',
     gap: dimensions.sm,
-    paddingBottom: dimensions.xs,
-    borderBottomWidth: 1,
+    paddingHorizontal: dimensions.screenPaddingH,
+    backgroundColor: colors.surface,
+    borderBottomWidth: dimensions.cardBorderWidth,
     borderBottomColor: colors.border,
   },
   titleWrap: {
     flex: 1,
     minWidth: 0,
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   rightAction: {
-    minWidth: 38,
+    minWidth: dimensions.touchTarget,
     alignItems: 'flex-end',
   },
   headerSpacer: {
-    width: 38,
-    height: 38,
+    width: dimensions.touchTarget,
+    height: dimensions.touchTarget,
   },
   title: {
-    ...typography.subtitle,
+    ...typography.bodyMedium,
     color: colors.text,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   subtitle: {
     ...typography.caption,
     color: colors.textMuted,
-    textAlign: 'center',
+    textAlign: 'left',
     marginTop: 2,
   },
   body: {
     flex: 1,
-    gap: dimensions.lg,
+    gap: dimensions.sectionGap,
+    paddingHorizontal: dimensions.screenPaddingH,
+    paddingTop: dimensions.screenPaddingV,
   },
   scrollBody: {
     flexGrow: 1,
-    gap: dimensions.lg,
+    gap: dimensions.sectionGap,
+    paddingHorizontal: dimensions.screenPaddingH,
+    paddingTop: dimensions.screenPaddingV,
     paddingBottom: dimensions.screenPaddingV,
   },
   sectionHeader: {
@@ -352,7 +548,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardPadded: {
-    padding: dimensions.md + 2,
+    padding: dimensions.cardPadding,
   },
   badge: {
     borderRadius: dimensions.radiusFull,
@@ -362,9 +558,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     ...typography.label,
-    color: colors.text,
     textTransform: 'uppercase',
-    letterSpacing: 0.4,
   },
   button: {
     minHeight: dimensions.buttonHeight,
@@ -403,22 +597,17 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   input: {
-    minHeight: dimensions.buttonHeight,
+    minHeight: dimensions.inputHeight,
     borderRadius: dimensions.radiusLg,
-    borderWidth: 1,
+    borderWidth: dimensions.cardBorderWidth,
     borderColor: colors.border,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.surface,
     color: colors.text,
     paddingHorizontal: dimensions.md,
     ...typography.body,
   },
   inputFocused: {
     borderColor: colors.accent,
-    shadowColor: colors.accent,
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
   },
   sheetOverlay: {
     flex: 1,
@@ -430,9 +619,12 @@ const styles = StyleSheet.create({
     borderTopRightRadius: dimensions.radiusXl,
     backgroundColor: colors.surface,
     paddingHorizontal: dimensions.screenPaddingH,
-    paddingTop: dimensions.md,
+    paddingTop: dimensions.xs,
     gap: dimensions.md,
     maxHeight: '86%',
+  },
+  sheetKeyboardAvoiding: {
+    width: '100%',
   },
   sheetHandle: {
     alignSelf: 'center',
@@ -447,10 +639,10 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   iconButton: {
-    width: 38,
-    height: 38,
+    width: dimensions.touchTarget,
+    height: dimensions.touchTarget,
     borderRadius: dimensions.radiusFull,
-    borderWidth: 1,
+    borderWidth: dimensions.cardBorderWidth,
     borderColor: colors.border,
     backgroundColor: colors.surfaceMuted,
     alignItems: 'center',
@@ -494,24 +686,6 @@ const styles = StyleSheet.create({
     marginTop: 0,
     textAlign: 'center',
   },
-  decorLeft: {
-    position: 'absolute',
-    top: -80,
-    left: -90,
-    width: 220,
-    height: 220,
-    borderRadius: 220,
-    backgroundColor: 'rgba(75, 65, 225, 0.04)',
-  },
-  decorRight: {
-    position: 'absolute',
-    top: 110,
-    right: -110,
-    width: 260,
-    height: 260,
-    borderRadius: 260,
-    backgroundColor: 'rgba(0, 0, 11, 0.03)',
-  },
 });
 
 const variantStyles: Record<ButtonVariant, ViewStyle> = {
@@ -525,22 +699,24 @@ const variantStyles: Record<ButtonVariant, ViewStyle> = {
   },
   secondary: {
     backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.accent,
+    borderWidth: dimensions.cardBorderWidth,
+    borderColor: colors.border,
   },
   ghost: {
     backgroundColor: 'transparent',
   },
   danger: {
-    backgroundColor: colors.danger,
+    backgroundColor: colors.surface,
+    borderWidth: dimensions.cardBorderWidth,
+    borderColor: colors.danger,
   },
 };
 
 const buttonTextStyles: Record<ButtonVariant, TextStyle> = {
-  primary: { color: '#FFFFFF' },
-  secondary: { color: colors.accent },
+  primary: { color: colors.chipActiveText },
+  secondary: { color: colors.text },
   ghost: { color: colors.text },
-  danger: { color: '#FFFFFF' },
+  danger: { color: colors.danger },
 };
 
 const badgeToneStyles = StyleSheet.create({
@@ -548,13 +724,22 @@ const badgeToneStyles = StyleSheet.create({
   success: { backgroundColor: colors.successSoft },
   warning: { backgroundColor: colors.warningSoft },
   danger: { backgroundColor: colors.dangerSoft },
-  primary: { backgroundColor: '#E2E0FC' },
-  accent: { backgroundColor: '#E2DFFF' },
+  primary: { backgroundColor: colors.accentSubtle },
+  accent: { backgroundColor: colors.accentSubtle },
+});
+
+const badgeTextToneStyles = StyleSheet.create({
+  neutral: { color: colors.textSecondary },
+  success: { color: colors.success },
+  warning: { color: colors.warning },
+  danger: { color: colors.danger },
+  primary: { color: colors.accent },
+  accent: { color: colors.accent },
 });
 
 const statToneStyles = StyleSheet.create({
-  primary: { borderColor: '#C6C4DF' },
-  accent: { borderColor: '#C3C0FF' },
-  success: { borderColor: '#BEEAD3' },
-  warning: { borderColor: '#F7D77A' },
+  primary: { borderColor: colors.border },
+  accent: { borderColor: colors.accentSubtle },
+  success: { borderColor: colors.successBg },
+  warning: { borderColor: colors.warningBg },
 });

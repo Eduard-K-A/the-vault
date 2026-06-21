@@ -14,7 +14,7 @@ describe('SyncStatusBadge', () => {
 
     await render(<SyncStatusBadge />);
 
-    expect(screen.getByText('Syncing')).toBeTruthy();
+    expect(screen.getByText('Syncing...')).toBeTruthy();
   });
 
   it('renders synced state', async () => {
@@ -38,7 +38,7 @@ describe('SyncStatusBadge', () => {
 
     await render(<SyncStatusBadge />);
 
-    expect(screen.getByText('Offline: 2 pending')).toBeTruthy();
+    expect(screen.getByText('Offline - 2 queued')).toBeTruthy();
   });
 
   it('renders failed last error', async () => {
@@ -46,7 +46,7 @@ describe('SyncStatusBadge', () => {
 
     await render(<SyncStatusBadge />);
 
-    expect(screen.getByText('Could not upload sales')).toBeTruthy();
+    expect(screen.getByText('Sync failed')).toBeTruthy();
   });
 
   it('renders degraded last error', async () => {

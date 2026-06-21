@@ -10,10 +10,12 @@ import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { db } from '@/db/powersync';
+import { syncPowerSyncNow } from '@/services/powersync.service';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
 import type { BusinessMember, Profile } from '@/types/models';
+import { createSyncTraceId } from '@/utils/syncDebug';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -23,6 +25,7 @@ export default function EmployeeListScreen() {
   const business = useBusinessStore((state) => state.activeBusiness);
   const actorId = useAuthStore((state) => state.userId);
   const role = useAuthStore((state) => state.role);
+  const [syncLoading, setSyncLoading] = React.useState(false);
   const { data: memberRows } = useQuery<BusinessMember>(
     'SELECT * FROM business_members WHERE business_id = ?',
     [businessId ?? ''],
@@ -61,13 +64,45 @@ export default function EmployeeListScreen() {
     ]);
   }
 
+  async function handleManualSync() {
+    if (syncLoading) {
+      return;
+    }
+
+    try {
+      setSyncLoading(true);
+      await syncPowerSyncNow(createSyncTraceId('employees-sync-now'));
+    } catch (error) {
+      Alert.alert('Manual sync failed', error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setSyncLoading(false);
+    }
+  }
+
   return (
-    <Screen title="POSly">
-      <View style={styles.header}>
-        <Text style={styles.title}>Team</Text>
-        <Text style={styles.subtitle}>Manage the team and view member performance.</Text>
-      </View>
-      <Button label="Performance dashboard" onPress={() => navigation.navigate('PerformanceDashboard')} />
+    <Screen
+      title="Employees"
+      subtitle={business?.name}
+      action={
+        <Button
+          label="Sync"
+          accessibilityLabel="Sync now"
+          variant="secondary"
+          onPress={handleManualSync}
+          loading={syncLoading}
+          fullWidth={false}
+        />
+      }
+    >
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => navigation.navigate('PerformanceDashboard')}
+        style={({ pressed }) => [styles.performanceRow, pressed && styles.pressed]}
+      >
+        <Text style={styles.performanceIcon}>▥</Text>
+        <Text style={styles.performanceLabel}>Performance dashboard</Text>
+        <Text style={styles.chevron}>›</Text>
+      </Pressable>
       {employees.length === 0 ? (
         <EmptyState title="No employees found" description="Invite employees with a join code." />
       ) : (
@@ -104,16 +139,32 @@ export default function EmployeeListScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: dimensions.xs,
+  performanceRow: {
+    minHeight: dimensions.rowHeight,
+    paddingHorizontal: dimensions.md,
+    borderRadius: dimensions.radiusXl,
+    borderWidth: dimensions.cardBorderWidth,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: dimensions.sm,
   },
-  title: {
-    ...typography.title,
-    color: colors.text,
-  },
-  subtitle: {
-    ...typography.body,
+  performanceIcon: {
+    ...typography.subtitle,
     color: colors.textMuted,
+  },
+  performanceLabel: {
+    ...typography.bodyMedium,
+    color: colors.text,
+    flex: 1,
+  },
+  chevron: {
+    ...typography.subtitle,
+    color: colors.textMuted,
+  },
+  pressed: {
+    opacity: 0.9,
   },
   card: {
     gap: dimensions.sm,

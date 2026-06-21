@@ -154,6 +154,10 @@ export default function AnalyticsScreen() {
           value: item.total_revenue,
         }))
       : [];
+  const transactionCount =
+    'summary' in analytics
+      ? analytics.summary.transactions
+      : (analytics.dailyTotals[analytics.dailyTotals.length - 1]?.transaction_count ?? 0);
 
   return (
     <Screen
@@ -168,14 +172,14 @@ export default function AnalyticsScreen() {
           <View style={styles.heroRow}>
             <View style={styles.heroCopy}>
               <Text style={styles.selectorActive}>Live analytics</Text>
-              <Text style={styles.heroText}>Track revenue, products, team performance, and stock risk in one place.</Text>
+              <Text style={styles.heroText}>Track revenue, products, staff performance, and stock risk in one place.</Text>
             </View>
             <Badge label={paymentData.length > 0 ? 'Fresh data' : 'No data'} tone="accent" />
           </View>
         </Card>
 
         <View style={styles.filterWrap}>
-          <Text style={styles.filterLabel}>Business filter</Text>
+          <Text style={styles.filterLabel}>Workspace</Text>
           <View style={styles.filterRow}>
             {businessOptions.map((item) => {
               const active = item.businessId === selectedBusinessId;
@@ -203,7 +207,7 @@ export default function AnalyticsScreen() {
             <Text style={styles.revenueLabel}>Total Revenue</Text>
             <Text style={styles.revenueValue}>{'summary' in analytics ? formatCurrency(analytics.summary.revenue) : formatCurrency(analytics.todayTotal)}</Text>
           </View>
-          <Badge label="+12.5%" tone="success" />
+          <Badge label={`${transactionCount} sales`} tone="success" />
         </View>
 
         <View style={styles.metrics}>
@@ -332,7 +336,7 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     padding: dimensions.md,
-    backgroundColor: '#F6F5FF',
+    backgroundColor: colors.accentSubtle,
   },
   heroRow: {
     flexDirection: 'row',
@@ -382,7 +386,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   filterChipLabelActive: {
-    color: '#FFFFFF',
+    color: colors.chipActiveText,
     fontWeight: '700',
   },
   filterMeta: {

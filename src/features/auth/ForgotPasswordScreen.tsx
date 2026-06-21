@@ -39,7 +39,7 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <Screen onBack={handleBack}>
+    <Screen onBack={handleBack} scrollable>
       <View style={styles.header}>
         <Text style={styles.title}>Forgot password</Text>
         <Text style={styles.subtitle}>Request a reset link for your account.</Text>

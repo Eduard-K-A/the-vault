@@ -47,7 +47,7 @@ export default function JoinBusinessScreen() {
   }
 
   return (
-    <Screen title="POSly" onBack={handleBack}>
+    <Screen title="POSly" onBack={handleBack} scrollable>
       <View style={styles.header}>
         <Text style={styles.title}>Join business</Text>
         <Text style={styles.subtitle}>Enter the 6-character join code from the owner.</Text>

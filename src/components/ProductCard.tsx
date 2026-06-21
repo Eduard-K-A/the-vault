@@ -29,53 +29,62 @@ export function ProductCard({ product, stockQuantity, onPress, onAdd, onEdit }: 
       onPress={() => onPress?.(product)}
       style={styles.pressable}
     >
-      <Card style={[styles.card, isOutOfStock && styles.cardOut, isLowStock && styles.cardLow]}>
+      <Card padded={false} style={[styles.card, isOutOfStock && styles.cardOut]}>
         <View style={styles.media}>
           {product.image_url ? (
-            <Image source={{ uri: product.image_url }} style={styles.image} />
+            <Image source={{ uri: product.image_url }} style={[styles.image, isOutOfStock && styles.imageOut]} />
           ) : (
-            <View style={styles.imageFallback}>
-              <Text style={styles.imageLetter}>{product.name.slice(0, 1).toUpperCase()}</Text>
+            <View accessibilityLabel="Product image placeholder" style={styles.imageFallback}>
+              <Text style={styles.imageIcon}>▧</Text>
             </View>
           )}
+          <View style={styles.stockBadge}>
+            <Badge label={statusLabel} tone={statusTone} />
+          </View>
         </View>
 
         <View style={styles.content}>
-          <View style={styles.headlineRow}>
-            <View style={styles.titleBlock}>
-              <Text style={[styles.name, !product.is_active && styles.nameMuted]} numberOfLines={1}>
-                {product.name}
-              </Text>
-              <Text style={styles.meta} numberOfLines={1}>
-                {product.sku ?? 'No SKU'}
-                {product.barcode ? ` · ${product.barcode}` : ''}
-              </Text>
-            </View>
-            <Text style={styles.price}>{formatCurrency(product.selling_price)}</Text>
-          </View>
+          <Text style={[styles.name, !product.is_active && styles.nameMuted]} numberOfLines={2}>
+            {product.name}
+          </Text>
+          <Text style={styles.meta} numberOfLines={1}>
+            {product.sku ?? 'No SKU'}
+            {product.barcode ? ` · ${product.barcode}` : ''}
+          </Text>
 
           <View style={styles.footer}>
-            <Badge label={statusLabel} tone={statusTone} />
-            {typeof stockQuantity === 'number' ? <Text style={styles.stock}>{stockQuantity} units</Text> : null}
+            <Text style={styles.price}>{formatCurrency(product.selling_price)}</Text>
+            <View style={styles.actions}>
+              {onEdit ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Edit ${product.name}`}
+                  hitSlop={8}
+                  onPress={(event) => {
+                    event.stopPropagation();
+                    onEdit(product);
+                  }}
+                  style={({ pressed }) => [styles.editButton, pressed && styles.actionButtonPressed]}
+                >
+                  <Text style={styles.actionLabel}>Edit</Text>
+                </Pressable>
+              ) : null}
+              {onAdd && !isOutOfStock ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Add ${product.name}`}
+                  hitSlop={8}
+                  onPress={(event) => {
+                    event.stopPropagation();
+                    onAdd(product);
+                  }}
+                  style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
+                >
+                  <Text style={styles.actionButtonText}>＋</Text>
+                </Pressable>
+              ) : null}
+            </View>
           </View>
-        </View>
-
-        <View style={styles.actions}>
-          {onAdd ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Restock ${product.name}`}
-              hitSlop={8}
-              onPress={(event) => {
-                event.stopPropagation();
-                onAdd(product);
-              }}
-              style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
-            >
-              <Text style={styles.actionButtonText}>＋</Text>
-            </Pressable>
-          ) : null}
-          <Text style={styles.actionLabel}>{onAdd ? 'Restock' : onEdit ? 'Edit' : 'View'}</Text>
         </View>
       </Card>
     </Pressable>
@@ -87,32 +96,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: dimensions.md,
-    minHeight: 92,
-    padding: dimensions.md,
-    borderRadius: dimensions.radiusMd,
+    minHeight: 220,
+    borderRadius: dimensions.radiusXl,
     backgroundColor: colors.surface,
   },
-  cardLow: {
-    borderLeftWidth: 3,
-    borderLeftColor: colors.warning,
-  },
   cardOut: {
-    borderLeftWidth: 3,
-    borderLeftColor: colors.danger,
+    opacity: 0.82,
   },
   media: {
-    width: 52,
-    height: 52,
-    borderRadius: dimensions.radiusMd,
+    height: 132,
+    borderTopLeftRadius: dimensions.radiusXl,
+    borderTopRightRadius: dimensions.radiusXl,
     overflow: 'hidden',
-    flexShrink: 0,
+    backgroundColor: colors.surfaceMuted,
   },
   image: {
     width: '100%',
     height: '100%',
+  },
+  imageOut: {
+    opacity: 0.4,
   },
   imageFallback: {
     flex: 1,
@@ -120,29 +123,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.surfaceMuted,
   },
-  imageLetter: {
+  imageIcon: {
     ...typography.subtitle,
-    color: colors.accent,
+    color: colors.textSecondary,
+    opacity: 0.65,
+  },
+  stockBadge: {
+    position: 'absolute',
+    top: dimensions.xs,
+    right: dimensions.xs,
   },
   content: {
-    flex: 1,
-    minWidth: 0,
-    gap: 4,
-  },
-  headlineRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: dimensions.sm,
-  },
-  titleBlock: {
-    flex: 1,
-    minWidth: 0,
-    gap: 2,
+    padding: dimensions.sm,
+    gap: dimensions.xxs,
   },
   name: {
-    ...typography.body,
+    ...typography.bodyMedium,
     color: colors.text,
-    fontWeight: '600',
+    minHeight: 40,
   },
   nameMuted: {
     color: colors.textMuted,
@@ -156,33 +154,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: dimensions.sm,
+    marginTop: dimensions.xs,
   },
   price: {
-    ...typography.subtitle,
+    ...typography.price,
     color: colors.text,
     fontVariant: ['tabular-nums'],
-    minWidth: 84,
-    textAlign: 'right',
-  },
-  stock: {
-    ...typography.label,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-  },
-  actions: {
-    alignSelf: 'stretch',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    gap: dimensions.xs,
-    minWidth: 52,
   },
   actionButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceMuted,
-    borderWidth: 1,
-    borderColor: colors.border,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -191,7 +174,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   actionButtonText: {
-    color: colors.accent,
+    color: colors.chipActiveText,
     fontSize: 20,
     lineHeight: 20,
     fontWeight: '700',
@@ -201,5 +184,16 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
+  },
+  editButton: {
+    minHeight: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: dimensions.sm,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: dimensions.xs,
   },
 });

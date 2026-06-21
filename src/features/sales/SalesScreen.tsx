@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
@@ -11,126 +11,27 @@ import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useSales } from '@/hooks/useSales';
-import { buildSalesForBusinessQuery } from '@/db/queries/salesQueries';
-import { refreshBusinessDataFromDatabase } from '@/services/businessDataRefresh.service';
 import { syncPowerSyncNow } from '@/services/powersync.service';
-import { powersync } from '@/db/powersync';
-import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
-import { createSyncTraceId, logSyncDebug } from '@/utils/syncDebug';
 import type { RootStackParamList } from '@/types/navigation';
 import { useQuery } from '@powersync/react';
 import type { Business } from '@/types/models';
+import { createSyncTraceId } from '@/utils/syncDebug';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
-
-interface EmployeeSalesSnapshot {
-  completedSaleCount: number;
-  latestSaleAt: string | null;
-}
-
-async function loadEmployeeSalesSnapshot(
-  businessId: string,
-  employeeId: string,
-): Promise<EmployeeSalesSnapshot> {
-  const salesQuery = buildSalesForBusinessQuery(businessId);
-  const row = await powersync.getOptional<{
-    count: number | string | null;
-    latest_sale_at: string | null;
-  }>(
-    `SELECT COUNT(*) AS count, MAX(created_at) AS latest_sale_at FROM (${salesQuery.sql}) AS employee_sales WHERE employee_id = ? AND status = 'completed'`,
-    [...salesQuery.parameters, employeeId],
-  );
-
-  return {
-    completedSaleCount: Number(row?.count ?? 0),
-    latestSaleAt: row?.latest_sale_at ?? null,
-  };
-}
 
 export default function SalesScreen() {
   const navigation = useNavigation<Navigation>();
   const { sales } = useSales();
-  const userId = useAuthStore((state) => state.userId);
   const activeBusiness = useBusinessStore((state) => state.activeBusiness);
-  const activeBranch = useBusinessStore((state) => state.activeBranch);
   const availableBusinesses = useBusinessStore((state) => state.availableBusinesses);
   const [selectedBusinessId, setSelectedBusinessId] = useState<string>('all');
   const [syncLoading, setSyncLoading] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const { data: businessRows } = useQuery<Business>('SELECT * FROM businesses');
 
   useEffect(() => {
     setSelectedBusinessId(activeBusiness?.id ?? 'all');
   }, [activeBusiness?.id]);
-
-  useEffect(() => {
-    if (!toastMessage) {
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      setToastMessage(null);
-    }, 1800);
-
-    return () => clearTimeout(timeout);
-  }, [toastMessage]);
-
-  async function handleManualSync() {
-    if (!activeBusiness?.id) {
-      Alert.alert('Sync failed', 'Select a business before syncing sales.');
-      return;
-    }
-    if (!userId) {
-      Alert.alert('Sync failed', 'Sign in before syncing sales.');
-      return;
-    }
-
-    const traceId = createSyncTraceId('sync-now');
-    logSyncDebug(traceId, 'sales screen sync button pressed', {
-      businessId: activeBusiness.id,
-      branchId: activeBranch?.id ?? null,
-      employeeId: userId,
-      selectedBusinessId,
-      visibleSaleCount: filteredSales.length,
-      totalSaleCount: sales.length,
-      syncLoading,
-    });
-
-    try {
-      setSyncLoading(true);
-      const beforeSnapshot = await loadEmployeeSalesSnapshot(activeBusiness.id, userId);
-      logSyncDebug(traceId, 'sales screen employee sales before sync', {
-        businessId: activeBusiness.id,
-        employeeId: userId,
-        ...beforeSnapshot,
-      });
-      logSyncDebug(traceId, 'sales screen PowerSync manual sync requested');
-      await syncPowerSyncNow(traceId);
-      logSyncDebug(traceId, 'sales screen business refresh requested', {
-        businessId: activeBusiness.id,
-        employeeId: userId,
-      });
-      const refreshResult = await refreshBusinessDataFromDatabase(activeBusiness.id, {}, traceId);
-      logSyncDebug(traceId, 'sales screen business refresh returned', { ...refreshResult });
-      const afterSnapshot = await loadEmployeeSalesSnapshot(activeBusiness.id, userId);
-      logSyncDebug(traceId, 'sales screen employee sales after refresh', {
-        businessId: activeBusiness.id,
-        employeeId: userId,
-        beforeCompletedSaleCount: beforeSnapshot.completedSaleCount,
-        ...afterSnapshot,
-      });
-      setToastMessage(`${afterSnapshot.completedSaleCount} sales synced`);
-    } catch (error) {
-      logSyncDebug(traceId, 'sales screen sync failed', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      Alert.alert('Sync failed', error instanceof Error ? error.message : 'Unknown error');
-    } finally {
-      setSyncLoading(false);
-      logSyncDebug(traceId, 'sales screen sync finished');
-    }
-  }
 
   const businessOptions = useMemo(() => {
     const summaries = availableBusinesses
@@ -194,68 +95,41 @@ export default function SalesScreen() {
     [filteredSales],
   );
 
-  const selectedBusinessName = businessOptions.find((item) => item.businessId === selectedBusinessId)?.businessName ?? 'All businesses';
-  const selectedBusinessLabel =
-    selectedBusinessId !== 'all' && activeBusiness?.id === selectedBusinessId && activeBranch
-      ? `${selectedBusinessName} · ${activeBranch.name}`
-      : selectedBusinessName;
+  async function handleManualSync() {
+    if (syncLoading) {
+      return;
+    }
+
+    try {
+      setSyncLoading(true);
+      await syncPowerSyncNow(createSyncTraceId('sales-sync-now'));
+    } catch (error) {
+      Alert.alert('Manual sync failed', error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setSyncLoading(false);
+    }
+  }
 
   return (
     <Screen
       title="My Sales"
-      action={<Badge label="Employee view" tone="primary" />}
+      action={
+        <View style={styles.headerActions}>
+          <Badge label="Employee view" tone="primary" />
+          <Button
+            label="Sync"
+            accessibilityLabel="Sync now"
+            variant="secondary"
+            onPress={handleManualSync}
+            loading={syncLoading}
+            fullWidth={false}
+          />
+        </View>
+      }
       scrollable
       contentStyle={styles.content}
     >
       <View style={styles.stack}>
-        <Card style={styles.heroCard}>
-          <View style={styles.heroRow}>
-            <View style={styles.heroCopy}>
-              <Text style={styles.heroKicker}>Sales overview</Text>
-              <Text style={styles.heroTitle}>A quick read on today, week, and month performance.</Text>
-              <Text style={styles.heroBody}>
-                Filter by business to separate sales from different workspaces.
-              </Text>
-            </View>
-            <View style={styles.heroActions}>
-              <Badge label={`${recentSales.length} records`} tone="accent" />
-              <Button
-                label="Sync now"
-                variant="secondary"
-                onPress={() => void handleManualSync()}
-                loading={syncLoading}
-                fullWidth={false}
-              />
-            </View>
-          </View>
-        </Card>
-
-        <View style={styles.filterWrap}>
-          <Text style={styles.filterLabel}>Business filter</Text>
-          <View style={styles.filterRow}>
-            {businessOptions.map((item) => {
-              const active = item.businessId === selectedBusinessId;
-              return (
-                <Pressable
-                  key={item.businessId}
-                  accessibilityRole="button"
-                  onPress={() => setSelectedBusinessId(item.businessId)}
-                  style={({ pressed }) => [
-                    styles.filterChip,
-                    active && styles.filterChipActive,
-                    pressed && styles.pressed,
-                  ]}
-                >
-                  <Text style={[styles.filterChipLabel, active && styles.filterChipLabelActive]}>
-                    {item.businessName}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          <Text style={styles.filterMeta}>Showing sales for {selectedBusinessLabel}.</Text>
-        </View>
-
         <View style={styles.metricsGrid}>
           <StatCard
             label="Today"
@@ -305,10 +179,7 @@ export default function SalesScreen() {
           />
         </Card>
 
-        <Card style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Daily sales pulse</Text>
-          <Text style={styles.summaryBody}>Completed sales are listed below with payment method and status chips for quick scanning.</Text>
-        </Card>
+        <Text style={styles.listLabel}>Recent sales</Text>
 
         {recentSales.length === 0 ? (
           <EmptyState title="No sales yet" description="Checkout completed sales will appear here." />
@@ -320,9 +191,11 @@ export default function SalesScreen() {
                   <View style={styles.rowCopy}>
                     <Text style={styles.saleId}>{item.id.slice(0, 8).toUpperCase()}</Text>
                     <Text style={styles.saleMeta}>{formatDateLabel(item.created_at)}</Text>
-                    <Text style={styles.saleBusiness}>
-                      {getBusinessName(item.business_id, businessOptions)}
-                    </Text>
+                    {getBusinessName(item.business_id, businessOptions) ? (
+                      <Text style={styles.saleBusiness}>
+                        {getBusinessName(item.business_id, businessOptions)}
+                      </Text>
+                    ) : null}
                   </View>
                   <Text style={styles.amount}>{formatCurrency(item.total_amount)}</Text>
                 </View>
@@ -340,11 +213,6 @@ export default function SalesScreen() {
 
         <Button label="View analytics" onPress={() => navigation.navigate('Analytics')} />
       </View>
-      {toastMessage ? (
-        <View pointerEvents="none" style={styles.toast}>
-          <Text style={styles.toastLabel}>{toastMessage}</Text>
-        </View>
-      ) : null}
     </Screen>
   );
 }
@@ -420,7 +288,7 @@ function getBusinessName(
   businessId: string,
   businesses: Array<{ businessId: string; businessName: string }>,
 ): string {
-  return businesses.find((item) => item.businessId === businessId)?.businessName ?? 'Unknown business';
+  return businesses.find((item) => item.businessId === businessId)?.businessName ?? '';
 }
 
 const styles = StyleSheet.create({
@@ -430,77 +298,9 @@ const styles = StyleSheet.create({
   stack: {
     gap: dimensions.lg,
   },
-  heroCard: {
-    padding: dimensions.md,
-    backgroundColor: '#F6F5FF',
-  },
-  heroRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: dimensions.sm,
-  },
-  heroCopy: {
-    flex: 1,
-    minWidth: 0,
-    gap: dimensions.xs,
-  },
-  heroActions: {
+  headerActions: {
     alignItems: 'flex-end',
-    gap: dimensions.sm,
-  },
-  heroKicker: {
-    ...typography.label,
-    color: colors.accent,
-    textTransform: 'uppercase',
-  },
-  heroTitle: {
-    ...typography.subtitle,
-    color: colors.text,
-  },
-  heroBody: {
-    ...typography.body,
-    color: colors.textMuted,
-  },
-  filterWrap: {
     gap: dimensions.xs,
-  },
-  filterLabel: {
-    ...typography.label,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: dimensions.sm,
-  },
-  filterChip: {
-    minHeight: 38,
-    paddingHorizontal: dimensions.md,
-    borderRadius: dimensions.radiusFull,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  filterChipActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
-  },
-  filterChipLabel: {
-    ...typography.caption,
-    color: colors.textMuted,
-  },
-  filterChipLabelActive: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  filterMeta: {
-    ...typography.caption,
-    color: colors.textMuted,
   },
   metricsGrid: {
     flexDirection: 'row',
@@ -530,16 +330,10 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     marginTop: 2,
   },
-  summaryCard: {
-    gap: dimensions.xs,
-  },
-  summaryTitle: {
-    ...typography.subtitle,
-    color: colors.text,
-  },
-  summaryBody: {
-    ...typography.body,
+  listLabel: {
+    ...typography.label,
     color: colors.textMuted,
+    textTransform: 'uppercase',
   },
   salesList: {
     gap: dimensions.sm,
@@ -581,26 +375,5 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.9,
     transform: [{ scale: 0.99 }],
-  },
-  toast: {
-    position: 'absolute',
-    left: dimensions.screenPaddingH,
-    right: dimensions.screenPaddingH,
-    top: dimensions.screenPaddingV + 12,
-    paddingHorizontal: dimensions.md,
-    paddingVertical: dimensions.sm,
-    borderRadius: dimensions.radiusFull,
-    backgroundColor: 'rgba(25, 28, 30, 0.92)',
-    shadowColor: colors.primary,
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
-  toastLabel: {
-    ...typography.body,
-    color: '#FFFFFF',
-    textAlign: 'center',
-    fontWeight: '600',
   },
 });

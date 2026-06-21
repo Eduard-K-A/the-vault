@@ -4,12 +4,12 @@ import { Badge } from '@/components/ui';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
 
 export function SyncStatusBadge() {
-  const { phase, isOnline, lastError, pendingUploadCount, failedUploadCount, lastSyncedAt } = useSyncStatus();
+  const { phase, isOnline, lastError, pendingUploadCount, lastSyncedAt } = useSyncStatus();
 
   if (phase === 'failed') {
     return (
       <Badge
-        label={failedUploadCount > 0 ? `${failedUploadCount} needs attention` : (lastError ?? 'Sync failed')}
+        label="Sync failed"
         tone="danger"
         accessibilityLabel="Sync status"
         testID="sync-status"
@@ -20,7 +20,7 @@ export function SyncStatusBadge() {
   if (phase === 'degraded') {
     return (
       <Badge
-        label={failedUploadCount > 0 ? `${failedUploadCount} needs attention` : (lastError ?? 'Sync degraded')}
+        label={lastError ?? 'Sync failed'}
         tone="warning"
         accessibilityLabel="Sync status"
         testID="sync-status"
@@ -31,7 +31,7 @@ export function SyncStatusBadge() {
   if (phase === 'offline' || !isOnline) {
     return (
       <Badge
-        label={pendingUploadCount > 0 ? `Offline: ${pendingUploadCount} pending` : 'Offline'}
+        label={pendingUploadCount > 0 ? `Offline - ${pendingUploadCount} queued` : 'Offline'}
         tone="warning"
         accessibilityLabel="Sync status"
         testID="sync-status"
@@ -42,8 +42,8 @@ export function SyncStatusBadge() {
   if (phase === 'syncing') {
     return (
       <Badge
-        label={pendingUploadCount > 0 ? `Uploading ${pendingUploadCount}` : 'Syncing'}
-        tone="warning"
+        label="Syncing..."
+        tone="accent"
         accessibilityLabel="Sync status"
         testID="sync-status"
       />
@@ -51,7 +51,7 @@ export function SyncStatusBadge() {
   }
 
   const syncedLabel = lastSyncedAt
-    ? `Synced ${new Date(lastSyncedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+    ? `Synced ${formatRelativeSyncTime(lastSyncedAt)}`
     : 'Synced';
 
   return (
@@ -62,4 +62,20 @@ export function SyncStatusBadge() {
       testID="sync-status"
     />
   );
+}
+
+function formatRelativeSyncTime(value: string): string {
+  const elapsedMs = Date.now() - new Date(value).getTime();
+  const elapsedMinutes = Math.max(0, Math.round(elapsedMs / 60000));
+
+  if (elapsedMinutes < 1) {
+    return 'just now';
+  }
+
+  if (elapsedMinutes < 60) {
+    return `${elapsedMinutes}m ago`;
+  }
+
+  const elapsedHours = Math.round(elapsedMinutes / 60);
+  return `${elapsedHours}h ago`;
 }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, ScrollView } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
@@ -57,13 +57,26 @@ export default function RestockModal() {
   }
 
   return (
-    <Screen title="Restock inventory" subtitle="Inventory logs are recorded for every stock change." onBack={handleBack}>
-      <ScrollView contentContainerStyle={{ gap: 16 }}>
-        <Card style={{ gap: 16 }}>
-          <Input label="Quantity" value={quantity} onChangeText={setQuantity} keyboardType="numeric" />
-          <Button label="Apply restock" onPress={handleRestock} loading={loading} />
-        </Card>
-      </ScrollView>
+    <Screen
+      title="Restock inventory"
+      subtitle="Inventory logs are recorded for every stock change."
+      onBack={handleBack}
+      scrollable
+      contentStyle={styles.content}
+    >
+      <Card style={styles.card}>
+        <Input label="Quantity" value={quantity} onChangeText={setQuantity} keyboardType="numeric" />
+        <Button label="Apply restock" onPress={handleRestock} loading={loading} />
+      </Card>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  content: {
+    gap: 16,
+  },
+  card: {
+    gap: 16,
+  },
+});

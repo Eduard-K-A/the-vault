@@ -2,7 +2,6 @@ import React from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
-
 import { Badge, Button, Card, Input, ModalSheet, Screen } from '@/components/ui';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
@@ -85,16 +84,10 @@ export default function OwnerSettingsScreen() {
 
   return (
     <Screen
-      title="Owner Settings"
-      action={<Badge label={role ?? 'owner'} tone="primary" />}
       scrollable
       contentStyle={styles.content}
     >
       <View style={styles.stack}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Owner settings</Text>
-          <Text style={styles.subtitle}>Manage your business preferences and configurations.</Text>
-        </View>
         {role === 'owner' && business?.join_code ? (
           <Card style={styles.joinCodeCard}>
             <View style={styles.joinCodeRow}>
@@ -193,8 +186,7 @@ export default function OwnerSettingsScreen() {
         </Card>
 
         <Card style={styles.signOutCard}>
-          <Button label="Sign Out" variant="danger" onPress={handleLogout} />
-          <Text style={styles.version}>POSly Terminal v2.4.0</Text>
+          <Button label="Sign out" variant="ghost" onPress={handleLogout} />
         </Card>
       </View>
       <ModalSheet visible={deleteModalOpen} title="Delete business" onClose={closeDeleteBusiness}>
@@ -238,23 +230,12 @@ const styles = StyleSheet.create({
   stack: {
     gap: dimensions.lg,
   },
-  header: {
-    gap: dimensions.xs,
-  },
-  title: {
-    ...typography.title,
-    color: colors.text,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textMuted,
-  },
   profileCard: {
     gap: dimensions.md,
   },
   joinCodeCard: {
     gap: dimensions.sm,
-    backgroundColor: '#F6F5FF',
+    backgroundColor: colors.accentSubtle,
   },
   joinCodeRow: {
     flexDirection: 'row',
@@ -392,11 +373,5 @@ const styles = StyleSheet.create({
   deleteActions: {
     flexDirection: 'row',
     gap: dimensions.sm,
-  },
-  version: {
-    ...typography.label,
-    color: colors.textMuted,
-    textAlign: 'center',
-    textTransform: 'uppercase',
   },
 });

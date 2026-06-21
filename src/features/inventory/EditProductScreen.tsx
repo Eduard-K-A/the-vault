@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text } from 'react-native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useQuery } from '@powersync/react';
@@ -7,7 +7,6 @@ import { useQuery } from '@powersync/react';
 import { Badge, Button, Card, Input, Screen } from '@/components/ui';
 import { db } from '@/db/powersync';
 import { colors } from '@/constants/colors';
-import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { useAuthStore } from '@/store/authStore';
 import type { RootStackParamList } from '@/types/navigation';
@@ -122,23 +121,29 @@ export default function EditProductScreen() {
       subtitle="Archived products stay hidden from employees."
       action={<Badge label={product.is_active ? 'Active' : 'Archived'} tone={product.is_active ? 'success' : 'neutral'} />}
       onBack={handleBack}
+      scrollable
+      contentStyle={styles.content}
     >
-      <ScrollView contentContainerStyle={{ gap: 16 }}>
-        <Card style={{ gap: 16 }}>
-          <Input label="Product name" value={name} onChangeText={setName} />
-          <Input label="Barcode" value={barcode} onChangeText={setBarcode} autoCapitalize="characters" />
-          <Input label="SKU" value={sku} onChangeText={setSku} autoCapitalize="characters" />
-          <Input label="Selling price" value={sellingPrice} onChangeText={setSellingPrice} keyboardType="numeric" />
-          <Input label="Cost price" value={costPrice} onChangeText={setCostPrice} keyboardType="numeric" />
-          <Button label="Save changes" onPress={handleSave} loading={loading} />
-          <Button label="Archive product" variant="danger" onPress={handleArchive} />
-        </Card>
-      </ScrollView>
+      <Card style={styles.card}>
+        <Input label="Product name" value={name} onChangeText={setName} />
+        <Input label="Barcode" value={barcode} onChangeText={setBarcode} autoCapitalize="characters" />
+        <Input label="SKU" value={sku} onChangeText={setSku} autoCapitalize="characters" />
+        <Input label="Selling price" value={sellingPrice} onChangeText={setSellingPrice} keyboardType="numeric" />
+        <Input label="Cost price" value={costPrice} onChangeText={setCostPrice} keyboardType="numeric" />
+        <Button label="Save changes" onPress={handleSave} loading={loading} />
+        <Button label="Archive product" variant="danger" onPress={handleArchive} />
+      </Card>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  content: {
+    gap: 16,
+  },
+  card: {
+    gap: 16,
+  },
   missing: {
     ...typography.body,
     color: colors.textMuted,
