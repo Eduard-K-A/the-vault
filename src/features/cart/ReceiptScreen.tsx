@@ -5,7 +5,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useQuery } from '@powersync/react';
 
-import { Badge, Button, Card, Screen, SectionHeader } from '@/components/ui';
+import { Badge, Button, Card, Screen } from '@/components/ui';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   successMarkText: {
-    color: '#FFFFFF',
+    color: colors.chipActiveText,
     ...typography.title,
   },
   successTitle: {

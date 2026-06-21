@@ -70,7 +70,7 @@ export default function PerformanceDashboard() {
     );
   }
 
-  const teamCount = analytics.leaderboard.length;
+  const staffCount = analytics.leaderboard.length;
   const activeToday = Math.max(1, analytics.leaderboard.filter((item) => item.revenue > 0).length);
 
   return (
@@ -83,12 +83,12 @@ export default function PerformanceDashboard() {
       >
       <View style={styles.stack}>
         <View style={styles.pageHeader}>
-          <Text style={styles.pageTitle}>Team</Text>
+          <Text style={styles.pageTitle}>Staff</Text>
         </View>
         <View style={styles.statsRow}>
           <Card style={styles.statCard}>
-            <Text style={styles.statLabel}>Total team</Text>
-            <Text style={styles.statValue}>{teamCount} Employees</Text>
+            <Text style={styles.statLabel}>Total staff</Text>
+            <Text style={styles.statValue}>{staffCount} Employees</Text>
           </Card>
           <Card style={[styles.statCard, styles.statCardStatus]}>
             <Text style={styles.statLabel}>Status</Text>
@@ -144,10 +144,10 @@ function getRoleLabel(index: number): string {
 }
 
 const avatarPalette = [
-  { backgroundColor: '#D9D6FF' },
-  { backgroundColor: '#F7D7D3' },
-  { backgroundColor: '#E1E4E8' },
-  { backgroundColor: '#D9D8F0' },
+  { backgroundColor: colors.accentSubtle },
+  { backgroundColor: colors.dangerBg },
+  { backgroundColor: colors.surfaceMuted },
+  { backgroundColor: colors.warningBg },
 ];
 
 const styles = StyleSheet.create({
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     gap: dimensions.sm,
   },
   statCardStatus: {
-    backgroundColor: '#F8FFF9',
+    backgroundColor: colors.successBg,
   },
   statLabel: {
     ...typography.label,
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#58D39B',
+    backgroundColor: colors.success,
     borderWidth: 2,
     borderColor: colors.surface,
   },

@@ -18,14 +18,11 @@ export default function LandingScreen() {
   return (
     <View style={styles.root}>
       <View style={styles.hero}>
-        <View style={styles.heroGlowOne} />
-        <View style={styles.heroGlowTwo} />
         <View style={styles.heroTop}>
           <BrandMark compact />
         </View>
         <View style={styles.heroContent}>
-          <Text style={styles.kicker}>Mobile POS</Text>
-          <Text style={styles.title}>Manage your business from your pocket</Text>
+          <Text style={styles.title}>The Vault</Text>
           <Text style={styles.body}>Accept payments, track inventory, and grow your team - even offline.</Text>
         </View>
       </View>
@@ -48,55 +45,34 @@ export default function LandingScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: colors.primaryDark,
+    backgroundColor: colors.surface,
   },
   hero: {
     flex: 1,
     paddingHorizontal: dimensions.screenPaddingH,
-    paddingTop: dimensions.xl,
+    paddingTop: 120,
     paddingBottom: dimensions.xl,
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    gap: dimensions.sectionGap,
     overflow: 'hidden',
   },
   heroTop: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   heroContent: {
-    gap: dimensions.md,
-    maxWidth: 520,
-  },
-  heroGlowOne: {
-    position: 'absolute',
-    top: '18%',
-    left: '30%',
-    width: 240,
-    height: 240,
-    borderRadius: 240,
-    backgroundColor: 'rgba(75, 65, 225, 0.18)',
-  },
-  heroGlowTwo: {
-    position: 'absolute',
-    bottom: 32,
-    right: -60,
-    width: 220,
-    height: 220,
-    borderRadius: 220,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-  },
-  kicker: {
-    ...typography.label,
-    color: '#C6C4DF',
-    textTransform: 'uppercase',
+    gap: dimensions.sm,
+    alignItems: 'center',
   },
   title: {
     ...typography.title,
-    color: '#FFFFFF',
-    maxWidth: 520,
+    color: colors.text,
+    textAlign: 'center',
   },
   body: {
-    ...typography.body,
-    color: '#F0F1F3',
+    ...typography.caption,
+    color: colors.textMuted,
     maxWidth: 440,
+    textAlign: 'center',
   },
   sheet: {
     marginHorizontal: dimensions.screenPaddingH,

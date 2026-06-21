@@ -13,7 +13,6 @@ import CartSheet from '@/features/cart/CartSheet';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
-import { refreshBusinessDataFromDatabase } from '@/services/businessDataRefresh.service';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { db } from '@/db/powersync';
 import { buildInventoryForBranchQuery } from '@/db/queries/inventoryQueries';
@@ -24,16 +23,15 @@ import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
 import type { InventoryRecord, Product } from '@/types/models';
-import { createSyncTraceId, logSyncDebug } from '@/utils/syncDebug';
+import { createSyncTraceId } from '@/utils/syncDebug';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function InventoryScreen() {
   const navigation = useNavigation<Navigation>();
-  const fullname = useAuthStore((state) => state.fullname);
   const role = useAuthStore((state) => state.role);
-  const businessId = useBusinessStore((state) => state.activeBusiness?.id ?? null);
   const branchId = useBusinessStore((state) => state.activeBranch?.id ?? null);
+  const branchName = useBusinessStore((state) => state.activeBranch?.name ?? 'Main branch');
   const businessName = useBusinessStore((state) => state.activeBusiness?.name ?? 'Inventory');
   const [cartVisible, setCartVisible] = useState(false);
   const [search, setSearch] = useState('');
@@ -118,41 +116,24 @@ export default function InventoryScreen() {
   }
 
   async function handleManualSync() {
-    if (!businessId) {
-      Alert.alert('Sync failed', 'Select a business before syncing.');
+    if (syncLoading) {
       return;
     }
 
-    const traceId = createSyncTraceId('sync-now');
-    logSyncDebug(traceId, 'button pressed', {
-      businessId,
-      branchId,
-      productCount: products.length,
-      inventoryCount: (inventoryItems as InventoryRecord[]).length,
-      syncLoading,
-    });
     try {
       setSyncLoading(true);
-      logSyncDebug(traceId, 'PowerSync manual sync requested');
-      await syncPowerSyncNow(traceId);
-      logSyncDebug(traceId, 'Supabase business refresh requested', { businessId });
-      const refreshResult = await refreshBusinessDataFromDatabase(businessId, {}, traceId);
-      logSyncDebug(traceId, 'Supabase business refresh returned', { ...refreshResult });
-      setToastMessage('Sync completed');
+      await syncPowerSyncNow(createSyncTraceId('inventory-sync-now'));
+      setToastMessage('Inventory synced');
     } catch (error) {
-      logSyncDebug(traceId, 'button flow failed', {
-        error: error instanceof Error ? error.message : String(error),
-      });
-      Alert.alert('Sync failed', error instanceof Error ? error.message : 'Unknown error');
+      Alert.alert('Manual sync failed', error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setSyncLoading(false);
-      logSyncDebug(traceId, 'button flow finished');
     }
   }
 
   useEffect(() => {
     const nextSnapshot = {
-      businessId,
+      businessId: useBusinessStore.getState().activeBusiness?.id ?? null,
       branchId,
       productCount: products.length,
       inventoryCount: (inventoryItems as InventoryRecord[]).length,
@@ -171,7 +152,7 @@ export default function InventoryScreen() {
       });
     }
     lastInventoryViewSnapshot.current = nextSnapshot;
-  }, [branchId, businessId, inventoryItems, products.length]);
+  }, [branchId, inventoryItems, products.length]);
 
   useEffect(() => {
     if (!toastMessage) {
@@ -188,27 +169,22 @@ export default function InventoryScreen() {
   const header = (
     <View style={styles.headerStack}>
       <View style={styles.topBar}>
-        <View style={styles.topBarRow}>
-          <View>
-            <Text style={styles.greeting}>Hi, {fullname?.split(' ')[0] ?? 'there'} 👋</Text>
-          </View>
-          <View style={styles.brandRow}>
-            <Text style={styles.brandText}>POSly</Text>
-            <View style={styles.brandDot} />
-          </View>
-        </View>
         <View style={styles.statusRow}>
-          <Text style={styles.businessName}>{businessName}</Text>
-          <SyncStatusBadge />
-        </View>
-        <View style={styles.syncActionsRow}>
-          <Button
-            label="Sync now"
-            variant="secondary"
-            onPress={() => void handleManualSync()}
-            loading={syncLoading}
-            fullWidth={false}
-          />
+          <View style={styles.businessCopy}>
+            <Text style={styles.businessName} numberOfLines={1}>{businessName}</Text>
+            <Text style={styles.branchMeta} numberOfLines={1}>{branchName} - {role ?? 'employee'}</Text>
+          </View>
+          <View style={styles.syncActions}>
+            <SyncStatusBadge />
+            <Button
+              label="Sync"
+              accessibilityLabel="Sync now"
+              variant="secondary"
+              onPress={handleManualSync}
+              loading={syncLoading}
+              fullWidth={false}
+            />
+          </View>
         </View>
       </View>
 
@@ -273,6 +249,11 @@ export default function InventoryScreen() {
                     : () => navigation.navigate('EditProduct', { productId: item.id })
                 }
                 onAdd={role === 'owner' ? openRestock : undefined}
+                onEdit={
+                  role === 'owner'
+                    ? () => navigation.navigate('EditProduct', { productId: item.id })
+                    : undefined
+                }
               />
             </View>
           )}
@@ -342,40 +323,26 @@ const styles = StyleSheet.create({
     gap: dimensions.md,
   },
   topBar: {
-    gap: dimensions.md,
-    backgroundColor: colors.accent,
-    borderRadius: dimensions.radiusXl,
-    paddingHorizontal: dimensions.lg,
-    paddingVertical: dimensions.lg,
-  },
-  topBarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     gap: dimensions.sm,
-  },
-  greeting: {
-    ...typography.subtitle,
-    color: '#FFFFFF',
-  },
-  brandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: dimensions.xs,
-  },
-  brandText: {
-    ...typography.subtitle,
-    color: '#FFFFFF',
-  },
-  brandDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#6FFBBE',
+    backgroundColor: colors.surface,
+    borderWidth: dimensions.cardBorderWidth,
+    borderColor: colors.border,
+    borderRadius: dimensions.radiusXl,
+    paddingHorizontal: dimensions.md,
+    paddingVertical: dimensions.md,
   },
   businessName: {
-    ...typography.body,
-    color: '#DAD8FF',
+    ...typography.bodyMedium,
+    color: colors.text,
+  },
+  businessCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  branchMeta: {
+    ...typography.caption,
+    color: colors.textMuted,
+    marginTop: 2,
   },
   statusRow: {
     flexDirection: 'row',
@@ -383,8 +350,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: dimensions.sm,
   },
-  syncActionsRow: {
-    alignItems: 'flex-start',
+  syncActions: {
+    alignItems: 'flex-end',
+    gap: dimensions.xs,
   },
   summaryStrip: {
     flexDirection: 'row',
@@ -435,7 +403,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: dimensions.md,
     paddingVertical: dimensions.sm,
     borderRadius: dimensions.radiusFull,
-    backgroundColor: 'rgba(25, 28, 30, 0.92)',
+    backgroundColor: colors.surface,
     shadowColor: colors.primary,
     shadowOpacity: 0.2,
     shadowRadius: 10,
@@ -444,7 +412,7 @@ const styles = StyleSheet.create({
   },
   toastLabel: {
     ...typography.body,
-    color: '#FFFFFF',
+    color: colors.text,
     textAlign: 'center',
     fontWeight: '600',
   },
@@ -490,17 +458,17 @@ const styles = StyleSheet.create({
     width: 'auto',
   },
   fabLabel: {
-    color: '#FFFFFF',
+    color: colors.chipActiveText,
     ...typography.body,
     fontWeight: '700',
   },
   fabMeta: {
     ...typography.caption,
-    color: '#DAD8FF',
+    color: colors.accentSubtle,
     marginTop: 2,
   },
   fabGlyph: {
-    color: '#FFFFFF',
+    color: colors.chipActiveText,
     fontSize: 22,
     lineHeight: 22,
   },

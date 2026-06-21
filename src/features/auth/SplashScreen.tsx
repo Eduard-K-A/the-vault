@@ -19,8 +19,6 @@ export default function SplashScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.orbOne} />
-      <View style={styles.orbTwo} />
       <BrandMark compact />
       <Text style={styles.title}>Preparing workspace</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>
@@ -46,23 +44,5 @@ const styles = StyleSheet.create({
     ...typography.body,
     color: colors.textMuted,
     textAlign: 'center',
-  },
-  orbOne: {
-    position: 'absolute',
-    top: 120,
-    left: -40,
-    width: 160,
-    height: 160,
-    borderRadius: 160,
-    backgroundColor: 'rgba(75, 65, 225, 0.1)',
-  },
-  orbTwo: {
-    position: 'absolute',
-    bottom: 100,
-    right: -50,
-    width: 180,
-    height: 180,
-    borderRadius: 180,
-    backgroundColor: 'rgba(0, 0, 11, 0.06)',
   },
 });
