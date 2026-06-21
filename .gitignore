@@ -5,6 +5,7 @@ web-build
 android
 ios
 coverage
+docs/
 *.log
 .env
 .env.local
