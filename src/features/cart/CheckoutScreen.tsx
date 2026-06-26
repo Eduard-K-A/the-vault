@@ -3,7 +3,8 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
-import { Button, Card, Input, Screen, SectionHeader } from '@/components/ui';
+import { Button, Card, Input, PaymentChip, Screen, SectionHeader } from '@/components/ui';
+import { SyncStatusBadge } from '@/components/SyncStatusBadge';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
@@ -104,18 +105,10 @@ export default function CheckoutScreen() {
   }
 
   return (
-    <Screen title="POSly" onBack={handleBack} scrollable contentStyle={styles.content}>
-        <View style={styles.pageHeader}>
-          <Text style={styles.pageTitle}>Checkout</Text>
-          <Text style={styles.pageSubtitle}>All writes happen locally before sync.</Text>
-        </View>
-
+    <Screen title="Checkout" action={<SyncStatusBadge />} onBack={handleBack} scrollable contentStyle={styles.content}>
         <Card style={styles.summaryHero}>
-          <Text style={styles.heroKicker}>{items.length} items</Text>
+          <Text style={styles.heroKicker}>{items.length} item{items.length === 1 ? '' : 's'}</Text>
           <Text style={styles.heroTotal}>{formatCurrency(total)}</Text>
-          <Pressable onPress={() => {}} hitSlop={8}>
-            <Text style={styles.heroLink}>View Details ˅</Text>
-          </Pressable>
         </Card>
 
         <Card style={styles.card}>
@@ -156,29 +149,20 @@ export default function CheckoutScreen() {
               </View>
 
               <View style={styles.paymentMethods}>
-                {paymentMethods.map((method) => {
-                  const active = line.method === method;
-                  return (
-                    <Pressable
-                      key={method}
-                      accessibilityRole="button"
-                      accessibilityLabel={`Select ${method} payment for payment ${index + 1}`}
-                      onPress={() =>
-                        setPaymentLines((current) =>
-                          current.map((entry) => (entry.id === line.id ? { ...entry, method } : entry)),
-                        )
-                      }
-                      style={[styles.paymentTile, active && styles.paymentTileActive]}
-                    >
-                      <Text style={[styles.paymentIcon, active && styles.paymentIconActive]}>
-                        {method === 'cash' ? '▭' : method === 'card' ? '▤' : method === 'gcash' ? '◫' : '◪'}
-                      </Text>
-                      <Text style={[styles.paymentLabel, active && styles.paymentLabelActive]}>
-                        {method === 'gcash' ? 'GCash' : method === 'maya' ? 'Maya' : method[0].toUpperCase() + method.slice(1)}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+                {paymentMethods.map((method) => (
+                  <PaymentChip
+                    key={method}
+                    accessibilityLabel={`Select ${method} payment for payment ${index + 1}`}
+                    active={line.method === method}
+                    glyph={method === 'cash' ? '▭' : method === 'card' ? '▤' : method === 'gcash' ? '◫' : '◪'}
+                    label={method === 'gcash' ? 'GCash' : method === 'maya' ? 'Maya' : method[0].toUpperCase() + method.slice(1)}
+                    onPress={() =>
+                      setPaymentLines((current) =>
+                        current.map((entry) => (entry.id === line.id ? { ...entry, method } : entry)),
+                      )
+                    }
+                  />
+                ))}
               </View>
 
               <Input
@@ -249,7 +233,7 @@ export default function CheckoutScreen() {
         <View style={styles.footer}>
           <Text style={styles.footerNote}>Saving offline. Will sync when connected.</Text>
           <Button
-            label="Complete Sale"
+            label={`Complete Sale · ${formatCurrency(total)}`}
             accessibilityLabel="Complete sale"
             onPress={handleCheckout}
             loading={loading}
@@ -264,34 +248,20 @@ const styles = StyleSheet.create({
     gap: dimensions.lg,
     paddingBottom: dimensions.xl,
   },
-  pageHeader: {
-    gap: dimensions.xs,
-  },
-  pageTitle: {
-    ...typography.title,
-    color: colors.text,
-  },
-  pageSubtitle: {
-    ...typography.body,
-    color: colors.textMuted,
-  },
   summaryHero: {
     gap: dimensions.xs,
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    paddingVertical: dimensions.lg,
+    backgroundColor: colors.accent,
+    paddingVertical: dimensions.xl,
   },
   heroKicker: {
-    ...typography.body,
-    color: colors.textMuted,
+    ...typography.bodyMedium,
+    color: colors.accentSubtle,
   },
   heroTotal: {
-    ...typography.title,
-    color: colors.text,
-  },
-  heroLink: {
-    ...typography.body,
-    color: colors.accent,
+    ...typography.priceHero,
+    color: colors.chipActiveText,
+    fontVariant: ['tabular-nums'],
   },
   card: {
     gap: dimensions.md,
@@ -324,36 +294,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: dimensions.sm,
-  },
-  paymentTile: {
-    width: '23%',
-    minHeight: 92,
-    borderRadius: dimensions.radiusMd,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: dimensions.xs,
-  },
-  paymentTileActive: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accent,
-  },
-  paymentIcon: {
-    ...typography.title,
-    color: colors.accent,
-  },
-  paymentIconActive: {
-    color: colors.chipActiveText,
-  },
-  paymentLabel: {
-    ...typography.body,
-    color: colors.text,
-  },
-  paymentLabelActive: {
-    color: colors.chipActiveText,
-    fontWeight: '600',
   },
   paymentActions: {
     flexDirection: 'row',

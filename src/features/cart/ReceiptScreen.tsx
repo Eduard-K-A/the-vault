@@ -6,12 +6,14 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useQuery } from '@powersync/react';
 
 import { Badge, Button, Card, Screen } from '@/components/ui';
+import { SyncStatusBadge } from '@/components/SyncStatusBadge';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatDate';
 import { useAuthStore } from '@/store/authStore';
+import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
 import type { Product, Sale, SaleItem } from '@/types/models';
 
@@ -22,6 +24,9 @@ export default function ReceiptScreen() {
   const navigation = useNavigation<Navigation>();
   const route = useRoute<Route>();
   const role = useAuthStore((state) => state.role);
+  const cashier = useAuthStore((state) => state.fullname);
+  const business = useBusinessStore((state) => state.activeBusiness);
+  const branch = useBusinessStore((state) => state.activeBranch);
   const { data: saleRows } = useQuery<Sale>('SELECT * FROM sales WHERE id = ?', [route.params.saleId]);
   const { data: itemRows } = useQuery<SaleItem>('SELECT * FROM sale_items WHERE sale_id = ?', [route.params.saleId]);
   const sale = useMemo(() => (saleRows as Sale[])[0] ?? null, [saleRows]);
@@ -46,27 +51,17 @@ export default function ReceiptScreen() {
 
   if (!sale) {
     return (
-      <Screen title="POSly" onBack={handleBack} scrollable contentStyle={styles.content}>
-        <View style={styles.stack}>
-          <View style={styles.pageHeader}>
-            <Text style={styles.pageTitle}>Receipt</Text>
-            <Text style={styles.pageSubtitle}>Sale not found.</Text>
-          </View>
-          <Card>
-            <Text style={styles.empty}>The receipt is no longer available.</Text>
-          </Card>
-        </View>
+      <Screen title="Receipt" subtitle="Sale not found." onBack={handleBack} scrollable contentStyle={styles.content}>
+        <Card>
+          <Text style={styles.empty}>The receipt is no longer available.</Text>
+        </Card>
       </Screen>
     );
   }
 
   return (
-    <Screen title="POSly" onBack={handleBack} scrollable contentStyle={styles.content}>
+    <Screen title="Receipt" action={<SyncStatusBadge />} onBack={handleBack} scrollable contentStyle={styles.content}>
       <View style={styles.stack}>
-        <View style={styles.pageHeader}>
-          <Text style={styles.pageTitle}>Receipt</Text>
-          <Text style={styles.pageSubtitle}>Local sale record captured for sync.</Text>
-        </View>
         <View style={styles.successMark}>
           <Text style={styles.successMarkText}>✓</Text>
         </View>
@@ -75,9 +70,9 @@ export default function ReceiptScreen() {
 
         <Card style={styles.receiptCard}>
           <View style={styles.receiptHeader}>
-            <Text style={styles.storeName}>Acme Retail</Text>
-            <Text style={styles.storeMeta}>123 Commerce St, Suite 100</Text>
-            <Text style={styles.storeMeta}>Cityville, ST 12345</Text>
+            <Text style={styles.storeName}>{business?.name ?? 'The Vault'}</Text>
+            {branch?.name ? <Text style={styles.storeMeta}>{branch.name}</Text> : null}
+            <Text style={styles.storeMeta}>Cashier: {cashier ?? 'Unknown'}</Text>
           </View>
 
           <View style={styles.dashedDivider} />
@@ -123,6 +118,10 @@ export default function ReceiptScreen() {
 
           <View style={styles.metaSection}>
             <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>Order ID</Text>
+              <Text style={styles.metaMono}>{sale.id.slice(0, 8).toUpperCase()}</Text>
+            </View>
+            <View style={styles.metaRow}>
               <Text style={styles.metaLabel}>Payment Method</Text>
               <Text style={styles.metaValue}>{sale.payment_method}</Text>
             </View>
@@ -140,6 +139,10 @@ export default function ReceiptScreen() {
                 label={sale.status === 'completed' ? 'Completed' : sale.status}
                 tone={sale.status === 'completed' ? 'success' : sale.status === 'refunded' ? 'warning' : 'neutral'}
               />
+            </View>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>Sync</Text>
+              <SyncStatusBadge />
             </View>
           </View>
         </Card>
@@ -161,17 +164,6 @@ const styles = StyleSheet.create({
   },
   stack: {
     gap: dimensions.lg,
-  },
-  pageHeader: {
-    gap: dimensions.xs,
-  },
-  pageTitle: {
-    ...typography.title,
-    color: colors.text,
-  },
-  pageSubtitle: {
-    ...typography.body,
-    color: colors.textMuted,
   },
   successMark: {
     width: 72,
@@ -255,6 +247,10 @@ const styles = StyleSheet.create({
   },
   metaValue: {
     ...typography.body,
+    color: colors.text,
+  },
+  metaMono: {
+    ...typography.mono,
     color: colors.text,
   },
   totalBand: {
