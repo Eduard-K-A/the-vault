@@ -14,8 +14,9 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function LoginScreen() {
   const navigation = useNavigation<Navigation>();
-  const [email, setEmail] = useState('eduard@gmail.com');
-  const [password, setPassword] = useState('11111111');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSignIn() {
@@ -42,12 +43,35 @@ export default function LoginScreen() {
     <Screen onBack={handleBack} scrollable>
       <View style={styles.header}>
         <Text style={styles.title}>Welcome back</Text>
-        <Text style={styles.subtitle}>Sign in to continue</Text>
+        <Text style={styles.subtitle}>Sign in to continue.</Text>
       </View>
       <Card style={styles.card}>
         <View style={styles.stack}>
-          <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" />
-          <Input label="Password" value={password} onChangeText={setPassword} secureTextEntry />
+          <Input
+            label="Email"
+            value={email}
+            onChangeText={setEmail}
+            autoCapitalize="none"
+            keyboardType="email-address"
+            placeholder="you@example.com"
+          />
+          <View>
+            <Input
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              placeholder="Your password"
+            />
+            <View style={styles.toggleRow}>
+              <Button
+                label={showPassword ? 'Hide password' : 'Show password'}
+                variant="ghost"
+                onPress={() => setShowPassword((value) => !value)}
+                fullWidth={false}
+              />
+            </View>
+          </View>
         </View>
         <View style={styles.linkRow}>
           <Button label="Forgot password" variant="ghost" onPress={() => navigation.navigate('ForgotPassword')} fullWidth={false} />
@@ -55,14 +79,12 @@ export default function LoginScreen() {
         </View>
         <Button label="Continue" onPress={handleSignIn} loading={loading} />
       </Card>
-      <Text style={styles.helper}>Demo credentials: owner@thevault.local or cashier@thevault.local</Text>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
-    alignItems: 'center',
     gap: dimensions.xs,
     paddingTop: dimensions.md,
     paddingBottom: dimensions.lg,
@@ -70,12 +92,10 @@ const styles = StyleSheet.create({
   title: {
     ...typography.title,
     color: colors.text,
-    textAlign: 'center',
   },
   subtitle: {
     ...typography.body,
     color: colors.textMuted,
-    textAlign: 'center',
   },
   card: {
     gap: dimensions.md,
@@ -83,15 +103,14 @@ const styles = StyleSheet.create({
   stack: {
     gap: dimensions.md,
   },
+  toggleRow: {
+    alignItems: 'flex-end',
+    marginTop: dimensions.xs,
+  },
   linkRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: dimensions.sm,
     justifyContent: 'space-between',
-  },
-  helper: {
-    ...typography.caption,
-    color: colors.textMuted,
-    textAlign: 'center',
   },
 });
