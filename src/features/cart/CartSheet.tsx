@@ -1,9 +1,9 @@
 import React from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
-import { Button, Card, Input, ModalSheet } from '@/components/ui';
+import { Button, Input, ModalSheet, Stepper } from '@/components/ui';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
@@ -82,38 +82,26 @@ export default function CartSheet({ visible, onClose }: CartSheetProps) {
             keyExtractor={(item) => item.product_id}
             ItemSeparatorComponent={() => <View style={{ height: dimensions.sm }} />}
             renderItem={({ item }) => (
-              <Card style={styles.rowCard}>
+              <View style={styles.itemRow}>
                 <View style={styles.row}>
                   <View style={styles.rowCopy}>
                     <Text style={styles.name} numberOfLines={2}>
                       {item.name}
                     </Text>
-                  <Text style={styles.meta}>
+                    <Text style={styles.meta}>
                       {item.quantity} x {formatCurrency(item.selling_price)}
                     </Text>
                   </View>
                   <Text style={styles.rowSubtotal}>{formatCurrency(item.subtotal)}</Text>
                 </View>
                 <View style={styles.rowActions}>
-                  <View style={styles.stepper}>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Decrease ${item.name} quantity`}
-                      onPress={() => setQuantity(item.product_id, item.quantity - 1)}
-                      style={styles.stepperButton}
-                    >
-                      <Text style={styles.stepperText}>−</Text>
-                    </Pressable>
-                    <Text style={styles.quantity}>{item.quantity}</Text>
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Increase ${item.name} quantity`}
-                      onPress={() => setQuantity(item.product_id, item.quantity + 1)}
-                      style={styles.stepperButton}
-                    >
-                      <Text style={styles.stepperText}>+</Text>
-                    </Pressable>
-                  </View>
+                  <Stepper
+                    value={item.quantity}
+                    decrementLabel={`Decrease ${item.name} quantity`}
+                    incrementLabel={`Increase ${item.name} quantity`}
+                    onDecrement={() => setQuantity(item.product_id, item.quantity - 1)}
+                    onIncrement={() => setQuantity(item.product_id, item.quantity + 1)}
+                  />
                   <Button
                     label="Remove"
                     variant="ghost"
@@ -122,7 +110,7 @@ export default function CartSheet({ visible, onClose }: CartSheetProps) {
                     fullWidth={false}
                   />
                 </View>
-              </Card>
+              </View>
             )}
           />
           <View style={styles.summary}>
@@ -146,7 +134,7 @@ export default function CartSheet({ visible, onClose }: CartSheetProps) {
             </View>
           </View>
           <Button
-            label="Checkout"
+            label={`Checkout · ${formatCurrency(total)}`}
             accessibilityLabel="Checkout cart"
             onPress={() => {
               onClose();
@@ -242,8 +230,11 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginTop: 2,
   },
-  rowCard: {
+  itemRow: {
     gap: dimensions.sm,
+    paddingVertical: dimensions.sm,
+    borderBottomWidth: dimensions.cardBorderWidth,
+    borderBottomColor: colors.border,
   },
   row: {
     flexDirection: 'row',
@@ -274,37 +265,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: dimensions.sm,
-  },
-  stepper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: dimensions.xs,
-    backgroundColor: colors.surfaceMuted,
-    borderRadius: dimensions.radiusFull,
-    paddingHorizontal: dimensions.xs,
-    paddingVertical: 4,
-  },
-  stepperButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepperText: {
-    ...typography.subtitle,
-    color: colors.text,
-    lineHeight: 20,
-  },
-  quantity: {
-    ...typography.body,
-    color: colors.text,
-    minWidth: 20,
-    textAlign: 'center',
-    fontWeight: '700',
   },
   summary: {
     gap: dimensions.xs,

@@ -80,7 +80,7 @@ export function ProductCard({ product, stockQuantity, onPress, onAdd, onEdit }: 
                   }}
                   style={({ pressed }) => [styles.actionButton, pressed && styles.actionButtonPressed]}
                 >
-                  <Text style={styles.actionButtonText}>＋</Text>
+                  <Text style={styles.actionButtonText}>+</Text>
                 </Pressable>
               ) : null}
             </View>
@@ -175,9 +175,12 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     color: colors.chipActiveText,
-    fontSize: 20,
-    lineHeight: 20,
+    fontSize: 22,
+    lineHeight: 26,
     fontWeight: '700',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   actionLabel: {
     ...typography.label,

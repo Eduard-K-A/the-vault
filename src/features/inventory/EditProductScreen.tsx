@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, StyleSheet, Text } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useQuery } from '@powersync/react';
@@ -29,27 +29,27 @@ export default function EditProductScreen() {
   const [sellingPrice, setSellingPrice] = useState(String(product?.selling_price ?? 0));
   const [costPrice, setCostPrice] = useState(String(product?.cost_price ?? 0));
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; selling?: string; cost?: string }>({});
 
   async function handleSave() {
     if (!product || !authUserId) {
       return;
     }
 
-    // Validate prices
     const sellingPriceValidation = validatePrice(sellingPrice);
-    if (!sellingPriceValidation.isValid) {
-      Alert.alert('Invalid selling price', sellingPriceValidation.error);
-      return;
-    }
-
     const costPriceValidation = validatePrice(costPrice);
-    if (!costPriceValidation.isValid) {
-      Alert.alert('Invalid cost price', costPriceValidation.error);
-      return;
-    }
-
+    const nextErrors: { name?: string; selling?: string; cost?: string } = {};
     if (!name.trim()) {
-      Alert.alert('Save failed', 'Product name is required.');
+      nextErrors.name = 'Product name is required.';
+    }
+    if (!sellingPriceValidation.isValid) {
+      nextErrors.selling = sellingPriceValidation.error;
+    }
+    if (!costPriceValidation.isValid) {
+      nextErrors.cost = costPriceValidation.error;
+    }
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
       return;
     }
 
@@ -125,14 +125,20 @@ export default function EditProductScreen() {
       contentStyle={styles.content}
     >
       <Card style={styles.card}>
-        <Input label="Product name" value={name} onChangeText={setName} />
+        <Input label="Product name" value={name} onChangeText={setName} error={errors.name} />
         <Input label="Barcode" value={barcode} onChangeText={setBarcode} autoCapitalize="characters" />
         <Input label="SKU" value={sku} onChangeText={setSku} autoCapitalize="characters" />
-        <Input label="Selling price" value={sellingPrice} onChangeText={setSellingPrice} keyboardType="numeric" />
-        <Input label="Cost price" value={costPrice} onChangeText={setCostPrice} keyboardType="numeric" />
+        <View style={styles.priceRow}>
+          <View style={styles.priceField}>
+            <Input label="Selling price" value={sellingPrice} onChangeText={setSellingPrice} keyboardType="numeric" error={errors.selling} />
+          </View>
+          <View style={styles.priceField}>
+            <Input label="Cost price" value={costPrice} onChangeText={setCostPrice} keyboardType="numeric" error={errors.cost} />
+          </View>
+        </View>
         <Button label="Save changes" onPress={handleSave} loading={loading} />
-        <Button label="Archive product" variant="danger" onPress={handleArchive} />
       </Card>
+      <Button label="Archive product" variant="danger" onPress={handleArchive} />
     </Screen>
   );
 }
@@ -143,6 +149,14 @@ const styles = StyleSheet.create({
   },
   card: {
     gap: 16,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  priceField: {
+    flex: 1,
+    minWidth: 0,
   },
   missing: {
     ...typography.body,

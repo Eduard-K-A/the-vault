@@ -4,14 +4,14 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@powersync/react';
 
-import { Button, Card, Input, ModalSheet, Screen, StatCard } from '@/components/ui';
+import { Button, ComingSoonSheet, Input, ModalSheet, Screen, Toast } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
 import { ProductCard } from '@/components/ProductCard';
 import { SearchBar } from '@/components/SearchBar';
 import { SyncStatusBadge } from '@/components/SyncStatusBadge';
 import CartSheet from '@/features/cart/CartSheet';
 import { colors } from '@/constants/colors';
-import { dimensions } from '@/constants/dimensions';
+import { dimensions, elevation } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { db } from '@/db/powersync';
@@ -40,13 +40,14 @@ export default function InventoryScreen() {
   const [restockQuantity, setRestockQuantity] = useState('1');
   const [restockLoading, setRestockLoading] = useState(false);
   const [syncLoading, setSyncLoading] = useState(false);
+  const [scanSoonVisible, setScanSoonVisible] = useState(false);
   const lastInventoryViewSnapshot = useRef<{
     businessId: string | null;
     branchId: string | null;
     productCount: number;
     inventoryCount: number;
   } | null>(null);
-  const { products, findByBarcode } = useProducts(search);
+  const { products } = useProducts(search);
   const { addItem, items, total } = useCart();
   const inventoryQuery = useMemo(() => buildInventoryForBranchQuery(branchId), [branchId]);
   const { data: inventoryItems } = useQuery<InventoryRecord>(
@@ -166,99 +167,84 @@ export default function InventoryScreen() {
     return () => clearTimeout(timeout);
   }, [toastMessage]);
 
-  const header = (
-    <View style={styles.headerStack}>
-      <View style={styles.topBar}>
-        <View style={styles.statusRow}>
-          <View style={styles.businessCopy}>
-            <Text style={styles.businessName} numberOfLines={1}>{businessName}</Text>
-            <Text style={styles.branchMeta} numberOfLines={1}>{branchName} - {role ?? 'employee'}</Text>
-          </View>
-          <View style={styles.syncActions}>
-            <SyncStatusBadge />
-            <Button
-              label="Sync"
-              accessibilityLabel="Sync now"
-              variant="secondary"
-              onPress={handleManualSync}
-              loading={syncLoading}
-              fullWidth={false}
-            />
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.summaryStrip}>
-        <StatCard label="Products" value={String(summary.total)} tone="primary" compact style={styles.metricCard} />
-        <StatCard label="Low stock" value={String(summary.lowStock)} tone="warning" compact style={styles.metricCard} />
-        <StatCard
-          label="Out of stock"
-          value={String(summary.outOfStock)}
-          tone="accent"
-          compact
-          style={styles.metricCard}
-        />
-      </View>
-
-      <Card style={styles.searchCard}>
-        <SearchBar
-          value={search}
-          onChangeText={setSearch}
-          placeholder="Search products..."
-          onScanPress={() => {
-            const firstBarcode = products[0]?.barcode;
-            if (firstBarcode) {
-              const product = findByBarcode(firstBarcode);
-              if (product) {
-                handleAdd(product);
-              }
-            }
-          }}
-        />
-      </Card>
+  const headerActions = (
+    <View style={styles.headerActions}>
+      <SyncStatusBadge />
+      <Button
+        label="Sync"
+        accessibilityLabel="Sync now"
+        variant="ghost"
+        onPress={handleManualSync}
+        loading={syncLoading}
+        fullWidth={false}
+      />
     </View>
   );
 
+  const listHeader = (
+    <View style={styles.listHeader}>
+      <Text style={styles.summaryLine}>
+        <Text style={styles.summaryStrong}>{summary.total}</Text>
+        {' products  ·  '}
+        <Text style={styles.summaryWarn}>{summary.lowStock}</Text>
+        {' low  ·  '}
+        <Text style={styles.summaryDanger}>{summary.outOfStock}</Text>
+        {' out of stock'}
+      </Text>
+      <SearchBar
+        value={search}
+        onChangeText={setSearch}
+        placeholder="Search products..."
+        onScanUnavailable={() => setScanSoonVisible(true)}
+      />
+    </View>
+  );
+
+  const showCartFab = role === 'employee' && items.length > 0;
+
   return (
-    <Screen>
-      {products.length === 0 ? (
-        <View style={styles.stack}>
-          {header}
+    <Screen
+      title={businessName}
+      subtitle={`${branchName} · ${role ?? 'employee'}`}
+      action={headerActions}
+      contentStyle={styles.screenContent}
+    >
+      <FlatList
+        data={products}
+        numColumns={2}
+        keyExtractor={(item) => item.id}
+        columnWrapperStyle={styles.columnWrapper}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={
           <EmptyState
-            title="No matching products"
-            description="Try a different search term or barcode."
+            title="No products yet"
+            description="Add your first product to start selling."
             actionLabel={role === 'owner' ? 'Add product' : undefined}
             onAction={role === 'owner' ? () => navigation.navigate('AddProduct') : undefined}
           />
-        </View>
-      ) : (
-        <FlatList
-          data={products}
-          keyExtractor={(item) => item.id}
-          ListHeaderComponent={header}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <View style={styles.productBlock}>
-              <ProductCard
-                product={item}
-                stockQuantity={inventoryByProductId.get(item.id)}
-                onPress={
-                  role === 'employee'
-                    ? handleAdd
-                    : () => navigation.navigate('EditProduct', { productId: item.id })
-                }
-                onAdd={role === 'owner' ? openRestock : undefined}
-                onEdit={
-                  role === 'owner'
-                    ? () => navigation.navigate('EditProduct', { productId: item.id })
-                    : undefined
-                }
-              />
-            </View>
-          )}
-        />
-      )}
+        }
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        renderItem={({ item }) => (
+          <View style={styles.gridCell}>
+            <ProductCard
+              product={item}
+              stockQuantity={inventoryByProductId.get(item.id)}
+              onPress={
+                role === 'employee'
+                  ? handleAdd
+                  : () => navigation.navigate('EditProduct', { productId: item.id })
+              }
+              onAdd={role === 'owner' ? openRestock : undefined}
+              onEdit={
+                role === 'owner'
+                  ? () => navigation.navigate('EditProduct', { productId: item.id })
+                  : undefined
+              }
+            />
+          </View>
+        )}
+      />
 
       <CartSheet visible={cartVisible} onClose={() => setCartVisible(false)} />
       <ModalSheet
@@ -286,96 +272,79 @@ export default function InventoryScreen() {
           </View>
         </View>
       </ModalSheet>
-      {toastMessage ? (
-        <View pointerEvents="none" style={styles.toast}>
-          <Text style={styles.toastLabel}>{toastMessage}</Text>
-        </View>
+      <ComingSoonSheet
+        visible={scanSoonVisible}
+        title="Barcode scanner"
+        message="Scanner is coming soon. Enter SKU or barcode manually."
+        onClose={() => setScanSoonVisible(false)}
+      />
+      <Toast message={toastMessage} visible={toastMessage !== null} />
+      {role === 'owner' || showCartFab ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={role === 'owner' ? 'Add product' : 'Open cart'}
+          onPress={() => (role === 'owner' ? navigation.navigate('AddProduct') : setCartVisible(true))}
+          style={({ pressed }) => [
+            styles.fab,
+            role === 'owner' ? styles.fabCompact : styles.fabWide,
+            pressed && styles.fabPressed,
+          ]}
+        >
+          <Text style={styles.fabGlyph}>{role === 'owner' ? '＋' : '🛒'}</Text>
+          <Text style={styles.fabLabel}>
+            {role === 'owner'
+              ? 'Add product'
+              : `${items.length} item${items.length === 1 ? '' : 's'} · ${formatCurrency(total)}`}
+          </Text>
+        </Pressable>
       ) : null}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={role === 'owner' ? 'Add product' : 'Open cart'}
-        onPress={() => (role === 'owner' ? navigation.navigate('AddProduct') : setCartVisible(true))}
-        style={({ pressed }) => [
-          styles.fab,
-          role === 'owner' ? styles.fabCompact : styles.fabWide,
-          pressed && styles.fabPressed,
-        ]}
-      >
-        <View style={role === 'owner' ? styles.fabCopyCompact : styles.fabCopy}>
-          <Text style={styles.fabLabel}>{role === 'owner' ? 'Add product' : 'Open cart'}</Text>
-          {role === 'owner' ? null : (
-            <Text style={styles.fabMeta}>
-              {`${items.length} item${items.length === 1 ? '' : 's'} • ${formatCurrency(total)}`}
-            </Text>
-          )}
-        </View>
-        <Text style={styles.fabGlyph}>{role === 'owner' ? '＋' : '🛒'}</Text>
-      </Pressable>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  stack: {
-    gap: dimensions.lg,
-  },
-  headerStack: {
-    gap: dimensions.md,
-  },
-  topBar: {
-    gap: dimensions.sm,
-    backgroundColor: colors.surface,
-    borderWidth: dimensions.cardBorderWidth,
-    borderColor: colors.border,
-    borderRadius: dimensions.radiusXl,
-    paddingHorizontal: dimensions.md,
-    paddingVertical: dimensions.md,
-  },
-  businessName: {
-    ...typography.bodyMedium,
-    color: colors.text,
-  },
-  businessCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  branchMeta: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  statusRow: {
+  headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: dimensions.sm,
-  },
-  syncActions: {
-    alignItems: 'flex-end',
     gap: dimensions.xs,
   },
-  summaryStrip: {
-    flexDirection: 'row',
-    gap: dimensions.sm,
-    overflow: 'hidden',
-    marginTop: dimensions.xs,
-    flexWrap: 'nowrap',
+  screenContent: {
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    gap: 0,
   },
-  metricCard: {
+  listHeader: {
+    gap: dimensions.md,
+    paddingBottom: dimensions.sm,
+  },
+  summaryLine: {
+    ...typography.bodyMedium,
+    color: colors.textSecondary,
+  },
+  summaryStrong: {
+    color: colors.textPrimary,
+    fontWeight: '700',
+  },
+  summaryWarn: {
+    color: colors.warning,
+    fontWeight: '700',
+  },
+  summaryDanger: {
+    color: colors.danger,
+    fontWeight: '700',
+  },
+  columnWrapper: {
+    gap: dimensions.cardGap,
+  },
+  gridCell: {
     flex: 1,
-    minWidth: 0,
-    flexBasis: 0,
-  },
-  searchCard: {
-    padding: dimensions.md,
-    marginTop: dimensions.xs,
-  },
-  productBlock: {
-    gap: dimensions.xs,
+    maxWidth: '50%',
   },
   listContent: {
-    gap: dimensions.md,
+    paddingHorizontal: dimensions.screenPaddingH,
+    paddingTop: dimensions.screenPaddingV,
     paddingBottom: dimensions.xl + 96,
+    gap: dimensions.cardGap,
   },
   restockSheet: {
     gap: dimensions.md,
@@ -395,81 +364,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: dimensions.sm,
   },
-  toast: {
-    position: 'absolute',
-    left: dimensions.screenPaddingH,
-    right: dimensions.screenPaddingH,
-    top: dimensions.screenPaddingV + 12,
-    paddingHorizontal: dimensions.md,
-    paddingVertical: dimensions.sm,
-    borderRadius: dimensions.radiusFull,
-    backgroundColor: colors.surface,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
-  },
-  toastLabel: {
-    ...typography.body,
-    color: colors.text,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
   fab: {
     position: 'absolute',
     right: dimensions.screenPaddingH,
     bottom: dimensions.screenPaddingV,
-    minHeight: 60,
-    borderRadius: dimensions.radiusXl,
+    minHeight: 52,
+    borderRadius: dimensions.radiusFull,
     backgroundColor: colors.accent,
     alignItems: 'center',
-    justifyContent: 'space-between',
     flexDirection: 'row',
-    shadowColor: colors.primary,
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 5,
+    gap: dimensions.xs,
+    paddingHorizontal: dimensions.lg,
+    paddingVertical: dimensions.sm,
+    shadowColor: colors.shadow,
+    ...elevation.raised,
   },
   fabWide: {
-    minWidth: 182,
-    paddingHorizontal: dimensions.md,
-    paddingVertical: dimensions.sm,
+    minWidth: 160,
+    justifyContent: 'center',
   },
   fabCompact: {
-    minWidth: 0,
-    paddingHorizontal: dimensions.md,
-    paddingVertical: dimensions.sm,
     alignSelf: 'flex-start',
   },
   fabPressed: {
-    opacity: 0.9,
+    opacity: 0.92,
     transform: [{ scale: 0.98 }],
-  },
-  fabCopy: {
-    flex: 1,
-    minWidth: 0,
-    marginRight: dimensions.sm,
-  },
-  fabCopyCompact: {
-    flex: 0,
-    marginRight: dimensions.xs,
-    width: 'auto',
   },
   fabLabel: {
     color: colors.chipActiveText,
-    ...typography.body,
+    ...typography.bodyMedium,
     fontWeight: '700',
-  },
-  fabMeta: {
-    ...typography.caption,
-    color: colors.accentSubtle,
-    marginTop: 2,
   },
   fabGlyph: {
     color: colors.chipActiveText,
-    fontSize: 22,
+    fontSize: 20,
     lineHeight: 22,
   },
 });

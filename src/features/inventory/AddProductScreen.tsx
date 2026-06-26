@@ -28,6 +28,7 @@ export default function AddProductScreen() {
   const [costPrice, setCostPrice] = useState('0');
   const [initialStock, setInitialStock] = useState('0');
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; selling?: string; cost?: string }>({});
 
   async function handleSave() {
     if (!authUserId || !businessId || !branchId) {
@@ -35,21 +36,20 @@ export default function AddProductScreen() {
       return;
     }
 
-    // Validate prices
     const sellingPriceValidation = validatePrice(sellingPrice);
-    if (!sellingPriceValidation.isValid) {
-      Alert.alert('Invalid selling price', sellingPriceValidation.error);
-      return;
-    }
-
     const costPriceValidation = validatePrice(costPrice);
-    if (!costPriceValidation.isValid) {
-      Alert.alert('Invalid cost price', costPriceValidation.error);
-      return;
-    }
-
+    const nextErrors: { name?: string; selling?: string; cost?: string } = {};
     if (!name.trim()) {
-      Alert.alert('Save failed', 'Product name is required.');
+      nextErrors.name = 'Product name is required.';
+    }
+    if (!sellingPriceValidation.isValid) {
+      nextErrors.selling = sellingPriceValidation.error;
+    }
+    if (!costPriceValidation.isValid) {
+      nextErrors.cost = costPriceValidation.error;
+    }
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
       return;
     }
 
@@ -112,7 +112,13 @@ export default function AddProductScreen() {
           </View>
         </Card>
         <Card style={styles.card}>
-          <Input label="Product name" value={name} onChangeText={setName} />
+          <Input
+            label="Product name"
+            value={name}
+            onChangeText={setName}
+            error={errors.name}
+            placeholder="e.g. Cold Brew 16oz"
+          />
           <Text style={styles.helperText}>Category metadata is coming soon. Use description for now.</Text>
           <View style={styles.scanRow}>
             <View style={styles.scanInput}>
@@ -122,10 +128,16 @@ export default function AddProductScreen() {
           </View>
           <Input label="SKU" value={sku} onChangeText={setSku} autoCapitalize="characters" />
           <Input label="Initial stock" value={initialStock} onChangeText={setInitialStock} keyboardType="numeric" />
-          <Input label="Selling price" value={sellingPrice} onChangeText={setSellingPrice} keyboardType="numeric" />
-          <Input label="Cost price" value={costPrice} onChangeText={setCostPrice} keyboardType="numeric" />
-          <Button label="Save" onPress={handleSave} loading={loading} />
+          <View style={styles.priceRow}>
+            <View style={styles.priceField}>
+              <Input label="Selling price" value={sellingPrice} onChangeText={setSellingPrice} keyboardType="numeric" error={errors.selling} />
+            </View>
+            <View style={styles.priceField}>
+              <Input label="Cost price" value={costPrice} onChangeText={setCostPrice} keyboardType="numeric" error={errors.cost} />
+            </View>
+          </View>
         </Card>
+        <Button label="Save Product" onPress={handleSave} loading={loading} />
     </Screen>
   );
 }
@@ -168,6 +180,14 @@ const styles = StyleSheet.create({
     gap: dimensions.sm,
   },
   scanInput: {
+    flex: 1,
+    minWidth: 0,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    gap: dimensions.sm,
+  },
+  priceField: {
     flex: 1,
     minWidth: 0,
   },
