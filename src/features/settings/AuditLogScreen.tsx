@@ -34,11 +34,7 @@ export default function AuditLogScreen() {
   }
 
   return (
-    <Screen title="POSly" onBack={handleBack}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Audit log</Text>
-        <Text style={styles.subtitle}>Trace of business actions.</Text>
-      </View>
+    <Screen title="Audit log" subtitle="Trace of business actions." onBack={handleBack}>
       {role !== 'owner' ? (
         <EmptyState title="Owner only" description="Audit logs are visible to business owners only." />
       ) : logs.length === 0 ? (
@@ -70,17 +66,6 @@ export default function AuditLogScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: dimensions.xs,
-  },
-  title: {
-    ...typography.title,
-    color: colors.text,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textMuted,
-  },
   card: {
     gap: dimensions.xs,
   },

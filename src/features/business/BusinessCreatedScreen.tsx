@@ -26,11 +26,7 @@ export default function BusinessCreatedScreen() {
   }
 
   return (
-    <Screen title="POSly" onBack={handleBack}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Business created</Text>
-        <Text style={styles.subtitle}>Share this join code with employees.</Text>
-      </View>
+    <Screen title="Business created" subtitle="Share this join code with employees." onBack={handleBack}>
       <Card style={styles.card}>
         <Badge label="Join code" tone="accent" />
         <Text style={styles.code}>{route.params.joinCode}</Text>
@@ -46,17 +42,6 @@ export default function BusinessCreatedScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: dimensions.xs,
-  },
-  title: {
-    ...typography.title,
-    color: colors.text,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textMuted,
-  },
   card: {
     gap: dimensions.md,
     alignItems: 'flex-start',

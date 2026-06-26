@@ -9,9 +9,9 @@ export function BrandMark({ compact = false }: { compact?: boolean }) {
   return (
     <View style={[styles.container, compact && styles.compact]}>
       <View style={styles.markCircle}>
-        <Text style={styles.mark}>Z</Text>
+        <Text style={styles.mark}>V</Text>
       </View>
-      {!compact ? <Text style={styles.label}>POSly</Text> : null}
+      {!compact ? <Text style={styles.label}>The Vault</Text> : null}
     </View>
   );
 }
@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   },
   mark: {
     ...typography.label,
-    color: '#FFFFFF',
+    color: colors.chipActiveText,
     fontSize: 14,
     lineHeight: 16,
     fontWeight: '700',

@@ -102,11 +102,7 @@ export default function BranchManagementScreen() {
   }
 
   return (
-    <Screen title="POSly" onBack={handleBack}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Branches</Text>
-        <Text style={styles.subtitle}>Manage branches and stock locations.</Text>
-      </View>
+    <Screen title="Branches" subtitle="Manage branches and stock locations." onBack={handleBack}>
       {canCreate ? <Button label="Add branch" onPress={handleCreateBranch} /> : null}
       {branches.length === 0 ? (
         <EmptyState title="No branches" description="Create a branch when the business is set up." />
@@ -175,17 +171,6 @@ export default function BranchManagementScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: dimensions.xs,
-  },
-  title: {
-    ...typography.title,
-    color: colors.text,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textMuted,
-  },
   card: {
     gap: dimensions.sm,
   },
@@ -195,6 +180,7 @@ const styles = StyleSheet.create({
   dangerCard: {
     gap: dimensions.md,
     borderColor: colors.danger,
+    backgroundColor: colors.dangerBg,
   },
   dangerCopy: {
     gap: dimensions.xs,

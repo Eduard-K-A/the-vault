@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
+import { glyphs } from '@/constants/glyphs';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import type {
@@ -89,7 +90,7 @@ function EmployeeTabNavigator() {
       screenOptions={({ route }) => ({
         ...tabBarOptions,
         tabBarIcon: ({ focused }) => {
-          const glyph = route.name === 'Inventory' ? '▦' : route.name === 'Sales' ? '▤' : '⚙';
+          const glyph = route.name === 'Inventory' ? glyphs.inventory : route.name === 'Sales' ? glyphs.sales : glyphs.settings;
           return <TabIcon active={focused} glyph={glyph} />;
         },
       })}
@@ -109,12 +110,12 @@ function OwnerTabNavigator() {
         tabBarIcon: ({ focused }) => {
           const glyph =
             route.name === 'Inventory'
-              ? '▦'
+              ? glyphs.inventory
               : route.name === 'Sales'
-                ? '▤'
+                ? glyphs.sales
                 : route.name === 'Employees'
-                  ? '◫'
-                  : '⚙';
+                  ? glyphs.employees
+                  : glyphs.settings;
           return <TabIcon active={focused} glyph={glyph} />;
         },
       })}

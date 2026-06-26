@@ -86,11 +86,7 @@ export default function TransactionDetailScreen() {
 
   if (!sale) {
     return (
-      <Screen title="POSly" onBack={handleBack}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Transaction detail</Text>
-          <Text style={styles.subtitle}>Transaction not found.</Text>
-        </View>
+      <Screen title="Transaction" subtitle="Transaction not found." onBack={handleBack}>
         <Card>
           <Text style={styles.empty}>This sale is unavailable.</Text>
         </Card>
@@ -99,11 +95,7 @@ export default function TransactionDetailScreen() {
   }
 
   return (
-    <Screen title="POSly" onBack={handleBack}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Transaction detail</Text>
-        <Text style={styles.subtitle}>Review transaction data and sale items.</Text>
-      </View>
+    <Screen title="Transaction" subtitle="Review sale items and totals." onBack={handleBack}>
       <Card style={styles.card}>
         <SectionHeader title={formatCurrency(sale.total_amount)} subtitle={formatDate(sale.created_at)} />
         <View style={styles.metaRow}>
@@ -136,17 +128,6 @@ export default function TransactionDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: dimensions.xs,
-  },
-  title: {
-    ...typography.title,
-    color: colors.text,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textMuted,
-  },
   empty: {
     color: colors.textMuted,
   },

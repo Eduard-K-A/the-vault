@@ -9,7 +9,6 @@ import { Badge, Card, Screen, StatCard } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
-import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
 import type { RootStackParamList } from '@/types/navigation';
 import type { Profile, Sale } from '@/types/models';
@@ -39,11 +38,7 @@ export default function EmployeeDetailScreen() {
 
   if (!employee) {
     return (
-    <Screen title="POSly" onBack={handleBack}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Employee detail</Text>
-          <Text style={styles.subtitle}>Employee not found.</Text>
-        </View>
+    <Screen title="Employee" subtitle="Employee not found." onBack={handleBack}>
         <EmptyState title="Missing employee" description="The selected employee is unavailable." />
       </Screen>
     );
@@ -52,12 +47,8 @@ export default function EmployeeDetailScreen() {
   const revenue = sales.reduce((sum, sale) => sum + sale.total_amount, 0);
 
   return (
-    <Screen title="POSly" onBack={handleBack}>
+    <Screen title={employee.fullname} subtitle={employee.email} onBack={handleBack}>
       <View style={styles.stack}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{employee.fullname}</Text>
-          <Text style={styles.subtitle}>{employee.email}</Text>
-        </View>
         <View style={styles.metrics}>
           <StatCard label="Transactions" value={String(sales.length)} tone="primary" />
           <StatCard label="Revenue" value={formatCurrency(revenue)} tone="accent" />
@@ -82,17 +73,6 @@ export default function EmployeeDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: dimensions.xs,
-  },
-  title: {
-    ...typography.title,
-    color: colors.text,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textMuted,
-  },
   stack: {
     gap: dimensions.lg,
   },

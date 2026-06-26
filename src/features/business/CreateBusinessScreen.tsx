@@ -14,9 +14,9 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function CreateBusinessScreen() {
   const navigation = useNavigation<Navigation>();
-  const [name, setName] = useState('Northwind Market');
-  const [address, setAddress] = useState('Makati City');
-  const [branchName, setBranchName] = useState('Main Branch');
+  const [name, setName] = useState('');
+  const [address, setAddress] = useState('');
+  const [branchName, setBranchName] = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleCreate() {
@@ -41,16 +41,12 @@ export default function CreateBusinessScreen() {
   }
 
   return (
-    <Screen title="POSly" onBack={handleBack} scrollable>
-      <View style={styles.header}>
-        <Text style={styles.title}>Create business</Text>
-        <Text style={styles.subtitle}>Set up your first workspace.</Text>
-      </View>
+    <Screen title="Create business" subtitle="Set up your first workspace." onBack={handleBack} scrollable>
       <Card style={styles.card}>
         <View style={styles.stack}>
-          <Input label="Business name" value={name} onChangeText={setName} />
-          <Input label="Address" value={address} onChangeText={setAddress} />
-          <Input label="First branch" value={branchName} onChangeText={setBranchName} />
+          <Input label="Business name" value={name} onChangeText={setName} placeholder="e.g. Northwind Market" />
+          <Input label="Address" value={address} onChangeText={setAddress} placeholder="City or full address" />
+          <Input label="First branch" value={branchName} onChangeText={setBranchName} placeholder="e.g. Main Branch" />
         </View>
         <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>What happens next?</Text>
@@ -63,17 +59,6 @@ export default function CreateBusinessScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: dimensions.xs,
-  },
-  title: {
-    ...typography.title,
-    color: colors.text,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textMuted,
-  },
   card: {
     gap: dimensions.md,
   },

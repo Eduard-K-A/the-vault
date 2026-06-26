@@ -29,7 +29,7 @@ export default function JoinBusinessScreen() {
     try {
       setLoading(true);
       const summary = await joinBusiness({ joinCode, userId });
-      await selectBusiness(summary.businessId);
+      await selectBusiness(summary.businessId, summary);
     } catch (error) {
       Alert.alert('Join failed', error instanceof Error ? error.message : 'Unknown error');
     } finally {
@@ -47,11 +47,7 @@ export default function JoinBusinessScreen() {
   }
 
   return (
-    <Screen title="POSly" onBack={handleBack} scrollable>
-      <View style={styles.header}>
-        <Text style={styles.title}>Join business</Text>
-        <Text style={styles.subtitle}>Enter the 6-character join code from the owner.</Text>
-      </View>
+    <Screen title="Join business" subtitle="Enter the 6-character join code from the owner." onBack={handleBack} scrollable>
       <Card style={styles.card}>
         <Input
           label="Join code"
@@ -71,17 +67,6 @@ export default function JoinBusinessScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: dimensions.xs,
-  },
-  title: {
-    ...typography.title,
-    color: colors.text,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textMuted,
-  },
   card: {
     gap: dimensions.md,
   },
