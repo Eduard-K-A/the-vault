@@ -18,8 +18,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/constants/colors';
-import { dimensions } from '@/constants/dimensions';
+import { dimensions, elevation } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
+
+export * from './premium';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -172,9 +174,7 @@ export function Screen({
                 >
                   <Text style={styles.iconText}>←</Text>
                 </Pressable>
-              ) : (
-                <View style={styles.iconButton} />
-              )}
+              ) : null}
               <View style={styles.titleWrap}>
                 {title ? <Text style={styles.title}>{title}</Text> : null}
                 {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
@@ -272,10 +272,12 @@ export function Button({
 interface InputProps extends TextInputProps {
   label?: string;
   accessibilityLabel?: string;
+  error?: string | null;
 }
 
-export function Input({ label, style, onFocus, onBlur, ...props }: InputProps) {
+export function Input({ label, style, onFocus, onBlur, error, ...props }: InputProps) {
   const [focused, setFocused] = React.useState(false);
+  const hasError = Boolean(error);
 
   return (
     <View style={styles.inputWrapper}>
@@ -291,9 +293,15 @@ export function Input({ label, style, onFocus, onBlur, ...props }: InputProps) {
           setFocused(false);
           onBlur?.(event);
         }}
-        style={[styles.input, focused && styles.inputFocused, style]}
+        style={[
+          styles.input,
+          focused && styles.inputFocused,
+          hasError && styles.inputError,
+          style,
+        ]}
         {...props}
       />
+      {hasError ? <Text style={styles.inputErrorText}>{error}</Text> : null}
     </View>
   );
 }
@@ -303,9 +311,10 @@ interface ModalSheetProps {
   title?: string;
   children: React.ReactNode;
   onClose: () => void;
+  footer?: React.ReactNode;
 }
 
-export function ModalSheet({ visible, title, children, onClose }: ModalSheetProps) {
+export function ModalSheet({ visible, title, children, onClose, footer }: ModalSheetProps) {
   const insets = useSafeAreaInsets();
   const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : 'height';
 
@@ -324,12 +333,45 @@ export function ModalSheet({ visible, title, children, onClose }: ModalSheetProp
             onPress={(event) => event.stopPropagation()}
           >
             <View style={styles.sheetHandle} />
-            {title ? <Text style={styles.sheetTitle}>{title}</Text> : null}
+            {title ? (
+              <View style={styles.sheetHeader}>
+                <Text style={styles.sheetTitle}>{title}</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Close"
+                  hitSlop={8}
+                  onPress={onClose}
+                  style={({ pressed }) => [styles.sheetClose, pressed && styles.iconButtonPressed]}
+                >
+                  <Text style={styles.sheetCloseGlyph}>✕</Text>
+                </Pressable>
+              </View>
+            ) : null}
             {children}
+            {footer ? <View style={styles.sheetFooter}>{footer}</View> : null}
           </Pressable>
         </KeyboardAvoidingView>
       </Pressable>
     </Modal>
+  );
+}
+
+interface ComingSoonSheetProps {
+  visible: boolean;
+  title?: string;
+  message: string;
+  onClose: () => void;
+}
+
+/** Standard bottom sheet for disabled future controls. */
+export function ComingSoonSheet({ visible, title = 'Coming soon', message, onClose }: ComingSoonSheetProps) {
+  return (
+    <ModalSheet visible={visible} title={title} onClose={onClose}>
+      <View style={styles.comingSoonBody}>
+        <Text style={styles.comingSoonText}>{message}</Text>
+        <Button label="Got it" onPress={onClose} />
+      </View>
+    </ModalSheet>
   );
 }
 
@@ -484,7 +526,9 @@ const styles = StyleSheet.create({
   },
   rightAction: {
     minWidth: dimensions.touchTarget,
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   headerSpacer: {
     width: dimensions.touchTarget,
@@ -541,10 +585,7 @@ const styles = StyleSheet.create({
     borderWidth: dimensions.cardBorderWidth,
     borderColor: colors.border,
     shadowColor: colors.shadow,
-    shadowOpacity: 0.035,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    ...elevation.resting,
     overflow: 'hidden',
   },
   cardPadded: {
@@ -608,6 +649,15 @@ const styles = StyleSheet.create({
   },
   inputFocused: {
     borderColor: colors.accent,
+    borderWidth: 1,
+  },
+  inputError: {
+    borderColor: colors.danger,
+    borderWidth: 1,
+  },
+  inputErrorText: {
+    ...typography.caption,
+    color: colors.danger,
   },
   sheetOverlay: {
     flex: 1,
@@ -622,6 +672,8 @@ const styles = StyleSheet.create({
     paddingTop: dimensions.xs,
     gap: dimensions.md,
     maxHeight: '86%',
+    shadowColor: colors.shadow,
+    ...elevation.overlay,
   },
   sheetKeyboardAvoiding: {
     width: '100%',
@@ -634,9 +686,37 @@ const styles = StyleSheet.create({
     backgroundColor: colors.borderStrong,
     marginBottom: dimensions.xs,
   },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: dimensions.sm,
+  },
   sheetTitle: {
     ...typography.subtitle,
     color: colors.text,
+  },
+  sheetClose: {
+    width: dimensions.touchTarget,
+    height: dimensions.touchTarget,
+    borderRadius: dimensions.radiusFull,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: -dimensions.sm,
+  },
+  sheetCloseGlyph: {
+    ...typography.subtitle,
+    color: colors.textSecondary,
+  },
+  sheetFooter: {
+    paddingTop: dimensions.sm,
+  },
+  comingSoonBody: {
+    gap: dimensions.md,
+  },
+  comingSoonText: {
+    ...typography.body,
+    color: colors.textSecondary,
   },
   iconButton: {
     width: dimensions.touchTarget,

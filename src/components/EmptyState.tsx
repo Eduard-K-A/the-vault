@@ -11,16 +11,23 @@ interface EmptyStateProps {
   description?: string;
   actionLabel?: string;
   onAction?: () => void;
+  glyph?: string;
 }
 
-export function EmptyState({ title, description, actionLabel, onAction }: EmptyStateProps) {
+export function EmptyState({ title, description, actionLabel, onAction, glyph = '□' }: EmptyStateProps) {
   return (
     <Card style={styles.card}>
       <View style={styles.content}>
-        <Text accessibilityLabel="Empty illustration" style={styles.icon}>□</Text>
+        <View style={styles.iconBubble}>
+          <Text accessibilityLabel="Empty illustration" style={styles.icon}>{glyph}</Text>
+        </View>
         <Text style={styles.title}>{title}</Text>
         {description ? <Text style={styles.description}>{description}</Text> : null}
-        {actionLabel && onAction ? <Button label={actionLabel} onPress={onAction} /> : null}
+        {actionLabel && onAction ? (
+          <View style={styles.action}>
+            <Button label={actionLabel} variant="secondary" onPress={onAction} fullWidth={false} />
+          </View>
+        ) : null}
       </View>
     </Card>
   );
@@ -34,10 +41,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: dimensions.sm,
   },
+  iconBubble: {
+    width: 72,
+    height: 72,
+    borderRadius: dimensions.radiusFull,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: dimensions.xs,
+  },
   icon: {
-    fontSize: 48,
-    lineHeight: 52,
+    fontSize: 32,
+    lineHeight: 36,
     color: colors.textSecondary,
+  },
+  action: {
+    marginTop: dimensions.sm,
   },
   title: {
     ...typography.bodyMedium,

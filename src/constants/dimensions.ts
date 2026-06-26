@@ -30,3 +30,34 @@ export const dimensions = {
   cardBorderWidth: 0.5,
   touchTarget: 48,
 } as const;
+
+/**
+ * Shared elevation system. Each token bundles the iOS shadow quartet with the
+ * Android `elevation` so depth reads identically across platforms. Shadow color
+ * is expected to be a pre-baked alpha (e.g. `colors.shadow`), so `shadowOpacity`
+ * stays at 1. Screens should consume these instead of hand-rolling shadows.
+ *
+ * - resting: default cards, list rows, search field
+ * - raised:  FAB, toast, sticky footers, active payment chip
+ * - overlay: bottom sheets, dialogs
+ */
+export const elevation = {
+  resting: {
+    shadowOpacity: 1,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
+  raised: {
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 4,
+  },
+  overlay: {
+    shadowOpacity: 1,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: -8 },
+    elevation: 12,
+  },
+} as const;
