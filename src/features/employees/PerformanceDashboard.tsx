@@ -1,57 +1,56 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@powersync/react';
 
-import { Button, Card, Screen } from '@/components/ui';
+import { EmployeeRow, RowGroup, Screen, StatCard } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
-import { getOwnerAnalytics } from '@/db/queries/analyticsQueries';
-import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
-import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
-import { useAuthStore } from '@/store/authStore';
+import { useBusinessStore } from '@/store/businessStore';
+import type { BusinessMember, Profile, Sale } from '@/types/models';
 import type { RootStackParamList } from '@/types/navigation';
-import type { AuditLog, Branch, Business, BusinessMember, Category, InventoryRecord, Payment, Profile, Product, Refund, RefundItem, Sale, SaleItem } from '@/types/models';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function PerformanceDashboard() {
   const navigation = useNavigation<Navigation>();
+  const business = useBusinessStore((store) => store.activeBusiness);
+  const businessId = business?.id ?? null;
   const { data: profileRows } = useQuery<Profile>('SELECT * FROM profiles');
-  const { data: businessRows } = useQuery<Business>('SELECT * FROM businesses');
-  const { data: memberRows } = useQuery<BusinessMember>('SELECT * FROM business_members');
-  const { data: branchRows } = useQuery<Branch>('SELECT * FROM branches');
-  const { data: categoryRows } = useQuery<Category>('SELECT * FROM categories');
-  const { data: productRows } = useQuery<Product>('SELECT * FROM products');
-  const { data: inventoryRows } = useQuery<InventoryRecord>('SELECT * FROM inventory_items');
-  const { data: saleRows } = useQuery<Sale>('SELECT * FROM sales');
-  const { data: itemRows } = useQuery<SaleItem>('SELECT * FROM sale_items');
-  const { data: paymentRows } = useQuery<Payment>('SELECT * FROM payments');
-  const { data: refundRows } = useQuery<Refund>('SELECT * FROM refunds');
-  const { data: refundItemRows } = useQuery<RefundItem>('SELECT * FROM refund_items');
-  const { data: auditLogRows } = useQuery<AuditLog>('SELECT * FROM audit_logs');
-  const business = (businessRows as Business[])[0] ?? null;
-  const branch = (branchRows as Branch[])[0] ?? null;
-  const state = {
-    profiles: profileRows as Profile[],
-    businesses: businessRows as Business[],
-    businessMembers: memberRows as BusinessMember[],
-    branches: branchRows as Branch[],
-    categories: categoryRows as Category[],
-    products: productRows as Product[],
-    inventory: inventoryRows as InventoryRecord[],
-    sales: saleRows as Sale[],
-    saleItems: itemRows as SaleItem[],
-    payments: paymentRows as Payment[],
-    refunds: refundRows as Refund[],
-    refundItems: refundItemRows as RefundItem[],
-    inventoryLogs: [],
-    auditLogs: auditLogRows as AuditLog[],
-  };
-  const analytics = business && branch ? getOwnerAnalytics(state, business.id, branch.id) : null;
-  useAuthStore((store) => store.role);
+  const { data: memberRows } = useQuery<BusinessMember>(
+    'SELECT * FROM business_members WHERE business_id = ?',
+    [businessId ?? ''],
+  );
+  const { data: saleRows } = useQuery<Sale>('SELECT * FROM sales WHERE business_id = ?', [businessId ?? '']);
+
+  const performers = useMemo(() => {
+    const profilesById = new Map((profileRows as Profile[]).map((profile) => [profile.id, profile]));
+    const completedSales = (saleRows as Sale[]).filter(
+      (sale) => sale.business_id === businessId && sale.status === 'completed',
+    );
+
+    return (memberRows as BusinessMember[])
+      .filter((member) => member.business_id === businessId && member.role !== 'owner' && member.is_active !== false)
+      .map((member) => {
+        const profile = profilesById.get(member.user_id);
+        const memberSales = completedSales.filter((sale) => sale.employee_id === member.user_id);
+        const revenue = memberSales.reduce((sum, sale) => sum + sale.total_amount, 0);
+        return {
+          id: member.id,
+          userId: member.user_id,
+          name: profile?.fullname ?? 'Pending sync',
+          email: profile?.email ?? 'Profile syncing…',
+          revenue,
+          transactions: memberSales.length,
+        };
+      })
+      .sort((left, right) => right.revenue - left.revenue);
+  }, [businessId, memberRows, profileRows, saleRows]);
+
+  const totalRevenue = performers.reduce((sum, item) => sum + item.revenue, 0);
+  const activeSellers = performers.filter((item) => item.transactions > 0).length;
 
   function handleBack() {
     if (navigation.canGoBack()) {
@@ -62,93 +61,38 @@ export default function PerformanceDashboard() {
     navigation.popToTop();
   }
 
-  if (!analytics) {
-    return (
-      <Screen title="Performance" subtitle="Employee performance dashboard." onBack={handleBack} scrollable contentStyle={styles.content}>
-        <EmptyState title="No data" description="Performance charts appear after sales are recorded." />
-      </Screen>
-    );
-  }
-
-  const staffCount = analytics.leaderboard.length;
-  const activeToday = Math.max(1, analytics.leaderboard.filter((item) => item.revenue > 0).length);
-
   return (
-      <Screen
-        title="Store POS"
-        onBack={handleBack}
-        action={<Button label="Invite" variant="primary" fullWidth={false} />}
-        scrollable
-        contentStyle={styles.content}
-      >
+    <Screen title="Performance" subtitle={business?.name} onBack={handleBack} scrollable contentStyle={styles.content}>
       <View style={styles.stack}>
-        <View style={styles.pageHeader}>
-          <Text style={styles.pageTitle}>Staff</Text>
-        </View>
         <View style={styles.statsRow}>
-          <Card style={styles.statCard}>
-            <Text style={styles.statLabel}>Total staff</Text>
-            <Text style={styles.statValue}>{staffCount} Employees</Text>
-          </Card>
-          <Card style={[styles.statCard, styles.statCardStatus]}>
-            <Text style={styles.statLabel}>Status</Text>
-            <Text style={styles.statValue}>{activeToday} Online Today</Text>
-          </Card>
+          <StatCard label="Employees" value={String(performers.length)} tone="primary" compact style={styles.statCard} />
+          <StatCard label="Active sellers" value={String(activeSellers)} tone="success" compact style={styles.statCard} />
+          <StatCard label="Revenue" value={formatCurrency(totalRevenue)} tone="accent" compact style={styles.statCard} />
         </View>
 
-        <View style={styles.list}>
-          {analytics.leaderboard.map((item, index) => (
-            <Card key={item.employee_id} style={[styles.memberCard, index >= 2 && styles.memberCardMuted]}>
-              <View style={styles.memberRow}>
-                <View style={[styles.avatar, avatarPalette[index % avatarPalette.length], index >= 2 && styles.avatarMuted]}>
-                  <Text style={styles.avatarText}>{getInitials(item.fullname)}</Text>
-                  <View style={styles.onlineDot} />
-                </View>
-                <View style={styles.memberCopy}>
-                  <View style={styles.memberHeader}>
-                    <Text style={[styles.memberName, index >= 2 && styles.memberNameMuted]}>{item.fullname}</Text>
-                    <View style={styles.roleChip}>
-                      <Text style={styles.roleText}>{getRoleLabel(index)}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.memberMeta}>Sales this month: {formatCurrency(item.revenue)}</Text>
-                </View>
-                <Text style={styles.chevron}>›</Text>
-              </View>
-            </Card>
-          ))}
-        </View>
+        {performers.length === 0 ? (
+          <EmptyState
+            title="No employees yet"
+            description="Share your join code from Settings to invite people."
+          />
+        ) : (
+          <RowGroup label="Sales performance">
+            {performers.map((item) => (
+              <EmployeeRow
+                key={item.id}
+                name={item.name}
+                meta={`${formatCurrency(item.revenue)} · ${item.transactions} order${item.transactions === 1 ? '' : 's'}`}
+                roleLabel={item.transactions > 0 ? `${item.transactions}` : 'No sales'}
+                roleTone={item.transactions > 0 ? 'success' : 'neutral'}
+                onPress={() => navigation.navigate('EmployeeDetail', { employeeId: item.userId })}
+              />
+            ))}
+          </RowGroup>
+        )}
       </View>
     </Screen>
   );
 }
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
-}
-
-function getRoleLabel(index: number): string {
-  if (index === 0) {
-    return 'Cashier';
-  }
-  if (index === 1) {
-    return 'Inventory';
-  }
-
-  return index % 2 === 0 ? 'Cashier' : 'Inventory';
-}
-
-const avatarPalette = [
-  { backgroundColor: colors.accentSubtle },
-  { backgroundColor: colors.dangerBg },
-  { backgroundColor: colors.surfaceMuted },
-  { backgroundColor: colors.warningBg },
-];
 
 const styles = StyleSheet.create({
   content: {
@@ -157,116 +101,13 @@ const styles = StyleSheet.create({
   stack: {
     gap: dimensions.lg,
   },
-  pageHeader: {
-    gap: dimensions.xs,
-  },
-  pageTitle: {
-    ...typography.title,
-    color: colors.text,
-  },
   statsRow: {
     flexDirection: 'row',
     gap: dimensions.sm,
-    flexWrap: 'wrap',
   },
   statCard: {
     flex: 1,
-    minWidth: 140,
-    minHeight: 126,
-    justifyContent: 'center',
-    gap: dimensions.sm,
-  },
-  statCardStatus: {
-    backgroundColor: colors.successBg,
-  },
-  statLabel: {
-    ...typography.label,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-  },
-  statValue: {
-    ...typography.subtitle,
-    color: colors.text,
-  },
-  list: {
-    gap: dimensions.md,
-  },
-  memberCard: {
-    padding: dimensions.md,
-  },
-  memberCardMuted: {
-    opacity: 0.82,
-  },
-  memberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: dimensions.md,
-  },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  avatarMuted: {
-    opacity: 0.85,
-  },
-  avatarText: {
-    color: colors.accent,
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  onlineDot: {
-    position: 'absolute',
-    right: 2,
-    bottom: 2,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.success,
-    borderWidth: 2,
-    borderColor: colors.surface,
-  },
-  memberCopy: {
-    flex: 1,
     minWidth: 0,
-    gap: dimensions.xs,
-  },
-  memberHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: dimensions.sm,
-    flexWrap: 'wrap',
-  },
-  memberName: {
-    color: colors.text,
-    fontSize: 20,
-    fontWeight: '700',
-  },
-  memberNameMuted: {
-    color: colors.textMuted,
-  },
-  roleChip: {
-    backgroundColor: colors.surfaceMuted,
-    paddingHorizontal: dimensions.sm,
-    paddingVertical: 4,
-    borderRadius: dimensions.radiusFull,
-  },
-  roleText: {
-    ...typography.label,
-    color: colors.text,
-    textTransform: 'uppercase',
-  },
-  memberMeta: {
-    ...typography.body,
-    color: colors.textMuted,
-  },
-  chevron: {
-    color: colors.textMuted,
-    fontSize: 32,
-    lineHeight: 32,
-    marginTop: -2,
+    flexBasis: 0,
   },
 });

@@ -1,8 +1,9 @@
 import React from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
-import { Badge, Button, Card, Input, ModalSheet, Screen } from '@/components/ui';
+import { Badge, Button, Card, Input, ModalSheet, RowGroup, Screen, SettingsRow } from '@/components/ui';
+import { SyncStatusBadge } from '@/components/SyncStatusBadge';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
@@ -84,10 +85,29 @@ export default function OwnerSettingsScreen() {
 
   return (
     <Screen
+      title="Settings"
+      subtitle={business?.name}
+      action={<SyncStatusBadge />}
       scrollable
       contentStyle={styles.content}
     >
       <View style={styles.stack}>
+        <Card style={styles.profileCard}>
+          <View style={styles.profileTop}>
+            <View style={styles.profileAvatar}>
+              <Text style={styles.profileAvatarText}>{(fullname ?? 'U').slice(0, 2).toUpperCase()}</Text>
+            </View>
+            <View style={styles.profileCopy}>
+              <Text style={styles.profileName}>{fullname ?? 'Unknown user'}</Text>
+              <Text style={styles.profileMeta}>{email ?? 'No email'}</Text>
+              <Text style={styles.profileMeta}>
+                {business?.name ?? 'No business'}
+                {branch?.name ? ` · ${branch.name}` : ''}
+              </Text>
+            </View>
+          </View>
+        </Card>
+
         {role === 'owner' && business?.join_code ? (
           <Card style={styles.joinCodeCard}>
             <View style={styles.joinCodeRow}>
@@ -98,83 +118,71 @@ export default function OwnerSettingsScreen() {
               <Badge label="Share with team" tone="accent" />
             </View>
             <Text style={styles.joinCodeMeta}>
-              Employees can use this code when joining your workspace.
+              Employees use this code when joining your workspace.
             </Text>
           </Card>
         ) : null}
-        <Card style={styles.profileCard}>
-          <View style={styles.profileTop}>
-            <View style={styles.profileAvatar}>
-              <Text style={styles.profileAvatarText}>{(fullname ?? 'U').slice(0, 2).toUpperCase()}</Text>
-            </View>
-            <View style={styles.profileCopy}>
-              <Text style={styles.profileName}>{fullname ?? 'Unknown user'}</Text>
-              <Text style={styles.profileMeta}>{email ?? 'No email'}</Text>
-            </View>
-          </View>
-          <View style={styles.profileFacts}>
-            <Text style={styles.fact}>Business: {business?.name ?? 'None selected'}</Text>
-            <Text style={styles.fact}>Branch: {branch?.name ?? 'None selected'}</Text>
-          </View>
-        </Card>
 
-        <View style={styles.grid}>
-          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('BranchManagement')}>
-            <View style={styles.iconBubble}>
-              <Text style={styles.iconGlyph}>⌂</Text>
-            </View>
-            <Text style={styles.gridTitle}>Business Information</Text>
-            <Text style={styles.gridBody}>Name, address, contact details</Text>
-          </Pressable>
-          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('BranchManagement')}>
-            <View style={styles.iconBubble}>
-              <Text style={styles.iconGlyph}>▣</Text>
-            </View>
-            <Text style={styles.gridTitle}>Branch Management</Text>
-            <Text style={styles.gridBody}>Add or configure locations</Text>
-          </Pressable>
-          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('Reports')}>
-            <View style={styles.iconBubble}>
-              <Text style={styles.iconGlyph}>⌘</Text>
-            </View>
-            <Text style={styles.gridTitle}>Reports</Text>
-            <Text style={styles.gridBody}>Receipts, exports, and summaries</Text>
-          </Pressable>
-          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('AuditLog')}>
-            <View style={styles.iconBubble}>
-              <Text style={styles.iconGlyph}>⌕</Text>
-            </View>
-            <Text style={styles.gridTitle}>Audit Logs</Text>
-            <Text style={styles.gridBody}>View operator activity history</Text>
-          </Pressable>
-          <Pressable style={styles.gridCard} onPress={clearActiveBusiness}>
-            <View style={styles.iconBubble}>
-              <Text style={styles.iconGlyph}>⋯</Text>
-            </View>
-            <Text style={styles.gridTitle}>Switch Business</Text>
-            <Text style={styles.gridBody}>Choose a different workspace</Text>
-          </Pressable>
-          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('PerformanceDashboard')}>
-            <View style={styles.iconBubble}>
-              <Text style={styles.iconGlyph}>⚑</Text>
-            </View>
-            <Text style={styles.gridTitle}>Performance</Text>
-            <Text style={styles.gridBody}>Leaderboard &amp; sales trends</Text>
-          </Pressable>
-          <Pressable style={styles.gridCard} onPress={() => navigation.navigate('SyncDiagnostics')}>
-            <View style={styles.iconBubble}>
-              <Text style={styles.iconGlyph}>↻</Text>
-            </View>
-            <Text style={styles.gridTitle}>Sync Diagnostics</Text>
-            <Text style={styles.gridBody}>Pending uploads and retry tools</Text>
-          </Pressable>
-        </View>
+        <RowGroup label="Business">
+          <SettingsRow
+            glyph="⌂"
+            title="Business information"
+            caption="Name, address, contact details"
+            onPress={() => navigation.navigate('BranchManagement')}
+          />
+          <SettingsRow
+            glyph="▣"
+            title="Branch management"
+            caption="Add or configure locations"
+            onPress={() => navigation.navigate('BranchManagement')}
+          />
+          <SettingsRow
+            glyph="⋯"
+            title="Switch business"
+            caption="Choose a different workspace"
+            onPress={clearActiveBusiness}
+          />
+        </RowGroup>
+
+        <RowGroup label="Team">
+          <SettingsRow
+            glyph="⚑"
+            title="Performance dashboard"
+            caption="Leaderboard and sales trends"
+            onPress={() => navigation.navigate('PerformanceDashboard')}
+          />
+        </RowGroup>
+
+        <RowGroup label="Data & Reports">
+          <SettingsRow
+            glyph="⌘"
+            title="Reports"
+            caption="Receipts, exports, and summaries"
+            onPress={() => navigation.navigate('Reports')}
+          />
+          <SettingsRow
+            glyph="⌕"
+            title="Audit log"
+            caption="Operator activity history"
+            onPress={() => navigation.navigate('AuditLog')}
+          />
+        </RowGroup>
+
+        <RowGroup label="Support">
+          <SettingsRow
+            glyph="↻"
+            title="Sync diagnostics"
+            caption="Pending uploads and retry tools"
+            onPress={() => navigation.navigate('SyncDiagnostics')}
+          />
+          <SettingsRow glyph="ⓘ" title="App version" value="0.1.0" />
+        </RowGroup>
 
         <Card style={styles.dangerCard}>
           <View style={styles.dangerCopy}>
             <Text style={styles.dangerTitle}>Danger zone</Text>
             <Text style={styles.dangerBody}>
-              Permanently delete {business?.name ?? 'the selected business'} and all related products.
+              Permanently delete {business?.name ?? 'the selected business'} and all of its data.
             </Text>
           </View>
           <Button
@@ -185,9 +193,7 @@ export default function OwnerSettingsScreen() {
           />
         </Card>
 
-        <Card style={styles.signOutCard}>
-          <Button label="Sign out" variant="ghost" onPress={handleLogout} />
-        </Card>
+        <Button label="Sign out" variant="ghost" onPress={handleLogout} />
       </View>
       <ModalSheet visible={deleteModalOpen} title="Delete business" onClose={closeDeleteBusiness}>
         <View style={styles.deleteSheet}>
@@ -291,58 +297,10 @@ const styles = StyleSheet.create({
     ...typography.caption,
     color: colors.textMuted,
   },
-  profileFacts: {
-    gap: dimensions.xs,
-  },
-  fact: {
-    color: colors.textMuted,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: dimensions.sm,
-  },
-  gridCard: {
-    width: '48%',
-    minHeight: 136,
-    padding: dimensions.md,
-    borderRadius: dimensions.radiusLg,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-    justifyContent: 'space-between',
-  },
-  iconBubble: {
-    width: 40,
-    height: 40,
-    borderRadius: 40,
-    backgroundColor: colors.surfaceMuted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconGlyph: {
-    ...typography.subtitle,
-    color: colors.textMuted,
-  },
-  gridTitle: {
-    ...typography.subtitle,
-    color: colors.text,
-  },
-  gridBody: {
-    ...typography.caption,
-    color: colors.textMuted,
-  },
-  signOutCard: {
-    gap: dimensions.sm,
-  },
   dangerCard: {
     gap: dimensions.md,
     borderColor: colors.danger,
+    backgroundColor: colors.dangerBg,
   },
   dangerCopy: {
     gap: dimensions.xs,

@@ -1,11 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
-import { Badge, Button, Card, Screen, StatCard } from '@/components/ui';
-import { BarChart, DonutChart } from '@/components/charts';
+import { Button, Card, RowGroup, SalesRow, Screen, StatCard } from '@/components/ui';
+import { DonutChart, LineChart } from '@/components/charts';
 import { EmptyState } from '@/components/EmptyState';
+import { SyncStatusBadge } from '@/components/SyncStatusBadge';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
@@ -14,8 +15,6 @@ import { useSales } from '@/hooks/useSales';
 import { syncPowerSyncNow } from '@/services/powersync.service';
 import { useBusinessStore } from '@/store/businessStore';
 import type { RootStackParamList } from '@/types/navigation';
-import { useQuery } from '@powersync/react';
-import type { Business } from '@/types/models';
 import { createSyncTraceId } from '@/utils/syncDebug';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -24,38 +23,16 @@ export default function SalesScreen() {
   const navigation = useNavigation<Navigation>();
   const { sales } = useSales();
   const activeBusiness = useBusinessStore((state) => state.activeBusiness);
-  const availableBusinesses = useBusinessStore((state) => state.availableBusinesses);
-  const [selectedBusinessId, setSelectedBusinessId] = useState<string>('all');
+  const branchName = useBusinessStore((state) => state.activeBranch?.name ?? 'All branches');
   const [syncLoading, setSyncLoading] = useState(false);
-  const { data: businessRows } = useQuery<Business>('SELECT * FROM businesses');
-
-  useEffect(() => {
-    setSelectedBusinessId(activeBusiness?.id ?? 'all');
-  }, [activeBusiness?.id]);
-
-  const businessOptions = useMemo(() => {
-    const summaries = availableBusinesses
-      .map((item) => {
-        const business = (businessRows as Business[]).find((entry) => entry.id === item.businessId);
-        return business
-          ? {
-              businessId: business.id,
-              businessName: business.name,
-            }
-          : null;
-      })
-      .filter((item): item is { businessId: string; businessName: string } => item !== null);
-
-    return [{ businessId: 'all', businessName: 'All businesses' }, ...summaries];
-  }, [availableBusinesses, businessRows]);
 
   const filteredSales = useMemo(() => {
-    if (selectedBusinessId === 'all') {
+    if (!activeBusiness) {
       return sales;
     }
 
-    return sales.filter((sale) => sale.business_id === selectedBusinessId);
-  }, [sales, selectedBusinessId]);
+    return sales.filter((sale) => sale.business_id === activeBusiness.id);
+  }, [sales, activeBusiness]);
 
   const metrics = useMemo(() => {
     const now = new Date();
@@ -112,14 +89,15 @@ export default function SalesScreen() {
 
   return (
     <Screen
-      title="My Sales"
+      title="Sales"
+      subtitle={branchName}
       action={
         <View style={styles.headerActions}>
-          <Badge label="Employee view" tone="primary" />
+          <SyncStatusBadge />
           <Button
             label="Sync"
             accessibilityLabel="Sync now"
-            variant="secondary"
+            variant="ghost"
             onPress={handleManualSync}
             loading={syncLoading}
             fullWidth={false}
@@ -161,7 +139,7 @@ export default function SalesScreen() {
               <Text style={styles.chartSubtitle}>Last seven days of completed sales.</Text>
             </View>
           </View>
-          <BarChart data={trendData.slice(-7)} />
+          <LineChart data={trendData.slice(-7)} />
         </Card>
 
         <Card style={styles.chartCard}>
@@ -182,36 +160,25 @@ export default function SalesScreen() {
         <Text style={styles.listLabel}>Recent sales</Text>
 
         {recentSales.length === 0 ? (
-          <EmptyState title="No sales yet" description="Checkout completed sales will appear here." />
+          <EmptyState title="No sales yet" description="Completed sales will appear here." />
         ) : (
-          <View style={styles.salesList}>
+          <RowGroup>
             {recentSales.map((item) => (
-              <Card key={item.id} style={styles.rowCard}>
-                <View style={styles.row}>
-                  <View style={styles.rowCopy}>
-                    <Text style={styles.saleId}>{item.id.slice(0, 8).toUpperCase()}</Text>
-                    <Text style={styles.saleMeta}>{formatDateLabel(item.created_at)}</Text>
-                    {getBusinessName(item.business_id, businessOptions) ? (
-                      <Text style={styles.saleBusiness}>
-                        {getBusinessName(item.business_id, businessOptions)}
-                      </Text>
-                    ) : null}
-                  </View>
-                  <Text style={styles.amount}>{formatCurrency(item.total_amount)}</Text>
-                </View>
-                <View style={styles.badges}>
-                  <Badge label={formatPaymentLabel(item.payment_method)} tone="neutral" />
-                  <Badge
-                    label={item.status}
-                    tone={item.status === 'completed' ? 'success' : item.status === 'voided' ? 'warning' : 'danger'}
-                  />
-                </View>
-              </Card>
+              <SalesRow
+                key={item.id}
+                orderId={`#${item.id.slice(0, 8).toUpperCase()}`}
+                dateLabel={`${formatDateLabel(item.created_at)} · ${formatPaymentLabel(item.payment_method)}`}
+                amount={formatCurrency(item.total_amount)}
+                statusLabel={item.status === 'completed' ? 'Paid' : item.status}
+                statusTone={item.status === 'completed' ? 'success' : item.status === 'voided' ? 'warning' : 'danger'}
+                methodGlyph={paymentGlyph(item.payment_method)}
+                onPress={() => navigation.navigate('TransactionDetail', { saleId: item.id })}
+              />
             ))}
-          </View>
+          </RowGroup>
         )}
 
-        <Button label="View analytics" onPress={() => navigation.navigate('Analytics')} />
+        <Button label="View analytics" variant="secondary" onPress={() => navigation.navigate('Analytics')} />
       </View>
     </Screen>
   );
@@ -284,11 +251,19 @@ function formatPaymentLabel(method: string): string {
   }
 }
 
-function getBusinessName(
-  businessId: string,
-  businesses: Array<{ businessId: string; businessName: string }>,
-): string {
-  return businesses.find((item) => item.businessId === businessId)?.businessName ?? '';
+function paymentGlyph(method: string): string {
+  switch (method) {
+    case 'cash':
+      return '▭';
+    case 'card':
+      return '▤';
+    case 'gcash':
+      return '◫';
+    case 'maya':
+      return '◪';
+    default:
+      return '▭';
+  }
 }
 
 const styles = StyleSheet.create({
@@ -334,46 +309,5 @@ const styles = StyleSheet.create({
     ...typography.label,
     color: colors.textMuted,
     textTransform: 'uppercase',
-  },
-  salesList: {
-    gap: dimensions.sm,
-  },
-  rowCard: {
-    gap: dimensions.sm,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: dimensions.sm,
-  },
-  rowCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  saleId: {
-    color: colors.text,
-    fontWeight: '700',
-  },
-  saleMeta: {
-    color: colors.textMuted,
-    marginTop: 2,
-  },
-  saleBusiness: {
-    ...typography.caption,
-    color: colors.accent,
-    marginTop: 2,
-  },
-  amount: {
-    color: colors.text,
-    fontWeight: '700',
-  },
-  badges: {
-    flexDirection: 'row',
-    gap: dimensions.xs,
-    flexWrap: 'wrap',
-  },
-  pressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.99 }],
   },
 });

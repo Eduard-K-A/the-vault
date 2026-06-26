@@ -2,7 +2,8 @@ import React from 'react';
 import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
-import { Badge, Button, Card, Screen } from '@/components/ui';
+import { Button, Card, Input, RowGroup, Screen, SettingsRow } from '@/components/ui';
+import { SyncStatusBadge } from '@/components/SyncStatusBadge';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
@@ -10,8 +11,6 @@ import { db, powersync } from '@/db/powersync';
 import { signOut } from '@/services/auth.service';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
-import { useSyncStatus } from '@/hooks/useSyncStatus';
-import { Input } from '@/components/ui';
 import type { RootStackParamList } from '@/types/navigation';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -26,7 +25,6 @@ export default function SettingsScreen() {
   const business = useBusinessStore((state) => state.activeBusiness);
   const branch = useBusinessStore((state) => state.activeBranch);
   const clearActiveBusiness = useBusinessStore((state) => state.clearActiveBusiness);
-  const { phase, lastError } = useSyncStatus();
   const [profile, setProfile] = React.useState<{ phone_number: string | null; avatar_url: string | null; created_at: string } | null>(null);
   const [nameDraft, setNameDraft] = React.useState(fullname ?? '');
   const [phoneDraft, setPhoneDraft] = React.useState('');
@@ -104,7 +102,8 @@ export default function SettingsScreen() {
   return (
     <Screen
       title="Settings"
-      action={<Badge label={role ?? 'member'} tone="primary" />}
+      subtitle={`${business?.name ?? 'No business'}${branch?.name ? ` · ${branch.name}` : ''}`}
+      action={<SyncStatusBadge />}
       scrollable
       contentStyle={styles.content}
     >
@@ -121,10 +120,6 @@ export default function SettingsScreen() {
             <View style={styles.profileCopy}>
               <Text style={styles.profileName}>{fullname ?? 'Unknown user'}</Text>
               <Text style={styles.profileMeta}>{email ?? 'No email'}</Text>
-              <Text style={styles.profileMeta}>
-                {business?.name ?? 'No business selected'}
-                {branch?.name ? ` · ${branch.name}` : ''}
-              </Text>
             </View>
           </View>
 
@@ -145,39 +140,27 @@ export default function SettingsScreen() {
               autoCapitalize="none"
               autoCorrect={false}
             />
+            <Text style={styles.note}>Photo upload is coming soon. Paste a URL for now.</Text>
           </View>
           <Button label="Save profile" onPress={handleSaveProfile} loading={saving} />
         </Card>
 
-        <Card style={styles.sectionCard}>
-          <View style={styles.sectionCopy}>
-            <Text style={styles.sectionTitle}>Switch business</Text>
-            <Text style={styles.sectionBody}>Choose another workspace from your linked businesses.</Text>
-          </View>
-          <Button label="Switch business" variant="secondary" onPress={clearActiveBusiness} />
-        </Card>
+        <RowGroup label="Workspace">
+          <SettingsRow
+            glyph="⋯"
+            title="Switch business"
+            caption="Choose another linked workspace"
+            onPress={clearActiveBusiness}
+          />
+          <SettingsRow
+            glyph="↻"
+            title="Sync diagnostics"
+            caption="Pending uploads and retry tools"
+            onPress={() => navigation.navigate('SyncDiagnostics')}
+          />
+        </RowGroup>
 
-        <Card style={styles.sectionCard}>
-          <View style={styles.sectionCopy}>
-            <Text style={styles.sectionTitle}>Sync status</Text>
-            <Text style={styles.sectionBody}>
-              PowerSync keeps the local database in sync with the backend when the connection is available.
-            </Text>
-          </View>
-          <View style={styles.queueRow}>
-            <Badge label={phase} tone={phase === 'ready' ? 'success' : phase === 'offline' ? 'warning' : 'primary'} />
-            {lastError ? <Badge label={lastError} tone="danger" /> : null}
-          </View>
-          <Button label="Open diagnostics" variant="secondary" onPress={() => navigation.navigate('SyncDiagnostics')} />
-        </Card>
-
-        <Card style={styles.sectionCard}>
-          <View style={styles.sectionCopy}>
-            <Text style={styles.sectionTitle}>Session</Text>
-            <Text style={styles.sectionBody}>End the current session on this device.</Text>
-          </View>
-          <Button label="Log out" variant="ghost" onPress={handleLogout} />
-        </Card>
+        <Button label="Log out" variant="ghost" onPress={handleLogout} />
       </View>
     </Screen>
   );
@@ -231,23 +214,8 @@ const styles = StyleSheet.create({
   form: {
     gap: dimensions.md,
   },
-  sectionCard: {
-    gap: dimensions.md,
-  },
-  sectionCopy: {
-    gap: dimensions.xs,
-  },
-  sectionTitle: {
-    ...typography.subtitle,
-    color: colors.text,
-  },
-  sectionBody: {
+  note: {
     ...typography.caption,
-    color: colors.textMuted,
-  },
-  queueRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: dimensions.xs,
+    color: colors.textSecondary,
   },
 });

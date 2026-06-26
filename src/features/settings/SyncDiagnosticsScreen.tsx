@@ -3,7 +3,7 @@ import { Alert, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { Button, Screen } from '@/components/ui';
+import { Button, ComingSoonSheet, PlaceholderAction, Screen } from '@/components/ui';
 import { SyncDiagnosticsPanel } from '@/components/SyncDiagnosticsPanel';
 import { dimensions } from '@/constants/dimensions';
 import { syncPowerSyncNow } from '@/services/powersync.service';
@@ -14,6 +14,7 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 export default function SyncDiagnosticsScreen() {
   const navigation = useNavigation<Navigation>();
   const [retrying, setRetrying] = React.useState(false);
+  const [comingSoon, setComingSoon] = React.useState<string | null>(null);
 
   async function handleRetrySync() {
     try {
@@ -40,8 +41,19 @@ export default function SyncDiagnosticsScreen() {
     >
       <View style={styles.stack}>
         <SyncDiagnosticsPanel />
-        <Button label="Retry sync" onPress={handleRetrySync} loading={retrying} />
+        <Button label="Sync now" onPress={handleRetrySync} loading={retrying} />
+        <PlaceholderAction
+          label="Force full sync 🔒"
+          message="Force full sync is coming soon. Sync now is available now."
+          onUnavailable={setComingSoon}
+        />
       </View>
+      <ComingSoonSheet
+        visible={comingSoon !== null}
+        title="Force full sync"
+        message={comingSoon ?? ''}
+        onClose={() => setComingSoon(null)}
+      />
     </Screen>
   );
 }

@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { colors } from '@/constants/colors';
-import { dimensions } from '@/constants/dimensions';
+import { dimensions, elevation } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 
 interface BarDatum {
@@ -13,6 +13,15 @@ interface BarDatum {
 
 export function BarChart({ data }: { data: BarDatum[] }) {
   const max = Math.max(...data.map((item) => item.value), 1);
+  const isEmpty = data.length === 0 || data.every((item) => item.value === 0);
+
+  if (isEmpty) {
+    return (
+      <View style={styles.chartCard}>
+        <Text style={styles.emptyCaption}>No sales in this period</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.chartCard}>
@@ -43,16 +52,70 @@ interface LineChartProps {
   data: BarDatum[];
 }
 
+const LINE_PLOT_HEIGHT = 120;
+
 export function LineChart({ data }: LineChartProps) {
+  const [width, setWidth] = React.useState(0);
+  const max = Math.max(...data.map((item) => item.value), 1);
+  const isEmpty = data.length === 0 || data.every((item) => item.value === 0);
+
+  if (isEmpty) {
+    return (
+      <View style={styles.chartCard}>
+        <Text style={styles.emptyCaption}>No sales in this period</Text>
+      </View>
+    );
+  }
+
+  const points = data.map((item, index) => ({
+    ...item,
+    x: data.length > 1 ? (index / (data.length - 1)) * width : width / 2,
+    y: LINE_PLOT_HEIGHT - (item.value / max) * LINE_PLOT_HEIGHT,
+  }));
+
   return (
     <View style={styles.chartCard}>
-      <View style={styles.linePlaceholder}>
+      <View style={styles.linePlot} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
+        {width > 0
+          ? points.map((point, index) => {
+              const next = points[index + 1];
+              const connector = next
+                ? (() => {
+                    const dx = next.x - point.x;
+                    const dy = next.y - point.y;
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    return (
+                      <View
+                        key={`seg-${index}`}
+                        style={[
+                          styles.lineSegment,
+                          {
+                            width: length,
+                            left: (point.x + next.x) / 2 - length / 2,
+                            top: (point.y + next.y) / 2,
+                            transform: [{ rotate: `${angle}rad` }],
+                          },
+                        ]}
+                      />
+                    );
+                  })()
+                : null;
+
+              return (
+                <React.Fragment key={point.label}>
+                  {connector}
+                  <View style={[styles.lineDot, { left: point.x - 5, top: point.y - 5 }]} />
+                </React.Fragment>
+              );
+            })
+          : null}
+      </View>
+      <View style={styles.lineLabels}>
         {data.map((item) => (
-          <View key={item.label} style={styles.linePoint}>
-            <View style={[styles.lineDot, { backgroundColor: item.color ?? colors.accent }]} />
-            <Text style={styles.lineLabel}>{item.label}</Text>
-            <Text style={styles.lineValue}>{item.value.toFixed(0)}</Text>
-          </View>
+          <Text key={item.label} style={styles.lineLabel} numberOfLines={1}>
+            {item.label}
+          </Text>
         ))}
       </View>
     </View>
@@ -64,7 +127,16 @@ interface DonutChartProps {
 }
 
 export function DonutChart({ data }: DonutChartProps) {
-  const total = data.reduce((sum, item) => sum + item.value, 0) || 1;
+  const rawTotal = data.reduce((sum, item) => sum + item.value, 0);
+  const total = rawTotal || 1;
+
+  if (data.length === 0 || rawTotal === 0) {
+    return (
+      <View style={styles.chartCard}>
+        <Text style={styles.emptyCaption}>No sales in this period</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.chartCard}>
@@ -95,11 +167,14 @@ const styles = StyleSheet.create({
     borderRadius: dimensions.radiusLg,
     padding: dimensions.md,
     gap: dimensions.md,
-    shadowColor: colors.primary,
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 1,
+    shadowColor: colors.shadow,
+    ...elevation.resting,
+  },
+  emptyCaption: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    paddingVertical: dimensions.lg,
   },
   barRow: {
     flexDirection: 'row',
@@ -129,28 +204,32 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     fontWeight: '700',
   },
-  linePlaceholder: {
-    gap: dimensions.sm,
+  linePlot: {
+    height: LINE_PLOT_HEIGHT,
+    position: 'relative',
   },
-  linePoint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: dimensions.sm,
+  lineSegment: {
+    position: 'absolute',
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: colors.accent,
   },
   lineDot: {
+    position: 'absolute',
     width: 10,
     height: 10,
     borderRadius: dimensions.radiusFull,
+    backgroundColor: colors.accent,
+    borderWidth: 2,
+    borderColor: colors.surface,
+  },
+  lineLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   lineLabel: {
     ...typography.caption,
     color: colors.textMuted,
-    flex: 1,
-  },
-  lineValue: {
-    ...typography.caption,
-    color: colors.text,
-    fontWeight: '700',
   },
   donutBody: {
     alignItems: 'center',

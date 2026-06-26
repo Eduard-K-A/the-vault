@@ -1,9 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@powersync/react';
 
-import { Badge, Card, Screen } from '@/components/ui';
+import { Badge, Button, Card, Screen } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
+import { SyncStatusBadge } from '@/components/SyncStatusBadge';
+import { syncPowerSyncNow } from '@/services/powersync.service';
+import { createSyncTraceId } from '@/utils/syncDebug';
 import { getOwnerAnalytics } from '@/db/queries/analyticsQueries';
 import {
   buildPaymentsForBusinessQuery,
@@ -24,6 +27,7 @@ const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function SalesOverviewScreen() {
   const [period, setPeriod] = useState<PeriodKey>('Today');
+  const [syncLoading, setSyncLoading] = useState(false);
   const businessId = useBusinessStore((store) => store.activeBusiness?.id ?? null);
   const branchId = useBusinessStore((store) => store.activeBranch?.id ?? null);
   const { data: profileRows } = useQuery<Profile>('SELECT * FROM profiles');
@@ -104,16 +108,45 @@ export default function SalesOverviewScreen() {
     };
   }, [filteredSales]);
 
+  async function handleManualSync() {
+    if (syncLoading) {
+      return;
+    }
+
+    try {
+      setSyncLoading(true);
+      await syncPowerSyncNow(createSyncTraceId('sales-overview-sync-now'));
+    } catch (error) {
+      Alert.alert('Manual sync failed', error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setSyncLoading(false);
+    }
+  }
+
+  const headerAction = (
+    <View style={styles.headerActions}>
+      <SyncStatusBadge />
+      <Button
+        label="Sync"
+        accessibilityLabel="Sync now"
+        variant="ghost"
+        onPress={handleManualSync}
+        loading={syncLoading}
+        fullWidth={false}
+      />
+    </View>
+  );
+
   if (!analytics) {
     return (
-      <Screen title="Sales" subtitle="Branch performance" scrollable contentStyle={styles.content}>
+      <Screen title="Sales" subtitle="Branch performance" action={headerAction} scrollable contentStyle={styles.content}>
         <EmptyState title="Select a business" description="Owners need an active business to view sales data." />
       </Screen>
     );
   }
 
   return (
-      <Screen scrollable contentStyle={styles.content}>
+      <Screen title="Sales" subtitle="Branch performance" action={headerAction} scrollable contentStyle={styles.content}>
       <View style={styles.stack}>
         <View style={styles.periodRow}>
           {PERIODS.map((item) => {
@@ -152,7 +185,7 @@ export default function SalesOverviewScreen() {
           <View style={styles.chartGrid}>
             {dayTotals.map((item) => {
               const max = Math.max(...dayTotals.map((entry) => entry.value), 1);
-              const active = item.label === 'Thu';
+              const active = item.value > 0 && item.value >= max;
               const height = Math.max(12, (item.value / max) * 100);
 
               return (
@@ -178,9 +211,6 @@ export default function SalesOverviewScreen() {
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Sales</Text>
-          <Pressable style={({ pressed }) => [styles.linkButton, pressed && styles.pressed]}>
-            <Text style={styles.linkLabel}>View All</Text>
-          </Pressable>
         </View>
 
         {filteredSales.length === 0 ? (
@@ -210,6 +240,7 @@ export default function SalesOverviewScreen() {
         )}
 
         <View style={styles.cardsGrid}>
+          {analytics.topProducts.length > 0 ? (
           <Card style={styles.chartCard}>
             <Text style={styles.chartTitle}>Top 5 Products</Text>
             <View style={styles.rankList}>
@@ -239,7 +270,9 @@ export default function SalesOverviewScreen() {
               })}
             </View>
           </Card>
+          ) : null}
 
+          {analytics.leaderboard.length > 0 ? (
           <Card style={styles.chartCard}>
             <Text style={styles.chartTitle}>Top Performers</Text>
             <View style={styles.performerList}>
@@ -260,7 +293,9 @@ export default function SalesOverviewScreen() {
               ))}
             </View>
           </Card>
+          ) : null}
 
+          {analytics.paymentBreakdown.length > 0 ? (
           <Card style={styles.chartCard}>
             <Text style={styles.chartTitle}>Payment Methods</Text>
             <View style={styles.paymentBody}>
@@ -279,6 +314,7 @@ export default function SalesOverviewScreen() {
               </View>
             </View>
           </Card>
+          ) : null}
         </View>
       </View>
     </Screen>
@@ -403,6 +439,11 @@ const styles = StyleSheet.create({
   },
   stack: {
     gap: dimensions.lg,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: dimensions.xs,
   },
   periodRow: {
     flexDirection: 'row',
@@ -552,14 +593,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...typography.subtitle,
     color: colors.text,
-  },
-  linkButton: {
-    minHeight: 28,
-    justifyContent: 'center',
-  },
-  linkLabel: {
-    ...typography.caption,
-    color: colors.accent,
   },
   listCard: {
     overflow: 'hidden',

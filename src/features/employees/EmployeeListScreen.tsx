@@ -1,14 +1,13 @@
 import React from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { useQuery } from '@powersync/react';
 
-import { Badge, Button, Card, Screen } from '@/components/ui';
+import { Button, EmployeeRow, RowGroup, Screen, SettingsRow } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
-import { colors } from '@/constants/colors';
+import { SyncStatusBadge } from '@/components/SyncStatusBadge';
 import { dimensions } from '@/constants/dimensions';
-import { typography } from '@/constants/typography';
 import { db } from '@/db/powersync';
 import { syncPowerSyncNow } from '@/services/powersync.service';
 import { useAuthStore } from '@/store/authStore';
@@ -37,8 +36,7 @@ export default function EmployeeListScreen() {
     .map((member) => ({
       ...member,
       profile: profilesById.get(member.user_id),
-    }))
-    .filter((entry) => Boolean(entry.profile));
+    }));
   const canRemove = role === 'owner';
 
   async function handleRemoveEmployee(employeeId: string) {
@@ -84,100 +82,60 @@ export default function EmployeeListScreen() {
       title="Employees"
       subtitle={business?.name}
       action={
-        <Button
-          label="Sync"
-          accessibilityLabel="Sync now"
-          variant="secondary"
-          onPress={handleManualSync}
-          loading={syncLoading}
-          fullWidth={false}
-        />
+        <View style={styles.headerActions}>
+          <SyncStatusBadge />
+          <Button
+            label="Sync"
+            accessibilityLabel="Sync now"
+            variant="ghost"
+            onPress={handleManualSync}
+            loading={syncLoading}
+            fullWidth={false}
+          />
+        </View>
       }
     >
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => navigation.navigate('PerformanceDashboard')}
-        style={({ pressed }) => [styles.performanceRow, pressed && styles.pressed]}
-      >
-        <Text style={styles.performanceIcon}>▥</Text>
-        <Text style={styles.performanceLabel}>Performance dashboard</Text>
-        <Text style={styles.chevron}>›</Text>
-      </Pressable>
-      {employees.length === 0 ? (
-        <EmptyState title="No employees found" description="Invite employees with a join code." />
-      ) : (
-        <FlatList
-          data={employees}
-          keyExtractor={(item) => item.id}
-          ItemSeparatorComponent={() => <View style={{ height: dimensions.sm }} />}
-          renderItem={({ item }) => (
-            <Pressable onPress={() => navigation.navigate('EmployeeDetail', { employeeId: item.user_id })}>
-              <Card style={styles.card}>
-                <View style={styles.row}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.name}>{item.profile?.fullname}</Text>
-                    <Text style={styles.meta}>{item.profile?.email}</Text>
-                  </View>
-                  <Badge label={item.role} tone={item.role === 'employee' ? 'neutral' : 'accent'} />
-                </View>
-                <Badge label="View details" tone="primary" />
-                {canRemove ? (
-                  <Button
-                    label="Remove"
-                    variant="danger"
-                    fullWidth={false}
-                    onPress={() => handleRemoveEmployee(item.user_id)}
-                  />
-                ) : null}
-              </Card>
-            </Pressable>
-          )}
-        />
-      )}
+      <View style={styles.stack}>
+        <RowGroup>
+          <SettingsRow
+            glyph="▥"
+            title="Performance dashboard"
+            caption="Leaderboard and sales trends"
+            onPress={() => navigation.navigate('PerformanceDashboard')}
+          />
+        </RowGroup>
+        {employees.length === 0 ? (
+          <EmptyState
+            title="No employees yet"
+            description="Share your join code from Settings to invite people."
+          />
+        ) : (
+          <RowGroup>
+            {employees.map((item) => (
+              <EmployeeRow
+                key={item.id}
+                name={item.profile?.fullname ?? 'Pending sync'}
+                meta={item.profile?.email ?? 'Profile syncing…'}
+                roleLabel={item.role}
+                roleTone={item.role === 'employee' ? 'neutral' : 'accent'}
+                onPress={() => navigation.navigate('EmployeeDetail', { employeeId: item.user_id })}
+                onLongPress={canRemove ? () => handleRemoveEmployee(item.user_id) : undefined}
+              />
+            ))}
+          </RowGroup>
+        )}
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  performanceRow: {
-    minHeight: dimensions.rowHeight,
-    paddingHorizontal: dimensions.md,
-    borderRadius: dimensions.radiusXl,
-    borderWidth: dimensions.cardBorderWidth,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+  headerActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: dimensions.sm,
+    gap: dimensions.xs,
   },
-  performanceIcon: {
-    ...typography.subtitle,
-    color: colors.textMuted,
-  },
-  performanceLabel: {
-    ...typography.bodyMedium,
-    color: colors.text,
-    flex: 1,
-  },
-  chevron: {
-    ...typography.subtitle,
-    color: colors.textMuted,
-  },
-  pressed: {
-    opacity: 0.9,
-  },
-  card: {
-    gap: dimensions.sm,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: dimensions.sm,
-  },
-  name: {
-    ...typography.subtitle,
-    color: colors.text,
-  },
-  meta: {
-    color: colors.textMuted,
+  stack: {
+    gap: dimensions.md,
   },
 });
