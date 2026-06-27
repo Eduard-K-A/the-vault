@@ -7,14 +7,18 @@ import { useSyncStore } from '@/store/syncStore';
 import type { Branch, Business, BusinessSummary } from '@/types/models';
 import { useAuthStore } from './authStore';
 import { enterSelectedBusiness } from './businessEntrySync';
-import { buildFallbackBusinessFromSummary, resolveSelectableBranch } from './businessSelectionHelpers';
+import {
+  buildFallbackBranchFromSummary,
+  buildFallbackBusinessFromSummary,
+  resolveSelectableBranch,
+} from './businessSelectionHelpers';
 
 interface BusinessState {
   activeBusiness: Business | null;
   activeBranch: Branch | null;
   availableBusinesses: BusinessSummary[];
   setAvailableBusinesses: (businesses: BusinessSummary[]) => void;
-  selectBusiness: (businessId: string) => Promise<void>;
+  selectBusiness: (businessId: string, joinedSummary?: BusinessSummary) => Promise<void>;
   clearActiveBusiness: () => void;
 }
 
@@ -25,13 +29,22 @@ export const useBusinessStore = create<BusinessState>((set, get) => ({
   setAvailableBusinesses: (businesses) => {
     set({ availableBusinesses: businesses });
   },
-  selectBusiness: async (businessId) => {
-    const available = get().availableBusinesses.find((entry) => entry.businessId === businessId) ?? null;
+  selectBusiness: async (businessId, joinedSummary) => {
+    const suppliedSummary = joinedSummary?.businessId === businessId ? joinedSummary : null;
+    const available =
+      get().availableBusinesses.find((entry) => entry.businessId === businessId) ?? suppliedSummary;
     const business =
       (await powersync.getOptional<Business>('SELECT * FROM businesses WHERE id = ?', [businessId])) ??
       (available ? buildFallbackBusinessFromSummary(available) : null);
     if (!business || !available) {
       return;
+    }
+
+    if (suppliedSummary) {
+      set({
+        activeBusiness: business,
+        activeBranch: buildFallbackBranchFromSummary(available),
+      });
     }
 
     console.log(`[business] selecting business: ${business.name} (ID: ${business.id})`);

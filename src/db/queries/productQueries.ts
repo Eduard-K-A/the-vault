@@ -5,6 +5,19 @@ export const PRODUCT_SEARCH_SQL =
 
 const NO_ACTIVE_BUSINESS_ID = '__no_active_business__';
 
+export const PRODUCT_BY_ID_SQL =
+  'SELECT * FROM products WHERE id = ? UNION ALL SELECT fallback_products.* FROM fallback_products WHERE id = ? AND NOT EXISTS (SELECT 1 FROM products WHERE products.id = fallback_products.id)';
+
+export function buildProductByIdQuery(productId: string): {
+  sql: string;
+  parameters: [string, string];
+} {
+  return {
+    sql: PRODUCT_BY_ID_SQL,
+    parameters: [productId, productId],
+  };
+}
+
 export function buildProductsForBusinessQuery(businessId: string | null): {
   sql: string;
   parameters: [string, string];

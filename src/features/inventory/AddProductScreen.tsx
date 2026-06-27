@@ -4,6 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
 import { Button, Card, Input, PlaceholderAction, Screen } from '@/components/ui';
+import { ProductPhotoPicker } from '@/components/ProductPhotoPicker';
 import { colors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
@@ -24,6 +25,7 @@ export default function AddProductScreen() {
   const [name, setName] = useState('');
   const [barcode, setBarcode] = useState('');
   const [sku, setSku] = useState('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [sellingPrice, setSellingPrice] = useState('0');
   const [costPrice, setCostPrice] = useState('0');
   const [initialStock, setInitialStock] = useState('0');
@@ -67,7 +69,7 @@ export default function AddProductScreen() {
           sku: sku.trim() || null,
           selling_price: Number(sellingPrice),
           cost_price: Number(costPrice),
-          image_url: null,
+          image_url: imageUrl,
           is_active: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -103,14 +105,7 @@ export default function AddProductScreen() {
 
   return (
     <Screen title="Add Product" onBack={handleBack} scrollable contentStyle={styles.content}>
-        <Card style={styles.photoCard}>
-          <Text style={styles.photoIcon}>▧</Text>
-          <Text style={styles.photoTitle}>Product photo</Text>
-          <View style={styles.photoActions}>
-            <PlaceholderAction label="Add photo" message="Photo upload is coming soon. SKU and product info save normally." />
-            <PlaceholderAction label="Use camera" message="Photo upload is coming soon. SKU and product info save normally." />
-          </View>
-        </Card>
+        <ProductPhotoPicker value={imageUrl} onChange={setImageUrl} />
         <Card style={styles.card}>
           <Input
             label="Product name"
@@ -146,26 +141,6 @@ const styles = StyleSheet.create({
   content: {
     gap: 16,
     paddingBottom: 8,
-  },
-  photoCard: {
-    minHeight: 120,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: dimensions.sm,
-  },
-  photoIcon: {
-    ...typography.title,
-    color: colors.textSecondary,
-    opacity: 0.5,
-  },
-  photoTitle: {
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  photoActions: {
-    flexDirection: 'row',
-    gap: dimensions.sm,
-    flexWrap: 'wrap',
   },
   card: {
     gap: 16,

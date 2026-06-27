@@ -14,8 +14,8 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function LoginScreen() {
   const navigation = useNavigation<Navigation>();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('eduard@gmail.com');
+  const [password, setPassword] = useState('11111111');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 

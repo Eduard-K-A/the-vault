@@ -5,12 +5,14 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useQuery } from '@powersync/react';
 
 import { Badge, Button, Card, Input, Screen } from '@/components/ui';
+import { ProductPhotoPicker } from '@/components/ProductPhotoPicker';
 import { db } from '@/db/powersync';
 import { colors } from '@/constants/colors';
 import { typography } from '@/constants/typography';
 import { useAuthStore } from '@/store/authStore';
 import type { RootStackParamList } from '@/types/navigation';
 import type { Product } from '@/types/models';
+import { buildProductByIdQuery } from '@/db/queries/productQueries';
 import { validatePrice } from '@/utils/validatePrice';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
@@ -20,12 +22,14 @@ export default function EditProductScreen() {
   const navigation = useNavigation<Navigation>();
   const route = useRoute<Route>();
   const authUserId = useAuthStore((state) => state.userId);
-  const { data: productRows } = useQuery<Product>('SELECT * FROM products WHERE id = ?', [route.params.productId]);
+  const productByIdQuery = useMemo(() => buildProductByIdQuery(route.params.productId), [route.params.productId]);
+  const { data: productRows } = useQuery<Product>(productByIdQuery.sql, productByIdQuery.parameters);
   const product = useMemo(() => (productRows as Product[])[0] ?? null, [productRows]);
 
   const [name, setName] = useState(product?.name ?? '');
   const [barcode, setBarcode] = useState(product?.barcode ?? '');
   const [sku, setSku] = useState(product?.sku ?? '');
+  const [imageUrl, setImageUrl] = useState<string | null>(product?.image_url ?? null);
   const [sellingPrice, setSellingPrice] = useState(String(product?.selling_price ?? 0));
   const [costPrice, setCostPrice] = useState(String(product?.cost_price ?? 0));
   const [loading, setLoading] = useState(false);
@@ -62,6 +66,7 @@ export default function EditProductScreen() {
             name: name.trim(),
             barcode: barcode.trim() || null,
             sku: sku.trim() || null,
+            image_url: imageUrl,
             selling_price: Number(sellingPrice),
             cost_price: Number(costPrice),
             updated_at: new Date().toISOString(),
@@ -124,6 +129,7 @@ export default function EditProductScreen() {
       scrollable
       contentStyle={styles.content}
     >
+      <ProductPhotoPicker value={imageUrl} onChange={setImageUrl} />
       <Card style={styles.card}>
         <Input label="Product name" value={name} onChangeText={setName} error={errors.name} />
         <Input label="Barcode" value={barcode} onChangeText={setBarcode} autoCapitalize="characters" />

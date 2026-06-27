@@ -14,7 +14,14 @@
       "supportsTablet": false
     },
     "plugins": [
-      "@journeyapps/react-native-quick-sqlite"
+      "@journeyapps/react-native-quick-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to set product images.",
+          "cameraPermission": "Allow $(PRODUCT_NAME) to use the camera to take product photos."
+        }
+      ]
     ],
     "android": {
       "package": "com.anonymous.thevault"
