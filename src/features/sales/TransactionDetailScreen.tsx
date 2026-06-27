@@ -6,7 +6,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useQuery } from '@powersync/react';
 
 import { Badge, Button, Card, Screen, SectionHeader } from '@/components/ui';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
@@ -23,6 +24,8 @@ type Route = NativeStackScreenProps<RootStackParamList, 'TransactionDetail'>['ro
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function TransactionDetailScreen() {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const route = useRoute<Route>();
   const userId = useAuthStore((state) => state.userId);
@@ -127,7 +130,7 @@ export default function TransactionDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   empty: {
     color: colors.textMuted,
   },

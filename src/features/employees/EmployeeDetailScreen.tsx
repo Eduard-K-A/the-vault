@@ -7,7 +7,8 @@ import { useQuery } from '@powersync/react';
 
 import { Badge, Card, Screen, StatCard } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { dimensions } from '@/constants/dimensions';
 import { formatCurrency } from '@/utils/formatCurrency';
 import type { RootStackParamList } from '@/types/navigation';
@@ -17,6 +18,8 @@ type Route = NativeStackScreenProps<RootStackParamList, 'EmployeeDetail'>['route
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function EmployeeDetailScreen() {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const route = useRoute<Route>();
   const { data: profileRows } = useQuery<Profile>('SELECT * FROM profiles WHERE id = ?', [route.params.employeeId]);
@@ -72,7 +75,7 @@ export default function EmployeeDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   stack: {
     gap: dimensions.lg,
   },

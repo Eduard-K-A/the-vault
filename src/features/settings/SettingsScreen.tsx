@@ -4,7 +4,9 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { Button, Card, Input, RowGroup, Screen, SettingsRow } from '@/components/ui';
 import { SyncStatusBadge } from '@/components/SyncStatusBadge';
-import { colors } from '@/constants/colors';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { db, powersync } from '@/db/powersync';
@@ -16,6 +18,8 @@ import type { RootStackParamList } from '@/types/navigation';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function SettingsScreen() {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const userId = useAuthStore((state) => state.userId);
   const email = useAuthStore((state) => state.email);
@@ -160,13 +164,15 @@ export default function SettingsScreen() {
           />
         </RowGroup>
 
+        <ThemeToggle />
+
         <Button label="Log out" variant="ghost" onPress={handleLogout} />
       </View>
     </Screen>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: {
     paddingBottom: dimensions.xl + 24,
   },

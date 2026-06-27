@@ -6,7 +6,8 @@ import { useQuery } from '@powersync/react';
 
 import { Badge, Card, Screen } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { formatDate } from '@/utils/formatDate';
@@ -18,6 +19,8 @@ import type { AuditLog } from '@/types/models';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function AuditLogScreen() {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const businessId = useBusinessStore((state) => state.activeBusiness?.id ?? null);
   const role = useAuthStore((state) => state.role);
@@ -65,7 +68,7 @@ export default function AuditLogScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     gap: dimensions.xs,
   },

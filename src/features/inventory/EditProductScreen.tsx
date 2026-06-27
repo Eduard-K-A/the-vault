@@ -7,7 +7,8 @@ import { useQuery } from '@powersync/react';
 import { Badge, Button, Card, Input, Screen } from '@/components/ui';
 import { ProductPhotoPicker } from '@/components/ProductPhotoPicker';
 import { db } from '@/db/powersync';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { typography } from '@/constants/typography';
 import { useAuthStore } from '@/store/authStore';
 import type { RootStackParamList } from '@/types/navigation';
@@ -19,6 +20,8 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type Route = NativeStackScreenProps<RootStackParamList, 'EditProduct'>['route'];
 
 export default function EditProductScreen() {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const route = useRoute<Route>();
   const authUserId = useAuthStore((state) => state.userId);
@@ -149,7 +152,7 @@ export default function EditProductScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: {
     gap: 16,
   },

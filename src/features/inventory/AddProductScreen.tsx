@@ -5,7 +5,8 @@ import { useNavigation } from '@react-navigation/native';
 
 import { Button, Card, Input, PlaceholderAction, Screen } from '@/components/ui';
 import { ProductPhotoPicker } from '@/components/ProductPhotoPicker';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { db } from '@/db/powersync';
@@ -18,6 +19,8 @@ import { validatePrice } from '@/utils/validatePrice';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function AddProductScreen() {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const authUserId = useAuthStore((state) => state.userId);
   const businessId = useBusinessStore((state) => state.activeBusiness?.id ?? null);
@@ -137,7 +140,7 @@ export default function AddProductScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: {
     gap: 16,
     paddingBottom: 8,

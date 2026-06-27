@@ -2,9 +2,10 @@ import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Badge, Card } from '@/components/ui';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
+import { useThemedStyles } from '@/theme';
 import type { Product } from '@/types/models';
 import { formatCurrency } from '@/utils/formatCurrency';
 
@@ -17,6 +18,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, stockQuantity, onPress, onAdd, onEdit }: ProductCardProps) {
+  const styles = useThemedStyles(createStyles);
   const isLowStock = typeof stockQuantity === 'number' && stockQuantity <= 5;
   const isOutOfStock = typeof stockQuantity === 'number' && stockQuantity <= 0;
   const statusTone = product.is_active ? (isOutOfStock ? 'danger' : isLowStock ? 'warning' : 'success') : 'neutral';
@@ -91,14 +93,14 @@ export function ProductCard({ product, stockQuantity, onPress, onAdd, onEdit }: 
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c: ThemeColors) => StyleSheet.create({
   pressable: {
     flex: 1,
   },
   card: {
     minHeight: 220,
     borderRadius: dimensions.radiusXl,
-    backgroundColor: colors.surface,
+    backgroundColor: c.surface,
   },
   cardOut: {
     opacity: 0.82,
@@ -108,7 +110,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: dimensions.radiusXl,
     borderTopRightRadius: dimensions.radiusXl,
     overflow: 'hidden',
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: c.surfaceMuted,
   },
   image: {
     width: '100%',
@@ -121,11 +123,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: c.surfaceMuted,
   },
   imageIcon: {
     ...typography.subtitle,
-    color: colors.textSecondary,
+    color: c.textSecondary,
     opacity: 0.65,
   },
   stockBadge: {
@@ -139,15 +141,15 @@ const styles = StyleSheet.create({
   },
   name: {
     ...typography.bodyMedium,
-    color: colors.text,
+    color: c.text,
     minHeight: 40,
   },
   nameMuted: {
-    color: colors.textMuted,
+    color: c.textMuted,
   },
   meta: {
     ...typography.caption,
-    color: colors.textMuted,
+    color: c.textMuted,
   },
   footer: {
     flexDirection: 'row',
@@ -158,14 +160,14 @@ const styles = StyleSheet.create({
   },
   price: {
     ...typography.price,
-    color: colors.text,
+    color: c.text,
     fontVariant: ['tabular-nums'],
   },
   actionButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.accent,
+    backgroundColor: c.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -174,7 +176,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   actionButtonText: {
-    color: colors.chipActiveText,
+    color: c.chipActiveText,
     fontSize: 22,
     lineHeight: 26,
     fontWeight: '700',
@@ -184,7 +186,7 @@ const styles = StyleSheet.create({
   },
   actionLabel: {
     ...typography.label,
-    color: colors.textMuted,
+    color: c.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },

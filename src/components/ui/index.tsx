@@ -17,9 +17,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors } from '@/constants/colors';
 import { dimensions, elevation } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 
 export * from './premium';
 
@@ -33,6 +34,7 @@ interface AppHeaderProps {
 }
 
 export function AppHeader({ title, subtitle, sync, action }: AppHeaderProps) {
+  const { styles } = useThemedStyles(createStyles);
   return (
     <View style={styles.appHeader}>
       <View style={styles.appHeaderCopy}>
@@ -55,6 +57,7 @@ interface IconButtonProps {
 }
 
 export function IconButton({ label, icon, onPress, disabled = false }: IconButtonProps) {
+  const { styles } = useThemedStyles(createStyles);
   return (
     <Pressable
       accessibilityRole="button"
@@ -81,6 +84,7 @@ interface SegmentedControlProps {
 }
 
 export function SegmentedControl({ accessibilityLabel, value, options, onChange }: SegmentedControlProps) {
+  const { styles } = useThemedStyles(createStyles);
   return (
     <View accessibilityLabel={accessibilityLabel} style={styles.segmentedControl}>
       {options.map((option) => {
@@ -107,6 +111,7 @@ interface PlaceholderActionProps {
 }
 
 export function PlaceholderAction({ label, message, onUnavailable }: PlaceholderActionProps) {
+  const { styles } = useThemedStyles(createStyles);
   return (
     <Pressable
       accessibilityRole="button"
@@ -140,6 +145,7 @@ export function Screen({
   scrollable = false,
   contentStyle,
 }: ScreenProps) {
+  const { styles } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const showHeader = Boolean(title || onBack || action);
   const rightAction = action ?? (showHeader ? <View style={styles.headerSpacer} /> : null);
@@ -206,6 +212,7 @@ interface CardProps {
 }
 
 export function Card({ children, style, padded = true }: CardProps) {
+  const { styles } = useThemedStyles(createStyles);
   return <View style={[styles.card, padded && styles.cardPadded, style]}>{children}</View>;
 }
 
@@ -217,9 +224,10 @@ interface BadgeProps {
 }
 
 export function Badge({ label, tone = 'neutral', accessibilityLabel, testID }: BadgeProps) {
+  const { styles, badgeTone, badgeTextTone } = useThemedStyles(createStyles);
   return (
-    <View testID={testID} accessibilityLabel={accessibilityLabel ?? label} style={[styles.badge, badgeToneStyles[tone]]}>
-      <Text style={[styles.badgeText, badgeTextToneStyles[tone]]}>{label}</Text>
+    <View testID={testID} accessibilityLabel={accessibilityLabel ?? label} style={[styles.badge, badgeTone[tone]]}>
+      <Text style={[styles.badgeText, badgeTextTone[tone]]}>{label}</Text>
     </View>
   );
 }
@@ -243,6 +251,8 @@ export function Button({
   fullWidth = true,
   accessibilityLabel,
 }: ButtonProps) {
+  const colors = useTheme();
+  const { styles, variantStyles, buttonTextStyles } = useThemedStyles(createStyles);
   const isDisabled = disabled || loading;
 
   return (
@@ -261,7 +271,7 @@ export function Button({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? colors.chipActiveText : variant === 'danger' ? colors.danger : colors.accent} />
+        <ActivityIndicator color={variant === 'primary' ? colors.onAccent : variant === 'danger' ? colors.danger : colors.accent} />
       ) : (
         <Text style={[styles.buttonText, buttonTextStyles[variant]]}>{label}</Text>
       )}
@@ -276,6 +286,8 @@ interface InputProps extends TextInputProps {
 }
 
 export function Input({ label, style, onFocus, onBlur, error, ...props }: InputProps) {
+  const colors = useTheme();
+  const { styles } = useThemedStyles(createStyles);
   const [focused, setFocused] = React.useState(false);
   const hasError = Boolean(error);
 
@@ -315,6 +327,7 @@ interface ModalSheetProps {
 }
 
 export function ModalSheet({ visible, title, children, onClose, footer }: ModalSheetProps) {
+  const { styles } = useThemedStyles(createStyles);
   const insets = useSafeAreaInsets();
   const keyboardBehavior = Platform.OS === 'ios' ? 'padding' : 'height';
 
@@ -365,6 +378,7 @@ interface ComingSoonSheetProps {
 
 /** Standard bottom sheet for disabled future controls. */
 export function ComingSoonSheet({ visible, title = 'Coming soon', message, onClose }: ComingSoonSheetProps) {
+  const { styles } = useThemedStyles(createStyles);
   return (
     <ModalSheet visible={visible} title={title} onClose={onClose}>
       <View style={styles.comingSoonBody}>
@@ -382,6 +396,7 @@ interface SectionHeaderProps {
 }
 
 export function SectionHeader({ title, subtitle, action }: SectionHeaderProps) {
+  const { styles } = useThemedStyles(createStyles);
   return (
     <View style={styles.sectionHeader}>
       <View style={styles.sectionHeaderCopy}>
@@ -402,8 +417,9 @@ interface StatCardProps {
 }
 
 export function StatCard({ label, value, tone = 'primary', style, compact = false }: StatCardProps) {
+  const { styles, statTone } = useThemedStyles(createStyles);
   return (
-    <Card style={[styles.statCard, compact && styles.statCardCompact, statToneStyles[tone], style]}>
+    <Card style={[styles.statCard, compact && styles.statCardCompact, statTone[tone], style]}>
       <Text style={[styles.statLabel, compact && styles.statLabelCompact]}>{label}</Text>
       <Text
         numberOfLines={1}
@@ -417,409 +433,411 @@ export function StatCard({ label, value, tone = 'primary', style, compact = fals
   );
 }
 
-const styles = StyleSheet.create({
-  appHeader: {
-    minHeight: dimensions.headerHeight,
-    paddingHorizontal: dimensions.screenPaddingH,
-    backgroundColor: colors.surface,
-    borderBottomWidth: dimensions.cardBorderWidth,
-    borderBottomColor: colors.border,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: dimensions.sm,
-  },
-  appHeaderCopy: {
-    flex: 1,
-    minWidth: 0,
-    alignItems: 'flex-start',
-  },
-  appHeaderActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: dimensions.xs,
-  },
-  iconActionButton: {
-    width: dimensions.touchTarget,
-    height: dimensions.touchTarget,
-    borderRadius: dimensions.radiusFull,
-    borderWidth: dimensions.cardBorderWidth,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconActionText: {
-    ...typography.subtitle,
-    color: colors.textSecondary,
-  },
-  segmentedControl: {
-    minHeight: dimensions.touchTarget,
-    borderRadius: dimensions.radiusMd,
-    borderWidth: dimensions.cardBorderWidth,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    flexDirection: 'row',
-    overflow: 'hidden',
-  },
-  segment: {
-    flex: 1,
-    minHeight: dimensions.touchTarget,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: dimensions.sm,
-  },
-  segmentActive: {
-    backgroundColor: colors.chipActiveBg,
-  },
-  segmentLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
-  segmentLabelActive: {
-    color: colors.chipActiveText,
-  },
-  placeholderAction: {
-    minHeight: dimensions.touchTarget,
-    opacity: 0.5,
-    borderRadius: dimensions.radiusLg,
-    borderWidth: dimensions.cardBorderWidth,
-    borderColor: colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: dimensions.md,
-  },
-  placeholderActionLabel: {
-    ...typography.bodyMedium,
-    color: colors.text,
-  },
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-    overflow: 'hidden',
-  },
-  keyboardAvoiding: {
-    flex: 1,
-    width: '100%',
-  },
-  shell: {
-    flex: 1,
-    width: '100%',
-    maxWidth: 720,
-    alignSelf: 'center',
-    gap: 0,
-  },
-  topBar: {
-    minHeight: dimensions.headerHeight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: dimensions.sm,
-    paddingHorizontal: dimensions.screenPaddingH,
-    backgroundColor: colors.surface,
-    borderBottomWidth: dimensions.cardBorderWidth,
-    borderBottomColor: colors.border,
-  },
-  titleWrap: {
-    flex: 1,
-    minWidth: 0,
-    alignItems: 'flex-start',
-  },
-  rightAction: {
-    minWidth: dimensions.touchTarget,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  headerSpacer: {
-    width: dimensions.touchTarget,
-    height: dimensions.touchTarget,
-  },
-  title: {
-    ...typography.bodyMedium,
-    color: colors.text,
-    textAlign: 'left',
-  },
-  subtitle: {
-    ...typography.caption,
-    color: colors.textMuted,
-    textAlign: 'left',
-    marginTop: 2,
-  },
-  body: {
-    flex: 1,
-    gap: dimensions.sectionGap,
-    paddingHorizontal: dimensions.screenPaddingH,
-    paddingTop: dimensions.screenPaddingV,
-  },
-  scrollBody: {
-    flexGrow: 1,
-    gap: dimensions.sectionGap,
-    paddingHorizontal: dimensions.screenPaddingH,
-    paddingTop: dimensions.screenPaddingV,
-    paddingBottom: dimensions.screenPaddingV,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: dimensions.md,
-  },
-  sectionHeaderCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  sectionAction: {
-    alignItems: 'flex-end',
-  },
-  sectionTitle: {
-    ...typography.subtitle,
-    color: colors.text,
-  },
-  sectionSubtitle: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginTop: dimensions.xs,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: dimensions.radiusXl,
-    borderWidth: dimensions.cardBorderWidth,
-    borderColor: colors.border,
-    shadowColor: colors.shadow,
-    ...elevation.resting,
-    overflow: 'hidden',
-  },
-  cardPadded: {
-    padding: dimensions.cardPadding,
-  },
-  badge: {
-    borderRadius: dimensions.radiusFull,
-    paddingHorizontal: dimensions.sm,
-    paddingVertical: 4,
-    alignSelf: 'flex-start',
-  },
-  badgeText: {
-    ...typography.label,
-    textTransform: 'uppercase',
-  },
-  button: {
-    minHeight: dimensions.buttonHeight,
-    borderRadius: dimensions.radiusLg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: dimensions.lg,
-    flexDirection: 'row',
-    gap: dimensions.xs,
-  },
-  buttonFullWidth: {
-    alignSelf: 'stretch',
-  },
-  buttonInline: {
-    alignSelf: 'flex-start',
-  },
-  buttonPressed: {
-    opacity: 0.94,
-    transform: [{ scale: 0.99 }],
-  },
-  buttonDisabled: {
-    opacity: 0.55,
-  },
-  buttonText: {
-    ...typography.body,
-    fontWeight: '600',
-    letterSpacing: 0.1,
-  },
-  inputWrapper: {
-    gap: dimensions.xs,
-  },
-  label: {
-    ...typography.label,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  input: {
-    minHeight: dimensions.inputHeight,
-    borderRadius: dimensions.radiusLg,
-    borderWidth: dimensions.cardBorderWidth,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    color: colors.text,
-    paddingHorizontal: dimensions.md,
-    ...typography.body,
-  },
-  inputFocused: {
-    borderColor: colors.accent,
-    borderWidth: 1,
-  },
-  inputError: {
-    borderColor: colors.danger,
-    borderWidth: 1,
-  },
-  inputErrorText: {
-    ...typography.caption,
-    color: colors.danger,
-  },
-  sheetOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: colors.scrim,
-  },
-  sheet: {
-    borderTopLeftRadius: dimensions.radiusXl,
-    borderTopRightRadius: dimensions.radiusXl,
-    backgroundColor: colors.surface,
-    paddingHorizontal: dimensions.screenPaddingH,
-    paddingTop: dimensions.xs,
-    gap: dimensions.md,
-    maxHeight: '86%',
-    shadowColor: colors.shadow,
-    ...elevation.overlay,
-  },
-  sheetKeyboardAvoiding: {
-    width: '100%',
-  },
-  sheetHandle: {
-    alignSelf: 'center',
-    width: dimensions.sheetHandleWidth,
-    height: dimensions.sheetHandleHeight,
-    borderRadius: dimensions.radiusFull,
-    backgroundColor: colors.borderStrong,
-    marginBottom: dimensions.xs,
-  },
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: dimensions.sm,
-  },
-  sheetTitle: {
-    ...typography.subtitle,
-    color: colors.text,
-  },
-  sheetClose: {
-    width: dimensions.touchTarget,
-    height: dimensions.touchTarget,
-    borderRadius: dimensions.radiusFull,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: -dimensions.sm,
-  },
-  sheetCloseGlyph: {
-    ...typography.subtitle,
-    color: colors.textSecondary,
-  },
-  sheetFooter: {
-    paddingTop: dimensions.sm,
-  },
-  comingSoonBody: {
-    gap: dimensions.md,
-  },
-  comingSoonText: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  iconButton: {
-    width: dimensions.touchTarget,
-    height: dimensions.touchTarget,
-    borderRadius: dimensions.radiusFull,
-    borderWidth: dimensions.cardBorderWidth,
-    borderColor: colors.border,
-    backgroundColor: colors.surfaceMuted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconButtonPressed: {
-    opacity: 0.9,
-  },
-  iconText: {
-    ...typography.subtitle,
-    color: colors.text,
-    lineHeight: 20,
-  },
-  statCard: {
-    minWidth: 140,
-  },
-  statCardCompact: {
-    minWidth: 0,
-    padding: dimensions.sm + 2,
-    gap: dimensions.xs,
-    alignItems: 'center',
-  },
-  statLabel: {
-    ...typography.label,
-    color: colors.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  statLabelCompact: {
-    fontSize: 10,
-    lineHeight: 14,
-  },
-  statValue: {
-    ...typography.subtitle,
-    color: colors.text,
-    marginTop: dimensions.xs,
-  },
-  statValueCompact: {
-    fontSize: 17,
-    lineHeight: 22,
-    marginTop: 0,
-    textAlign: 'center',
-  },
-});
+const createStyles = (c: ThemeColors) => {
+  const styles = StyleSheet.create({
+    appHeader: {
+      minHeight: dimensions.headerHeight,
+      paddingHorizontal: dimensions.screenPaddingH,
+      backgroundColor: c.surface,
+      borderBottomWidth: dimensions.cardBorderWidth,
+      borderBottomColor: c.border,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: dimensions.sm,
+    },
+    appHeaderCopy: {
+      flex: 1,
+      minWidth: 0,
+      alignItems: 'flex-start',
+    },
+    appHeaderActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: dimensions.xs,
+    },
+    iconActionButton: {
+      width: dimensions.touchTarget,
+      height: dimensions.touchTarget,
+      borderRadius: dimensions.radiusFull,
+      borderWidth: dimensions.cardBorderWidth,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    iconActionText: {
+      ...typography.subtitle,
+      color: c.textSecondary,
+    },
+    segmentedControl: {
+      minHeight: dimensions.touchTarget,
+      borderRadius: dimensions.radiusMd,
+      borderWidth: dimensions.cardBorderWidth,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+      flexDirection: 'row',
+      overflow: 'hidden',
+    },
+    segment: {
+      flex: 1,
+      minHeight: dimensions.touchTarget,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: dimensions.sm,
+    },
+    segmentActive: {
+      backgroundColor: c.chipActiveBg,
+    },
+    segmentLabel: {
+      ...typography.caption,
+      color: c.textSecondary,
+      fontWeight: '500',
+    },
+    segmentLabelActive: {
+      color: c.chipActiveText,
+    },
+    placeholderAction: {
+      minHeight: dimensions.touchTarget,
+      opacity: 0.5,
+      borderRadius: dimensions.radiusLg,
+      borderWidth: dimensions.cardBorderWidth,
+      borderColor: c.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: dimensions.md,
+    },
+    placeholderActionLabel: {
+      ...typography.bodyMedium,
+      color: c.text,
+    },
+    screen: {
+      flex: 1,
+      backgroundColor: c.background,
+      overflow: 'hidden',
+    },
+    keyboardAvoiding: {
+      flex: 1,
+      width: '100%',
+    },
+    shell: {
+      flex: 1,
+      width: '100%',
+      maxWidth: 720,
+      alignSelf: 'center',
+      gap: 0,
+    },
+    topBar: {
+      minHeight: dimensions.headerHeight,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: dimensions.sm,
+      paddingHorizontal: dimensions.screenPaddingH,
+      backgroundColor: c.background,
+      borderBottomWidth: dimensions.cardBorderWidth,
+      borderBottomColor: c.border,
+    },
+    titleWrap: {
+      flex: 1,
+      minWidth: 0,
+      alignItems: 'flex-start',
+    },
+    rightAction: {
+      minWidth: dimensions.touchTarget,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'flex-end',
+    },
+    headerSpacer: {
+      width: dimensions.touchTarget,
+      height: dimensions.touchTarget,
+    },
+    title: {
+      ...typography.bodyMedium,
+      color: c.text,
+      textAlign: 'left',
+    },
+    subtitle: {
+      ...typography.caption,
+      color: c.textMuted,
+      textAlign: 'left',
+      marginTop: 2,
+    },
+    body: {
+      flex: 1,
+      gap: dimensions.sectionGap,
+      paddingHorizontal: dimensions.screenPaddingH,
+      paddingTop: dimensions.screenPaddingV,
+    },
+    scrollBody: {
+      flexGrow: 1,
+      gap: dimensions.sectionGap,
+      paddingHorizontal: dimensions.screenPaddingH,
+      paddingTop: dimensions.screenPaddingV,
+      paddingBottom: dimensions.screenPaddingV,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: dimensions.md,
+    },
+    sectionHeaderCopy: {
+      flex: 1,
+      minWidth: 0,
+    },
+    sectionAction: {
+      alignItems: 'flex-end',
+    },
+    sectionTitle: {
+      ...typography.subtitle,
+      color: c.text,
+    },
+    sectionSubtitle: {
+      ...typography.caption,
+      color: c.textMuted,
+      marginTop: dimensions.xs,
+    },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: dimensions.radiusXl,
+      borderWidth: dimensions.cardBorderWidth,
+      borderColor: c.border,
+      shadowColor: c.shadow,
+      ...elevation.resting,
+      overflow: 'hidden',
+    },
+    cardPadded: {
+      padding: dimensions.cardPadding,
+    },
+    badge: {
+      borderRadius: dimensions.radiusFull,
+      paddingHorizontal: dimensions.sm,
+      paddingVertical: 4,
+      alignSelf: 'flex-start',
+    },
+    badgeText: {
+      ...typography.label,
+      textTransform: 'uppercase',
+    },
+    button: {
+      minHeight: dimensions.buttonHeight,
+      borderRadius: dimensions.radiusLg,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: dimensions.lg,
+      flexDirection: 'row',
+      gap: dimensions.xs,
+    },
+    buttonFullWidth: {
+      alignSelf: 'stretch',
+    },
+    buttonInline: {
+      alignSelf: 'flex-start',
+    },
+    buttonPressed: {
+      opacity: 0.94,
+      transform: [{ scale: 0.99 }],
+    },
+    buttonDisabled: {
+      opacity: 0.55,
+    },
+    buttonText: {
+      ...typography.body,
+      fontWeight: '600',
+      letterSpacing: 0.1,
+    },
+    inputWrapper: {
+      gap: dimensions.xs,
+    },
+    label: {
+      ...typography.label,
+      color: c.textMuted,
+      textTransform: 'uppercase',
+    },
+    input: {
+      minHeight: dimensions.inputHeight,
+      borderRadius: dimensions.radiusLg,
+      borderWidth: dimensions.cardBorderWidth,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+      color: c.text,
+      paddingHorizontal: dimensions.md,
+      ...typography.body,
+    },
+    inputFocused: {
+      borderColor: c.accent,
+      borderWidth: 1.5,
+    },
+    inputError: {
+      borderColor: c.danger,
+      borderWidth: 1.5,
+    },
+    inputErrorText: {
+      ...typography.caption,
+      color: c.danger,
+    },
+    sheetOverlay: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      backgroundColor: c.scrim,
+    },
+    sheet: {
+      borderTopLeftRadius: dimensions.radius2xl,
+      borderTopRightRadius: dimensions.radius2xl,
+      backgroundColor: c.surface,
+      paddingHorizontal: dimensions.screenPaddingH,
+      paddingTop: dimensions.xs,
+      gap: dimensions.md,
+      maxHeight: '86%',
+      shadowColor: c.shadow,
+      ...elevation.overlay,
+    },
+    sheetKeyboardAvoiding: {
+      width: '100%',
+    },
+    sheetHandle: {
+      alignSelf: 'center',
+      width: dimensions.sheetHandleWidth,
+      height: dimensions.sheetHandleHeight,
+      borderRadius: dimensions.radiusFull,
+      backgroundColor: c.borderStrong,
+      marginBottom: dimensions.xs,
+    },
+    sheetHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: dimensions.sm,
+    },
+    sheetTitle: {
+      ...typography.subtitle,
+      color: c.text,
+    },
+    sheetClose: {
+      width: dimensions.touchTarget,
+      height: dimensions.touchTarget,
+      borderRadius: dimensions.radiusFull,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: -dimensions.sm,
+    },
+    sheetCloseGlyph: {
+      ...typography.subtitle,
+      color: c.textSecondary,
+    },
+    sheetFooter: {
+      paddingTop: dimensions.sm,
+    },
+    comingSoonBody: {
+      gap: dimensions.md,
+    },
+    comingSoonText: {
+      ...typography.body,
+      color: c.textSecondary,
+    },
+    iconButton: {
+      width: dimensions.touchTarget,
+      height: dimensions.touchTarget,
+      borderRadius: dimensions.radiusFull,
+      borderWidth: dimensions.cardBorderWidth,
+      borderColor: c.border,
+      backgroundColor: c.surfaceMuted,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    iconButtonPressed: {
+      opacity: 0.9,
+    },
+    iconText: {
+      ...typography.subtitle,
+      color: c.text,
+      lineHeight: 20,
+    },
+    statCard: {
+      minWidth: 140,
+    },
+    statCardCompact: {
+      minWidth: 0,
+      padding: dimensions.sm + 2,
+      gap: dimensions.xs,
+      alignItems: 'center',
+    },
+    statLabel: {
+      ...typography.label,
+      color: c.textMuted,
+      textTransform: 'uppercase',
+    },
+    statLabelCompact: {
+      fontSize: 10,
+      lineHeight: 14,
+    },
+    statValue: {
+      ...typography.title,
+      color: c.text,
+      marginTop: dimensions.xs,
+    },
+    statValueCompact: {
+      fontSize: 18,
+      lineHeight: 22,
+      marginTop: 0,
+      textAlign: 'center',
+    },
+  });
 
-const variantStyles: Record<ButtonVariant, ViewStyle> = {
-  primary: {
-    backgroundColor: colors.accent,
-    shadowColor: colors.accent,
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
-  },
-  secondary: {
-    backgroundColor: colors.surface,
-    borderWidth: dimensions.cardBorderWidth,
-    borderColor: colors.border,
-  },
-  ghost: {
-    backgroundColor: 'transparent',
-  },
-  danger: {
-    backgroundColor: colors.surface,
-    borderWidth: dimensions.cardBorderWidth,
-    borderColor: colors.danger,
-  },
+  const variantStyles: Record<ButtonVariant, ViewStyle> = {
+    primary: {
+      backgroundColor: c.accent,
+      shadowColor: c.accent,
+      shadowOpacity: 0.16,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 4 },
+      elevation: 2,
+    },
+    secondary: {
+      backgroundColor: c.surface,
+      borderWidth: dimensions.cardBorderWidth,
+      borderColor: c.borderStrong,
+    },
+    ghost: {
+      backgroundColor: 'transparent',
+    },
+    danger: {
+      backgroundColor: c.surface,
+      borderWidth: dimensions.cardBorderWidth,
+      borderColor: c.danger,
+    },
+  };
+
+  const buttonTextStyles: Record<ButtonVariant, TextStyle> = {
+    primary: { color: c.onAccent },
+    secondary: { color: c.text },
+    ghost: { color: c.text },
+    danger: { color: c.danger },
+  };
+
+  const badgeTone = StyleSheet.create({
+    neutral: { backgroundColor: c.surfaceMuted },
+    success: { backgroundColor: c.successSoft },
+    warning: { backgroundColor: c.warningSoft },
+    danger: { backgroundColor: c.dangerSoft },
+    primary: { backgroundColor: c.accentSubtle },
+    accent: { backgroundColor: c.accentSubtle },
+  });
+
+  const badgeTextTone = StyleSheet.create({
+    neutral: { color: c.textSecondary },
+    success: { color: c.success },
+    warning: { color: c.warning },
+    danger: { color: c.danger },
+    primary: { color: c.accent },
+    accent: { color: c.accent },
+  });
+
+  const statTone = StyleSheet.create({
+    primary: { borderColor: c.border },
+    accent: { borderColor: c.accentSubtle },
+    success: { borderColor: c.successBg },
+    warning: { borderColor: c.warningBg },
+  });
+
+  return { styles, variantStyles, buttonTextStyles, badgeTone, badgeTextTone, statTone };
 };
-
-const buttonTextStyles: Record<ButtonVariant, TextStyle> = {
-  primary: { color: colors.chipActiveText },
-  secondary: { color: colors.text },
-  ghost: { color: colors.text },
-  danger: { color: colors.danger },
-};
-
-const badgeToneStyles = StyleSheet.create({
-  neutral: { backgroundColor: colors.surfaceMuted },
-  success: { backgroundColor: colors.successSoft },
-  warning: { backgroundColor: colors.warningSoft },
-  danger: { backgroundColor: colors.dangerSoft },
-  primary: { backgroundColor: colors.accentSubtle },
-  accent: { backgroundColor: colors.accentSubtle },
-});
-
-const badgeTextToneStyles = StyleSheet.create({
-  neutral: { color: colors.textSecondary },
-  success: { color: colors.success },
-  warning: { color: colors.warning },
-  danger: { color: colors.danger },
-  primary: { color: colors.accent },
-  accent: { color: colors.accent },
-});
-
-const statToneStyles = StyleSheet.create({
-  primary: { borderColor: colors.border },
-  accent: { borderColor: colors.accentSubtle },
-  success: { borderColor: colors.successBg },
-  warning: { borderColor: colors.warningBg },
-});

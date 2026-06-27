@@ -5,7 +5,8 @@ import { useNavigation } from '@react-navigation/native';
 
 import { BusinessRow, Button, RowGroup, Screen } from '@/components/ui';
 import { EmptyState } from '@/components/EmptyState';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { signOut } from '@/services/auth.service';
@@ -16,6 +17,8 @@ import type { RootStackParamList } from '@/types/navigation';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function BusinessSelectionScreen() {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const businesses = useBusinessStore((state) => state.availableBusinesses);
   const selectBusiness = useBusinessStore((state) => state.selectBusiness);
@@ -67,7 +70,7 @@ export default function BusinessSelectionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   stack: {
     gap: dimensions.lg,
   },

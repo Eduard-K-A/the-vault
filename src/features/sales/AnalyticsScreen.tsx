@@ -13,7 +13,8 @@ import {
   buildSaleItemsForBusinessQuery,
   buildSalesForBusinessQuery,
 } from '@/db/queries/salesQueries';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
@@ -25,6 +26,8 @@ import type { AuditLog, Branch, Business, BusinessMember, Category, InventoryRec
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function AnalyticsScreen() {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const role = useAuthStore((state) => state.role);
   const userId = useAuthStore((state) => state.userId);
@@ -327,7 +330,7 @@ export default function AnalyticsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: {
     paddingBottom: dimensions.xl + 24,
   },

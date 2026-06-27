@@ -1,13 +1,25 @@
+/**
+ * Minimal / mono type scale. Tight tracking on large text, airy labels, and
+ * tabular-friendly numerics for prices. Weights stay restrained (no black).
+ */
 export const typography = {
-  title: {
-    fontSize: 22,
-    lineHeight: 28,
+  display: {
+    fontSize: 34,
+    lineHeight: 40,
     fontWeight: '700' as const,
+    letterSpacing: -0.6,
+  },
+  title: {
+    fontSize: 24,
+    lineHeight: 30,
+    fontWeight: '700' as const,
+    letterSpacing: -0.4,
   },
   subtitle: {
     fontSize: 17,
     lineHeight: 24,
     fontWeight: '600' as const,
+    letterSpacing: -0.2,
   },
   body: {
     fontSize: 15,
@@ -27,18 +39,20 @@ export const typography = {
   label: {
     fontSize: 11,
     lineHeight: 16,
-    fontWeight: '500' as const,
-    letterSpacing: 0.5,
+    fontWeight: '600' as const,
+    letterSpacing: 0.8,
   },
   price: {
     fontSize: 17,
     lineHeight: 24,
     fontWeight: '700' as const,
+    letterSpacing: -0.2,
   },
   priceHero: {
-    fontSize: 32,
-    lineHeight: 40,
+    fontSize: 36,
+    lineHeight: 42,
     fontWeight: '700' as const,
+    letterSpacing: -1,
   },
   mono: {
     fontSize: 14,

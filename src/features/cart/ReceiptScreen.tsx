@@ -7,7 +7,8 @@ import { useQuery } from '@powersync/react';
 
 import { Badge, Button, Card, Screen } from '@/components/ui';
 import { SyncStatusBadge } from '@/components/SyncStatusBadge';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
@@ -21,6 +22,8 @@ type Route = NativeStackScreenProps<RootStackParamList, 'Receipt'>['route'];
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function ReceiptScreen() {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const route = useRoute<Route>();
   const role = useAuthStore((state) => state.role);
@@ -158,7 +161,7 @@ export default function ReceiptScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: {
     paddingBottom: dimensions.xl + 24,
   },

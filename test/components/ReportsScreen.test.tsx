@@ -31,12 +31,12 @@ describe('ReportsScreen', () => {
     });
   });
 
-  it('shows current Excel export and future CSV/PDF placeholders', async () => {
+  it('shows sales and inventory exports plus future CSV/PDF placeholder', async () => {
     const view = await renderReportsScreen();
 
-    expect(view.getByText('Export Excel')).toBeTruthy();
-    expect(view.getByText('Export CSV')).toBeTruthy();
-    expect(view.getByText('Export PDF')).toBeTruthy();
-    expect(view.getByText('CSV/PDF export is coming soon. Excel export is available now.')).toBeTruthy();
+    expect(view.getByText('Export sales')).toBeTruthy();
+    expect(view.getByText('Export inventory')).toBeTruthy();
+    expect(view.getByText('CSV & PDF exports')).toBeTruthy();
+    expect(view.getByText('Coming soon')).toBeTruthy();
   });
 });

@@ -4,7 +4,9 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { Badge, Button, Card, Input, ModalSheet, RowGroup, Screen, SettingsRow } from '@/components/ui';
 import { SyncStatusBadge } from '@/components/SyncStatusBadge';
-import { colors } from '@/constants/colors';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { db } from '@/db/powersync';
@@ -18,6 +20,8 @@ import { canConfirmBusinessDeletion } from './businessDeletionHelpers';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function OwnerSettingsScreen() {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const fullname = useAuthStore((state) => state.fullname);
   const email = useAuthStore((state) => state.email);
@@ -178,6 +182,8 @@ export default function OwnerSettingsScreen() {
           <SettingsRow glyph="ⓘ" title="App version" value="0.1.0" />
         </RowGroup>
 
+        <ThemeToggle />
+
         <Card style={styles.dangerCard}>
           <View style={styles.dangerCopy}>
             <Text style={styles.dangerTitle}>Danger zone</Text>
@@ -229,7 +235,7 @@ export default function OwnerSettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: {
     paddingBottom: dimensions.xl + 24,
   },

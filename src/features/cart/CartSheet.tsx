@@ -4,7 +4,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
 import { Button, Input, ModalSheet, Stepper } from '@/components/ui';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
@@ -19,6 +20,8 @@ interface CartSheetProps {
 }
 
 export default function CartSheet({ visible, onClose }: CartSheetProps) {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const { items, subtotal, discountAmount, total, setQuantity, removeItem, setDiscountAmount } = useCart();
   const [discountVisible, setDiscountVisible] = React.useState(false);
@@ -191,7 +194,7 @@ export default function CartSheet({ visible, onClose }: CartSheetProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   emptyState: {
     gap: dimensions.xs,
     alignItems: 'center',

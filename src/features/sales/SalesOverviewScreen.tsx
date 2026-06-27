@@ -13,7 +13,8 @@ import {
   buildSaleItemsForBusinessQuery,
   buildSalesForBusinessQuery,
 } from '@/db/queries/salesQueries';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
@@ -26,6 +27,14 @@ const PERIODS: PeriodKey[] = ['Today', '7 Days', '30 Days', 'Custom'];
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function SalesOverviewScreen() {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
+  const paymentColors = [colors.accent, colors.border, colors.success, colors.textSecondary];
+  const performerAvatarStyles = [
+    { backgroundColor: colors.accentSubtle },
+    { backgroundColor: colors.successBg },
+    { backgroundColor: colors.warningBg },
+  ];
   const [period, setPeriod] = useState<PeriodKey>('Today');
   const [syncLoading, setSyncLoading] = useState(false);
   const businessId = useBusinessStore((store) => store.activeBusiness?.id ?? null);
@@ -328,6 +337,7 @@ interface MetricCardProps {
 }
 
 function MetricCard({ icon, label, value }: MetricCardProps) {
+  const styles = useThemedStyles(createStyles);
   return (
     <Card style={styles.metricCard}>
       <View style={styles.metricHeader}>
@@ -426,14 +436,7 @@ function getInitials(name: string): string {
     .join('');
 }
 
-const paymentColors = [colors.accent, colors.border, colors.success, colors.textSecondary];
-const performerAvatarStyles = [
-  { backgroundColor: colors.accentSubtle },
-  { backgroundColor: colors.successBg },
-  { backgroundColor: colors.warningBg },
-];
-
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: {
     paddingBottom: dimensions.xl + 24,
   },

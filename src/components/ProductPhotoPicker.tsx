@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Alert, Image, StyleSheet, Text, View } from 'react-native';
 
 import { Button, Card } from '@/components/ui';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
+import { useThemedStyles } from '@/theme';
 import { pickProductImage, removePersistedImage, type ImageSource } from '@/services/productImage.service';
 
 interface ProductPhotoPickerProps {
@@ -13,6 +14,7 @@ interface ProductPhotoPickerProps {
 }
 
 export function ProductPhotoPicker({ value, onChange }: ProductPhotoPickerProps) {
+  const styles = useThemedStyles(createStyles);
   const [loading, setLoading] = useState<ImageSource | null>(null);
 
   async function handlePick(source: ImageSource) {
@@ -76,7 +78,7 @@ export function ProductPhotoPicker({ value, onChange }: ProductPhotoPickerProps)
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     gap: dimensions.sm,
   },

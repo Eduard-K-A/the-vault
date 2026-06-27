@@ -41,12 +41,12 @@ describe('AddProductScreen', () => {
     });
   });
 
-  it('shows future-scope photo, category metadata, and scanner placeholders', async () => {
+  it('shows photo picker, category metadata, and scanner placeholders', async () => {
     const view = await renderAddProductScreen();
 
     expect(view.getByText('Product photo')).toBeTruthy();
-    expect(view.getByText('Add photo')).toBeTruthy();
-    expect(view.getByText('Use camera')).toBeTruthy();
+    expect(view.getByText('Choose photo')).toBeTruthy();
+    expect(view.getByText('Take photo')).toBeTruthy();
     expect(view.getByText('Category metadata is coming soon. Use description for now.')).toBeTruthy();
     expect(view.getByLabelText('Scan barcode')).toBeTruthy();
   });

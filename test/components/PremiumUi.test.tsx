@@ -11,8 +11,8 @@ import { dimensions } from '@/constants/dimensions';
 
 describe('premium UI foundation', () => {
   it('uses the premium POS token defaults', () => {
-    expect(colors.background).toBe('#F7F7F7');
-    expect(colors.accent).toBe('#2563EB');
+    expect(colors.background).toBe('#FAFAFA');
+    expect(colors.accent).toBe('#4F46E5');
     expect(dimensions.touchTarget).toBe(48);
   });
 

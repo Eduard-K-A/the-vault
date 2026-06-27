@@ -4,7 +4,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
 import { Button, Card, Input, Screen } from '@/components/ui';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { joinBusiness } from '@/services/business.service';
@@ -15,6 +16,8 @@ import type { RootStackParamList } from '@/types/navigation';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function JoinBusinessScreen() {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const userId = useAuthStore((state) => state.userId);
   const selectBusiness = useBusinessStore((state) => state.selectBusiness);
@@ -66,7 +69,7 @@ export default function JoinBusinessScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     gap: dimensions.md,
   },

@@ -2,9 +2,10 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Input } from '@/components/ui';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
+import { useThemedStyles } from '@/theme';
 
 interface SearchBarProps {
   value: string;
@@ -23,6 +24,7 @@ export function SearchBar({
   onScanPress,
   onScanUnavailable,
 }: SearchBarProps) {
+  const styles = useThemedStyles(createStyles);
   const handleScanPress = onScanPress ?? (() => onScanUnavailable?.(scannerUnavailableMessage));
   const showScanner = Boolean(onScanPress || onScanUnavailable);
 
@@ -51,7 +53,7 @@ export function SearchBar({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c: ThemeColors) => StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -59,13 +61,13 @@ const styles = StyleSheet.create({
     minHeight: dimensions.inputHeight,
     borderRadius: dimensions.radiusLg,
     borderWidth: dimensions.cardBorderWidth,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: c.border,
+    backgroundColor: c.surface,
     paddingLeft: dimensions.md,
     paddingRight: dimensions.xs,
   },
   searchIcon: {
-    color: colors.textSecondary,
+    color: c.textSecondary,
     ...typography.body,
   },
   input: {
@@ -78,9 +80,9 @@ const styles = StyleSheet.create({
     height: dimensions.chipHeight,
     paddingHorizontal: dimensions.sm,
     borderRadius: dimensions.radiusFull,
-    backgroundColor: colors.surface,
+    backgroundColor: c.surface,
     borderWidth: dimensions.cardBorderWidth,
-    borderColor: colors.border,
+    borderColor: c.border,
     alignItems: 'center',
     justifyContent: 'center',
     opacity: 0.5,
@@ -90,7 +92,7 @@ const styles = StyleSheet.create({
   },
   scanLabel: {
     ...typography.body,
-    color: colors.textSecondary,
+    color: c.textSecondary,
     fontWeight: '500',
   },
 });

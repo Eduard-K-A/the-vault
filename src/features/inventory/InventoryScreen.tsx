@@ -10,7 +10,8 @@ import { ProductCard } from '@/components/ProductCard';
 import { SearchBar } from '@/components/SearchBar';
 import { SyncStatusBadge } from '@/components/SyncStatusBadge';
 import CartSheet from '@/features/cart/CartSheet';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { dimensions, elevation } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { formatCurrency } from '@/utils/formatCurrency';
@@ -28,6 +29,8 @@ import { createSyncTraceId } from '@/utils/syncDebug';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function InventoryScreen() {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const role = useAuthStore((state) => state.role);
   const branchId = useBusinessStore((state) => state.activeBranch?.id ?? null);
@@ -302,7 +305,7 @@ export default function InventoryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -2,9 +2,10 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button, Card } from '@/components/ui';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
+import { useThemedStyles } from '@/theme';
 
 interface EmptyStateProps {
   title: string;
@@ -15,6 +16,7 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ title, description, actionLabel, onAction, glyph = '□' }: EmptyStateProps) {
+  const styles = useThemedStyles(createStyles);
   return (
     <Card style={styles.card}>
       <View style={styles.content}>
@@ -33,7 +35,7 @@ export function EmptyState({ title, description, actionLabel, onAction, glyph = 
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (c: ThemeColors) => StyleSheet.create({
   card: {
     padding: dimensions.xl,
   },
@@ -45,7 +47,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: dimensions.radiusFull,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: c.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: dimensions.xs,
@@ -53,19 +55,19 @@ const styles = StyleSheet.create({
   icon: {
     fontSize: 32,
     lineHeight: 36,
-    color: colors.textSecondary,
+    color: c.textSecondary,
   },
   action: {
     marginTop: dimensions.sm,
   },
   title: {
     ...typography.bodyMedium,
-    color: colors.text,
+    color: c.text,
     textAlign: 'center',
   },
   description: {
     ...typography.caption,
-    color: colors.textMuted,
+    color: c.textMuted,
     textAlign: 'center',
     maxWidth: 260,
   },

@@ -29,18 +29,18 @@ describe('redesign foundation', () => {
   });
 
   it('exposes the redesigned token values', () => {
-    expect(colors.background).toBe('#F7F7F7');
+    expect(colors.background).toBe('#FAFAFA');
     expect(colors.surface).toBe('#FFFFFF');
-    expect(colors.accent).toBe('#2563EB');
-    expect(colors.chipActiveBg).toBe('#111827');
-    expect(colors.textPrimary).toBe('#111827');
-    expect(colors.textSecondary).toBe('#6B7280');
+    expect(colors.accent).toBe('#4F46E5');
+    expect(colors.chipActiveBg).toBe('#18181B');
+    expect(colors.textPrimary).toBe('#18181B');
+    expect(colors.textSecondary).toBe('#71717A');
 
-    expect(typography.title).toEqual(expect.objectContaining({ fontSize: 22, fontWeight: '700' }));
+    expect(typography.title).toEqual(expect.objectContaining({ fontSize: 24, fontWeight: '700' }));
     expect(typography.bodyMedium).toEqual(expect.objectContaining({ fontSize: 15, fontWeight: '500' }));
-    expect(typography.priceHero).toEqual(expect.objectContaining({ fontSize: 32, fontWeight: '700' }));
+    expect(typography.priceHero).toEqual(expect.objectContaining({ fontSize: 36, fontWeight: '700' }));
 
-    expect(dimensions.screenPaddingH).toBe(16);
+    expect(dimensions.screenPaddingH).toBe(18);
     expect(dimensions.touchTarget).toBe(48);
     expect(dimensions.tabBarHeight).toBe(60);
     expect(dimensions.cardBorderWidth).toBe(0.5);

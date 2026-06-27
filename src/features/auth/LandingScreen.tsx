@@ -5,7 +5,8 @@ import { useNavigation } from '@react-navigation/native';
 
 import { BrandMark } from '@/components/BrandMark';
 import { Button, Card } from '@/components/ui';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import type { RootStackParamList } from '@/types/navigation';
@@ -13,6 +14,8 @@ import type { RootStackParamList } from '@/types/navigation';
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
 export default function LandingScreen() {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
 
   return (
@@ -42,7 +45,7 @@ export default function LandingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.surface,

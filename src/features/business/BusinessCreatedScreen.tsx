@@ -4,7 +4,8 @@ import type { NativeStackNavigationProp, NativeStackScreenProps } from '@react-n
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 import { Badge, Button, Card, Screen } from '@/components/ui';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import type { RootStackParamList } from '@/types/navigation';
@@ -13,6 +14,8 @@ type Navigation = NativeStackNavigationProp<RootStackParamList>;
 type Route = NativeStackScreenProps<RootStackParamList, 'BusinessCreated'>['route'];
 
 export default function BusinessCreatedScreen() {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const route = useRoute<Route>();
 
@@ -41,7 +44,7 @@ export default function BusinessCreatedScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     gap: dimensions.md,
     alignItems: 'flex-start',

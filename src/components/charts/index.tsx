@@ -1,9 +1,10 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
 import { dimensions, elevation } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
+import { useTheme, useThemedStyles } from '@/theme';
 
 interface BarDatum {
   label: string;
@@ -12,6 +13,8 @@ interface BarDatum {
 }
 
 export function BarChart({ data }: { data: BarDatum[] }) {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const max = Math.max(...data.map((item) => item.value), 1);
   const isEmpty = data.length === 0 || data.every((item) => item.value === 0);
 
@@ -55,6 +58,7 @@ interface LineChartProps {
 const LINE_PLOT_HEIGHT = 120;
 
 export function LineChart({ data }: LineChartProps) {
+  const styles = useThemedStyles(createStyles);
   const [width, setWidth] = React.useState(0);
   const max = Math.max(...data.map((item) => item.value), 1);
   const isEmpty = data.length === 0 || data.every((item) => item.value === 0);
@@ -127,6 +131,8 @@ interface DonutChartProps {
 }
 
 export function DonutChart({ data }: DonutChartProps) {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const rawTotal = data.reduce((sum, item) => sum + item.value, 0);
   const total = rawTotal || 1;
 
@@ -159,7 +165,7 @@ export function DonutChart({ data }: DonutChartProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   chartCard: {
     backgroundColor: colors.surface,
     borderColor: colors.border,

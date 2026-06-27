@@ -2,9 +2,10 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Card } from '@/components/ui';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
+import { useThemedStyles } from '@/theme';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
@@ -14,6 +15,7 @@ function formatValue(value: string | number | null | undefined): string {
 }
 
 export function SyncDiagnosticsPanel() {
+  const styles = useThemedStyles(createStyles);
   const sync = useSyncStatus();
   const authStatus = useAuthStore((state) => state.status);
   const business = useBusinessStore((state) => state.activeBusiness);
@@ -47,7 +49,7 @@ export function SyncDiagnosticsPanel() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     gap: dimensions.sm,
   },

@@ -16,6 +16,7 @@ const config: Config = {
     '^expo-secure-store$': '<rootDir>/test/__mocks__/expoModules.ts',
     '^expo-file-system$': '<rootDir>/test/__mocks__/expoModules.ts',
     '^expo-sharing$': '<rootDir>/test/__mocks__/expoModules.ts',
+    '^expo-image-picker$': '<rootDir>/test/__mocks__/expoImagePicker.ts',
   },
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',

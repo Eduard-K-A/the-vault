@@ -5,7 +5,8 @@ import { useNavigation } from '@react-navigation/native';
 
 import { Button, Card, Input, PaymentChip, Screen, SectionHeader } from '@/components/ui';
 import { SyncStatusBadge } from '@/components/SyncStatusBadge';
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
+import { useTheme, useThemedStyles } from '@/theme';
 import { dimensions } from '@/constants/dimensions';
 import { typography } from '@/constants/typography';
 import { useCart } from '@/hooks/useCart';
@@ -28,6 +29,8 @@ interface PaymentLine {
 }
 
 export default function CheckoutScreen() {
+  const colors = useTheme();
+  const styles = useThemedStyles(createStyles);
   const navigation = useNavigation<Navigation>();
   const role = useAuthStore((state) => state.role);
   const { items, subtotal, discountAmount, total, paymentMethod, checkout } = useCart();
@@ -243,7 +246,7 @@ export default function CheckoutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: {
     gap: dimensions.lg,
     paddingBottom: dimensions.xl,

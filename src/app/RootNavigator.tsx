@@ -3,9 +3,10 @@ import { StyleSheet, Text, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-import { colors } from '@/constants/colors';
+import type { ThemeColors } from '@/constants/colors';
 import { dimensions } from '@/constants/dimensions';
 import { glyphs } from '@/constants/glyphs';
+import { useTheme, useThemedStyles } from '@/theme';
 import { useAuthStore } from '@/store/authStore';
 import { useBusinessStore } from '@/store/businessStore';
 import type {
@@ -48,6 +49,7 @@ const EmployeeTabs = createBottomTabNavigator<EmployeeTabParamList>();
 const OwnerTabs = createBottomTabNavigator<OwnerTabParamList>();
 
 function TabIcon({ active, glyph }: { active: boolean; glyph: string }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.tabIcon}>
       {active ? <View style={styles.tabDot} /> : null}
@@ -56,7 +58,7 @@ function TabIcon({ active, glyph }: { active: boolean; glyph: string }) {
   );
 }
 
-const tabBarOptions = {
+const buildTabBarOptions = (colors: ThemeColors) => ({
   headerShown: false,
   tabBarActiveTintColor: colors.accent,
   tabBarInactiveTintColor: colors.textMuted,
@@ -82,9 +84,10 @@ const tabBarOptions = {
     minHeight: dimensions.tabBarHeight,
   },
   tabBarShowLabel: true,
-};
+});
 
 function EmployeeTabNavigator() {
+  const tabBarOptions = buildTabBarOptions(useTheme());
   return (
     <EmployeeTabs.Navigator
       screenOptions={({ route }) => ({
@@ -103,6 +106,7 @@ function EmployeeTabNavigator() {
 }
 
 function OwnerTabNavigator() {
+  const tabBarOptions = buildTabBarOptions(useTheme());
   return (
     <OwnerTabs.Navigator
       screenOptions={({ route }) => ({
@@ -128,7 +132,7 @@ function OwnerTabNavigator() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   tabIcon: {
     width: 48,
     height: 32,
